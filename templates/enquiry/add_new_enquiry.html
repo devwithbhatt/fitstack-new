@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+{% load form_tags %}
+
+{% block content %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/customstyle.css' %}">
+<!-- Compact Breadcrumb Navigation -->
+<nav aria-label="breadcrumb" class="custom-breadcrumb mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                <i class="mdi mdi-home-outline mdi-18px"></i> Dashboard
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'enquiry_list' %}" class="text-decoration-none">
+                <i class="mdi mdi-comment-question-outline mdi-18px"></i> Enquiries
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            <i class="mdi mdi-plus-circle-outline mdi-18px"></i> Add New Enquiry
+        </li>
+    </ol>
+</nav>
+
+<div class="col-lg-12 px-0">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Add New Enquiry</h4>
+        </div>
+        <div class="card-body">
+            <form method="post" class="needs-validation" novalidate>
+    {% csrf_token %}
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label class="form-label">
+                Name <span class="text-danger">*</span>
+            </label>
+            {{ form.name }}
+            {% if form.name.errors %}
+                <div class="text-danger small">{{ form.name.errors.0 }}</div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label class="form-label">
+                Contact Number <span class="text-danger">*</span>
+            </label>
+            {{ form.mobile_number }}
+            {% if form.mobile_number.errors %}
+                <div class="text-danger small">{{ form.mobile_number.errors.0 }}</div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Email</label>
+            {{ form.email }}
+            {% if form.email.errors %}
+                <div class="text-danger small">{{ form.email.errors.0 }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label class="form-label">
+                Gender <span class="text-danger">*</span>
+            </label>
+            {{ form.gender }}
+            {% if form.gender.errors %}
+                <div class="text-danger small">{{ form.gender.errors.0 }}</div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label class="form-label">
+                Age <span class="text-danger">*</span>
+            </label>
+            {{ form.age }}
+            {% if form.age.errors %}
+                <div class="text-danger small">{{ form.age.errors.0 }}</div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Source</label>
+            {{ form.source }}
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Address</label>
+        {{ form.address }}
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Query For</label>
+            {{ form.interested_in }}
+        </div>
+
+        
+        <div class="col-md-4 mb-3">
+            <label class="form-label">
+                Next Follow-up Date <span class="text-danger">*</span>
+            </label>
+            {{ form.next_follow_up_date }}
+            {% if form.next_follow_up_date.errors %}
+                <div class="text-danger small">
+                    {{ form.next_follow_up_date.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Remark</label>
+        {{ form.enquiry_note }}
+    </div>
+
+    <div class="d-flex justify-content-end">
+        <button type="submit" class="btn btn-primary me-2">Submit</button>
+        <a href="{% url 'enquiry_list' %}" class="btn btn-light">Cancel</a>
+    </div>
+</form>
+
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+  'use strict'
+  const forms = document.querySelectorAll('.needs-validation')
+  Array.from(forms).forEach(function (form) {
+    form.addEventListener('submit', function (event) {
+      if (!form.checkValidity()) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+      form.classList.add('was-validated')
+    }, false)
+  })
+})()
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.querySelector('form')
+  
+  // Function to scroll to first error field
+  function scrollToFirstError() {
+    // Look for fields with validation errors
+    const invalidFields = form.querySelectorAll('.is-invalid, .text-danger.small')
+    const emptyRequiredFields = form.querySelectorAll('input[required]:invalid, select[required]:invalid, textarea[required]:invalid')
+    
+    let firstErrorElement = null
+    
+    // Check for Bootstrap validation errors first
+    if (invalidFields.length > 0) {
+      firstErrorElement = invalidFields[0]
+    }
+    
+    // Check for HTML5 validation errors
+    if (!firstErrorElement && emptyRequiredFields.length > 0) {
+      firstErrorElement = emptyRequiredFields[0]
+    }
+    
+    // If we found an error, scroll to it and focus
+    if (firstErrorElement) {
+      // If it's an error message, find the corresponding input field
+      let targetElement = firstErrorElement
+      if (firstErrorElement.classList.contains('text-danger')) {
+        // Error message div, find the previous input/select/textarea
+        const prevElement = firstErrorElement.previousElementSibling
+        if (prevElement && (prevElement.tagName === 'INPUT' || prevElement.tagName === 'SELECT' || prevElement.tagName === 'TEXTAREA')) {
+          targetElement = prevElement
+        } else {
+          // Try to find the input field in the same parent div
+          const parentDiv = firstErrorElement.closest('.mb-3')
+          if (parentDiv) {
+            const inputField = parentDiv.querySelector('input, select, textarea')
+            if (inputField) {
+              targetElement = inputField
+            }
+          }
+        }
+      }
+      
+      // Scroll to the element
+      targetElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      })
+      
+      // Focus the element
+      if (targetElement.tagName === 'INPUT' || targetElement.tagName === 'SELECT' || targetElement.tagName === 'TEXTAREA') {
+        targetElement.focus()
+      }
+      
+      // Add visual highlight
+      targetElement.style.borderColor = '#dc3545'
+      setTimeout(() => {
+        targetElement.style.borderColor = ''
+      }, 3000)
+      
+      return true
+    }
+    
+    return false
+  }
+  
+  // Intercept form submission to check for errors
+  form.addEventListener('submit', function (e) {
+    // Let browser validation happen first
+    if (!form.checkValidity()) {
+      e.preventDefault()
+      e.stopPropagation()
+      
+      // Add was-validated class to show validation styles
+      form.classList.add('was-validated')
+      
+      // Scroll to first error after a short delay to let validation render
+      setTimeout(() => {
+        scrollToFirstError()
+      }, 100)
+      
+      return false
+    }
+    
+    // If form is valid, check for server-side errors (Bootstrap validation)
+    setTimeout(() => {
+      if (scrollToFirstError()) {
+        e.preventDefault()
+        e.stopPropagation()
+      }
+    }, 100)
+  })
+  
+  // Also check on page load if there are any server-side errors
+  setTimeout(() => {
+    scrollToFirstError()
+  }, 500)
+})
+</script>
+
+{% endblock %}

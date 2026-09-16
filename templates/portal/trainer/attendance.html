@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% load static humanize custom_tags %}
+
+{% block title %}My Shift Attendance - Coach {{ trainer.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid gym-dashboard-root px-3 px-md-4 py-3">
+
+  <div class="dashboard-hero-header">
+    <div>
+      <h2 class="dashboard-hero-title">My Shift Attendance</h2>
+      <p class="dashboard-hero-subtitle">Review your daily gym presence and work shift logs</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <form method="post" action="{% url 'trainer_portal:attendance_action' %}" id="trainer-att-page-form" class="m-0">
+        {% csrf_token %}
+        {% if is_checked_in %}
+          <input type="hidden" name="action" value="checkout">
+          <button type="button" class="btn btn-danger btn-sm font-weight-bold px-3 rounded-pill shadow-sm" onclick="confirmPageCheckOut();">
+            <i class="mdi mdi-logout-variant mr-1"></i> Clock Out (Active Since {{ active_attendance.check_in_time|time:'g:i A' }})
+          </button>
+        {% else %}
+          <input type="hidden" name="action" value="checkin">
+          <button type="submit" class="btn btn-success btn-sm font-weight-bold px-3 rounded-pill shadow-sm">
+            <i class="mdi mdi-login-variant mr-1"></i> Clock In Now
+          </button>
+        {% endif %}
+      </form>
+      <a href="{% url 'trainer_portal:dashboard' %}" class="btn btn-outline-secondary btn-sm px-3 rounded-pill">
+        <i class="fas fa-arrow-left mr-1"></i> Dashboard
+      </a>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6 mb-4">
+      <div class="kpi-card kpi-primary">
+        <div>
+          <div class="kpi-header">
+            <span class="kpi-label">Lifetime Present Shifts</span>
+            <div class="kpi-icon-wrap kpi-icon-primary">
+              <i class="fas fa-clock"></i>
+            </div>
+          </div>
+          <div class="kpi-value">{{ total_days }}</div>
+        </div>
+        <div class="kpi-meta">
+          <span class="kpi-meta-badge kpi-badge-primary">
+            <i class="fas fa-history mr-1"></i> Shifts
+          </span>
+          <span class="kpi-meta-desc">Total verified attendances</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+      <div class="kpi-card kpi-success">
+        <div>
+          <div class="kpi-header">
+            <span class="kpi-label">This Month Sessions</span>
+            <div class="kpi-icon-wrap kpi-icon-success">
+              <i class="fas fa-calendar-check"></i>
+            </div>
+          </div>
+          <div class="kpi-value">{{ this_month_count }}</div>
+        </div>
+        <div class="kpi-meta">
+          <span class="kpi-meta-badge kpi-badge-success">
+            <i class="fas fa-fire mr-1"></i> Current Month
+          </span>
+          <span class="kpi-meta-desc">Monthly shift count</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="gym-card">
+    <div class="gym-card-header">
+      <div class="gym-card-title">
+        <i class="mdi mdi-calendar-clock text-primary" style="font-size: 1.25rem;"></i>
+        <span>Shift Logs</span>
+      </div>
+      <span class="badge-soft badge-soft-secondary">{{ attendance_logs|length }} Total Logs</span>
+    </div>
+    <div class="gym-card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th>#</th>
+              <th>Date</th>
+              <th>Day</th>
+              <th>Check-In</th>
+              <th>Check-Out</th>
+              <th>Duration</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in attendance_logs %}
+            <tr>
+              <td class="text-muted">{{ forloop.counter }}</td>
+              <td class="font-weight-bold text-dark">{{ log.check_in_time|date:'d M Y' }}</td>
+              <td><span class="badge badge-light border text-muted">{{ log.check_in_time|date:'l' }}</span></td>
+              <td class="text-success font-weight-bold">{{ log.check_in_time|time:'g:i A'|default:'-' }}</td>
+              <td>{{ log.check_out_time|time:'g:i A'|default:'-' }}</td>
+              <td>
+                {% if log.duration %}
+                  <span class="badge badge-light border font-weight-bold">{{ log.duration }}</span>
+                {% elif not log.check_out_time %}
+                  <span class="badge badge-success px-2 py-1">In Progress</span>
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge badge-success px-2 py-1">
+                  <i class="fas fa-check-circle mr-1"></i> Present
+                </span>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="text-center py-5 text-muted">
+                <i class="mdi mdi-calendar-blank" style="font-size: 2.5rem;"></i>
+                <div class="mt-2 font-weight-bold">No attendance records found</div>
+                <div class="small">Use the button above to clock in for your shift!</div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function confirmPageCheckOut() {
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: 'End Gym Shift?',
+            text: 'Are you sure you want to clock out for today?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: '<i class="fas fa-sign-out-alt mr-1"></i> Yes, Clock Out',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('trainer-att-page-form').submit();
+            }
+        });
+    } else {
+        if (confirm('Are you sure you want to clock out?')) {
+            document.getElementById('trainer-att-page-form').submit();
+        }
+    }
+}
+</script>
+{% endblock %}

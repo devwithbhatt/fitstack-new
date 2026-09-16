@@ -1,0 +1,299 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load form_tags %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="custom-breadcrumb mb-3">
+  <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                <i class="mdi mdi-home-outline mdi-18px"></i> Dashboard
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'member_list' %}" class="text-decoration-none">
+                <i class="mdi mdi-account-multiple-outline mdi-18px"></i> Members List
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'member_profile' member.id %}" class="text-decoration-none">
+                <i class="mdi mdi-account-outline mdi-18px"></i> Member Profile
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            <i class="mdi mdi-file-document-box-plus-outline mdi-18px"></i> {% if history %}Upgrade{% else %}Assign{% endif %} Membership Plan
+        </li>
+    </ol>
+    </nav>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="card-title text-white mb-0">
+                        <i class="mdi mdi-arrow-up-bold-circle-outline mr-2"></i>
+                        {% if history %}Upgrade{% else %}Assign{% endif %} Membership Plan for {{ member.name }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <form class="forms-sample" action="{% if history %}{% url 'update_membership_plan' member.id history.id %}{% else %}{% url 'assign_membership_plan' member.id %}{% endif %}" method="post" novalidate>
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="id_plan">Plan <span class="text-danger">*</span></label>
+                                    {{ form.plan|attr:'class:form-control,required:true' }}
+                                    <div class="invalid-feedback">{% if form.plan.errors %}{{ form.plan.errors.0 }}{% else %}Please select a plan.{% endif %}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="id_add_on_days">Add on days</label>
+                                    {{ form.add_on_days|attr:'class:form-control' }}
+                                    {% if form.add_on_days.errors %}
+                                        <div class="invalid-feedback">{{ form.add_on_days.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="id_membership_start_date">Membership Start Date <span class="text-danger">*</span></label>
+                                    {{ form.membership_start_date|attr:'class:form-control,required:true' }}
+                                    <div class="invalid-feedback">{% if form.membership_start_date.errors %}{{ form.membership_start_date.errors.0 }}{% else %}Please select a start date.{% endif %}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="id_payment_date">Payment Date <span class="text-danger">*</span></label>
+                                    <input type="date" name="payment_date" class="form-control" required id="id_payment_date" value="{{ form.payment_date.value|date:'Y-m-d' }}">
+                                    <div class="invalid-feedback">{% if form.payment_date.errors %}{{ form.payment_date.errors.0 }}{% else %}Please select a payment date.{% endif %}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_registration_fee">Registration Fee</label>
+                                    {{ form.registration_fee|attr:'class:form-control' }}
+                                    <div class="invalid-feedback">{% if form.registration_fee.errors %}{{ form.registration_fee.errors.0 }}{% else %}Registration fee cannot be negative.{% endif %}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_discount">Discount</label>
+                                    {{ form.discount|attr:'class:form-control' }}
+                                    <div class="invalid-feedback">{% if form.discount.errors %}{{ form.discount.errors.0 }}{% else %}Discount cannot be greater than the plan price.{% endif %}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_total_amount">Total Amount</label>
+                                    {{ form.total_amount|attr:'class:form-control,readonly:true' }}
+                                    <h4 class="mt-2">Total: <span id="total_display" class="font-weight-bold">0.00</span> <span id="gst_display" class="text-muted"></span></h4>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_paid_amount">Paid Amount <span class="text-danger">*</span></label>
+                                    {{ form.paid_amount|attr:'class:form-control,required:true' }}
+                                    <div class="invalid-feedback">{% if form.paid_amount.errors %}{{ form.paid_amount.errors.0 }}{% else %}Paid amount cannot be greater than the total amount or negative.{% endif %}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="id_payment_mode">Payment Mode <span class="text-danger">*</span></label>
+                                    {{ form.payment_mode|attr:'class:form-control,required:true' }}
+                                    <div class="invalid-feedback">{% if form.payment_mode.errors %}{{ form.payment_mode.errors.0 }}{% else %}Please select a payment mode.{% endif %}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="id_transaction_id">Transaction ID</label>
+                                    {{ form.transaction_id|attr:'class:form-control' }}
+                                    {% if form.transaction_id.errors %}
+                                        <div class="invalid-feedback">{{ form.transaction_id.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4" id="follow-up-date-row" style="display: none;">
+                                <div class="form-group">
+                                    <label for="id_follow_up_date"> Dues Follow-up Date <span class="text-danger">*</span></label>
+                                    {{ form.follow_up_date|attr:'class:form-control' }}
+                                    <div class="invalid-feedback">{% if form.follow_up_date.errors %}{{ form.follow_up_date.errors.0 }}{% else %}Please select a follow-up date.{% endif %}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="id_comment">Comment</label>
+                                    {{ form.comment|attr:'class:form-control' }}
+                                    {% if form.comment.errors %}
+                                        <div class="invalid-feedback">{{ form.comment.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end mt-4">
+                            <a href="{% url 'member_profile' member.id %}" class="btn btn-light btn-lg mr-3">Cancel</a>
+                            <button type="submit" class="btn btn-primary btn-lg px-5 shadow">
+                                {% if history %}Upgrade{% else %}Assign{% endif %} Plan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.querySelector('form');
+    const plansData = JSON.parse('{{ plans_json|escapejs|default:"[]" }}');
+    const gymData = JSON.parse('{{ gym_json|escapejs|default:"[]" }}')[0];
+    
+    const planSelect = document.getElementById('id_plan');
+    const registrationFeeInput = document.getElementById('id_registration_fee');
+    const discountInput = document.getElementById('id_discount');
+    const totalAmountInput = document.getElementById('id_total_amount');
+    const paidAmountInput = document.getElementById('id_paid_amount');
+    const totalDisplay = document.getElementById('total_display');
+    const gstDisplay = document.getElementById('gst_display');
+    const followUpDateRow = document.getElementById('follow-up-date-row');
+    const followUpDateInput = document.getElementById('id_follow_up_date');
+    
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('id_membership_start_date').setAttribute('max', today);
+    document.getElementById('id_payment_date').setAttribute('max', today);
+    followUpDateInput.setAttribute('min', today);
+    
+    function updateTotalAmount() {
+        const selectedPlanId = planSelect.value;
+        const registrationFee = parseFloat(registrationFeeInput.value) || 0;
+        const discount = parseFloat(discountInput.value) || 0;
+        
+        let planOfferPrice = 0;
+        if (selectedPlanId && plansData.length > 0) {
+            const selectedPlan = plansData.find(p => p.pk == selectedPlanId);
+            if (selectedPlan) {
+                planOfferPrice = parseFloat(selectedPlan.fields.offer_price);
+            }
+        }
+        
+        const baseAmount = planOfferPrice + registrationFee - discount;
+        
+        let gstRate = 0;
+        if (gymData && gymData.fields.gst_enabled) {
+            gstRate = parseFloat(gymData.fields.gst_rate) || 0;
+        }
+        
+        const gstAmount = (baseAmount * gstRate) / 100;
+        const totalAmount = baseAmount + gstAmount;
+
+        totalAmountInput.value = totalAmount.toFixed(2);
+        totalDisplay.textContent = totalAmount.toFixed(2);
+
+        if (gstRate > 0) {
+            gstDisplay.textContent = `(Includes ${gstAmount.toFixed(2)} GST)`;
+        } else {
+            gstDisplay.textContent = '';
+        }
+        validateForm();
+    }
+
+    function validateField(input, condition, errorMessage) {
+        const feedback = input.nextElementSibling;
+        if (condition) {
+            input.classList.add('is-invalid');
+            if (feedback && feedback.classList.contains('invalid-feedback')) {
+                feedback.textContent = errorMessage;
+            }
+            return false;
+        } else {
+            input.classList.remove('is-invalid');
+            return true;
+        }
+    }
+
+    function validateForm() {
+        let isValid = true;
+        const selectedPlanId = planSelect.value;
+        let planOfferPrice = 0;
+        if (selectedPlanId && plansData.length > 0) {
+            const selectedPlan = plansData.find(p => p.pk == selectedPlanId);
+            if (selectedPlan) {
+                planOfferPrice = parseFloat(selectedPlan.fields.offer_price);
+            }
+        }
+
+        const totalAmount = parseFloat(totalAmountInput.value);
+        const paidAmount = parseFloat(paidAmountInput.value);
+
+        if (paidAmount < totalAmount) {
+            followUpDateRow.style.display = 'block';
+            followUpDateInput.required = true;
+        } else {
+            followUpDateRow.style.display = 'none';
+            followUpDateInput.required = false;
+        }
+
+        isValid = validateField(planSelect, !planSelect.value, 'Please select a plan.') && isValid;
+        isValid = validateField(registrationFeeInput, parseFloat(registrationFeeInput.value) < 0, 'Registration fee cannot be negative.') && isValid;
+        isValid = validateField(discountInput, parseFloat(discountInput.value) > planOfferPrice, 'Discount cannot be greater than the plan price.') && isValid;
+        isValid = validateField(paidAmountInput, paidAmount < 0, 'Paid amount cannot be negative.') && isValid;
+        isValid = validateField(paidAmountInput, paidAmount > totalAmount, 'Paid amount cannot be greater than the total amount.') && isValid;
+        isValid = validateField(followUpDateInput, followUpDateInput.required && !followUpDateInput.value, 'Please select a follow-up date.') && isValid;
+        
+        return isValid;
+    }
+
+    form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        if (!validateForm()) {
+            event.stopPropagation();
+        } else {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You are about to assign this membership plan.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, assign it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const submitButton = form.querySelector('button[type="submit"]');
+                    submitButton.disabled = true;
+                    submitButton.textContent = '{% if history %}Updating{% else %}Assigning{% endif %}...';
+                    form.submit();
+                }
+            });
+        }
+    });
+
+    planSelect.addEventListener('change', updateTotalAmount);
+    registrationFeeInput.addEventListener('input', updateTotalAmount);
+    discountInput.addEventListener('input', updateTotalAmount);
+    paidAmountInput.addEventListener('input', validateForm);
+    followUpDateInput.addEventListener('input', validateForm);
+
+    // Initial validation check
+    updateTotalAmount();
+});
+</script>
+{% endblock %}

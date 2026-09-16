@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %} Help Center - GYM Management Software {% endblock title %}
+
+{% block content %}
+<style>
+ 
+    .video-container {
+        position: relative;
+        padding-bottom: 56.25%;
+        height: 0;
+        overflow: hidden;
+        max-width: 100%;
+        background: #000;
+    }
+    .video-container iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+</style>
+<div class="container-fluid py-4">
+
+    <!-- HEADER -->
+    <div class="page-header d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="mb-0 font-weight-bold">Help Center</h3>
+            <small class="text-muted">Your guide to using the GYM Management Software</small>
+        </div>
+    </div>
+
+
+    <!-- VIDEO TUTORIALS -->
+    {% comment %} <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Video Tutorials</h4>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="video-container">
+                                <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                            </div>
+                            <h6 class="mt-2">Getting Started</h6>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="video-container">
+                                <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                            </div>
+                            <h6 class="mt-2">Member Management</h6>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="video-container">
+                                <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                            </div>
+                            <h6 class="mt-2">Billing and Payments</h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> {% endcomment %}
+
+    <!-- FAQ SECTIONS -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Frequently Asked Questions</h4>
+                    <div class="accordion" id="faqAccordion">
+
+                        <!-- Getting Started -->
+                        <div class="card">
+                            <div class="card-header" id="headingOne">
+                                <h5 class="mb-0">
+                                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                        <i class="mdi mdi-star-circle-outline mr-2"></i>Getting Started
+                                    </button>
+                                </h5>
+                            </div>
+                            <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#faqAccordion">
+                                <div class="card-body">
+                                    <strong>How do I add a new member?</strong>
+                                    <p>To add a new member, navigate to the "Members" section from the sidebar and click on the "Add New Member" button. Fill in the required details and save.</p>
+                                    <strong>How do I view the dashboard?</strong>
+                                    <p>The dashboard is the first screen you see after logging in. You can also access it by clicking on "Dashboard" in the sidebar.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Member Management -->
+                        <div class="card">
+                            <div class="card-header" id="headingTwo">
+                                <h5 class="mb-0">
+                                    <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                        <i class="mdi mdi-account-multiple-outline mr-2"></i>Member Management
+                                    </button>
+                                </h5>
+                            </div>
+                            <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#faqAccordion">
+                                <div class="card-body">
+                                    <strong>How do I edit a member's details?</strong>
+                                    <p>Go to the "Members" list, find the member you want to edit, and click on the "Edit" icon next to their name.</p>
+                                    <strong>How do I freeze or unfreeze a membership?</strong>
+                                    <p>In the member's profile, you will find an option to change their membership status. You can select "Freeze" and specify a reason and duration.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Billing and Payments -->
+                        <div class="card">
+                            <div class="card-header" id="headingThree">
+                                <h5 class="mb-0">
+                                    <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                        <i class="mdi mdi-credit-card-outline mr-2"></i>Billing and Payments
+                                    </button>
+                                </h5>
+                            </div>
+                            <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#faqAccordion">
+                                <div class="card-body">
+                                    <strong>How do I generate an invoice?</strong>
+                                    <p>Invoices are automatically generated based on membership plans. You can view them in the "Billing" section.</p>
+                                    <strong>How do I record a payment?</strong>
+                                    <p>From the "Billing" section, you can select an unpaid invoice and click on "Add Payment" to record the transaction.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Trainers and Staff -->
+                        <div class="card">
+                            <div class="card-header" id="headingFour">
+                                <h5 class="mb-0">
+                                    <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                                        <i class="mdi mdi-human-male-female mr-2"></i>Trainers and Staff
+                                    </button>
+                                </h5>
+                            </div>
+                            <div id="collapseFour" class="collapse" aria-labelledby="headingFour" data-parent="#faqAccordion">
+                                <div class="card-body">
+                                    <strong>How do I add a new trainer?</strong>
+                                    <p>Navigate to the "Trainers" section and click "Add New Trainer". Fill in their details, specialization, and schedule.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reports and Analytics -->
+                        <div class="card">
+                            <div class="card-header" id="headingFive">
+                                <h5 class="mb-0">
+                                    <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
+                                        <i class="mdi mdi-chart-bar mr-2"></i>Reports and Analytics
+                                    </button>
+                                </h5>
+                            </div>
+                            <div id="collapseFive" class="collapse" aria-labelledby="headingFive" data-parent="#faqAccordion">
+                                <div class="card-body">
+                                    <strong>How do I view attendance reports?</strong>
+                                    <p>Go to "Attendance" = "Attendance Report" to generate and view attendance records for members and trainers.</p>
+                                    <strong>Can I export data?</strong>
+                                    <p>Yes, most tables in the software have an "Export" button that allows you to download data in CSV or PDF format.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Settings and Configuration -->
+                        <div class="card">
+                            <div class="card-header" id="headingSix">
+                                <h5 class="mb-0">
+                                    <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseSix" aria-expanded="false" aria-controls="collapseSix">
+                                        <i class="mdi mdi-settings-outline mr-2"></i>Settings and Configuration
+                                    </button>
+                                </h5>
+                            </div>
+                            <div id="collapseSix" class="collapse" aria-labelledby="headingSix" data-parent="#faqAccordion">
+                                <div class="card-body">
+                                    <strong>How do I change my password?</strong>
+                                    <p>You can change your password from the "Settings" page, accessible from the sidebar.</p>
+                                    <strong>How do I configure membership plans?</strong>
+                                    <p>Navigate to "Management" = "Membership Plans" to add, edit, or delete membership packages.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div id="no-results" class="text-center mt-3" style="display: none;">
+                        <h5>No results found</h5>
+                        <p>We couldn't find any matches for your search. Please try another term.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTACT SUPPORT -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h4 class="card-title">Still Need Help?</h4>
+                    <p class="text-muted">If you can't find the answer you're looking for, please don't hesitate to contact our support team.</p>
+                    <a href="mailto:info@bhattsquare.com" class="btn btn-primary">Contact Support</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock content %}

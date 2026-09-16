@@ -1,0 +1,455 @@
+{% extends 'website/base_website.html' %}
+{% load static %}
+
+{% block title %}Free BMI Calculator Online India | FitStack — Check Your Body Mass Index{% endblock %}
+
+{% block seo %}
+<meta name="description" content="Use FitStack's free online BMI calculator — supports metric (kg/cm) and imperial (lbs/ft). Get your Body Mass Index, ideal weight range, and WHO-standard BMI classification instantly. Trusted by fitness professionals across India.">
+<meta name="keywords" content="free BMI calculator India, online BMI calculator, body mass index calculator, BMI calculator kg cm, BMI checker metric imperial, ideal weight calculator, healthy weight range, BMI for gym members, fitness BMI tool, gym health calculator, FitStack BMI">
+<meta name="author" content="FitStack by BhattSquare">
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+{% endblock %}
+
+{% block canonical %}
+<link rel="canonical" href="https://fitstack.nextgenapplication.com/bmi-calculator/">
+{% endblock %}
+
+{% block og_tags %}
+<meta property="og:site_name" content="FitStack">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://fitstack.nextgenapplication.com/bmi-calculator/">
+<meta property="og:title" content="Free BMI Calculator — Check Your Body Mass Index Online">
+<meta property="og:description" content="Calculate BMI using metric or imperial units. Get your ideal weight range and WHO BMI classification instantly — powered by FitStack.">
+<meta property="og:image" content="{% static 'images/bmi-og.png' %}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="en_IN">
+{% endblock %}
+
+{% block twitter_tags %}
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Free BMI Calculator — FitStack">
+<meta name="twitter:description" content="Check your BMI instantly with metric or imperial units. Ideal weight range and WHO classification included.">
+<meta name="twitter:image" content="{% static 'images/bmi-og.png' %}">
+{% endblock %}
+
+{% block schema_ld %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "FitStack BMI Calculator",
+  "url": "https://fitstack.nextgenapplication.com/bmi-calculator/",
+  "description": "A free online BMI calculator supporting metric and imperial units with ideal weight range and WHO classification.",
+  "applicationCategory": "HealthApplication",
+  "operatingSystem": "Web",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "INR"
+  }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+    <img src="{% static 'images/hero_image_gym.png' %}" alt="FitStack BMI calculator" class="page-hero-media">
+    <div class="brand-container page-hero-content">
+        <div class="max-w-4xl site-reveal">
+            <span class="brand-eyebrow brand-eyebrow-dark">
+                <i class="fa-solid fa-calculator"></i>
+                BMI calculator
+            </span>
+            <h1 class="brand-heading mt-6">A cleaner health utility built inside the same premium FitStack experience.</h1>
+            <p class="text-white/72 text-lg leading-8 mt-6 max-w-3xl">
+                Calculate BMI using metric or imperial units, see your ideal range, and get a fast interpretation that’s easy to understand.
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="brand-section">
+    <div class="brand-container">
+        <div class="calculator-shell">
+            <div class="grid gap-5">
+                <div class="brand-card p-8 site-reveal">
+                    <div class="flex items-center justify-between gap-4 mb-6">
+                        <div>
+                            <p class="brand-mono text-xs uppercase tracking-[0.18em] text-slate-500">Configuration</p>
+                            <h2 class="text-2xl font-bold mt-2">Enter your details</h2>
+                        </div>
+                        <div class="flex p-1 rounded-full bg-slate-100 border border-slate-200">
+                            <button id="metricBtn" class="btn btn-primary btn-sm">Metric</button>
+                            <button id="imperialBtn" class="btn btn-ghost btn-sm">Imperial</button>
+                        </div>
+                    </div>
+
+                    <div class="grid gap-5">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="form-control">
+                                <label class="label"><span class="label-text">Age</span></label>
+                                <input type="number" id="age" class="input" placeholder="25">
+                            </div>
+                            <div class="form-control">
+                                <label class="label"><span class="label-text">Gender</span></label>
+                                <select class="select">
+                                    <option>Male</option>
+                                    <option>Female</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-control">
+                            <label id="weightLabel" class="label"><span class="label-text">Current weight (kg)</span></label>
+                            <input type="number" id="weight" class="input" placeholder="72.5" step="0.1">
+                        </div>
+
+                        <div id="heightMetric" class="form-control">
+                            <label class="label"><span class="label-text">Height (cm)</span></label>
+                            <input type="number" id="heightCm" class="input" placeholder="175">
+                        </div>
+
+                        <div id="heightImperial" class="hidden grid grid-cols-2 gap-4">
+                            <div class="form-control">
+                                <label class="label"><span class="label-text">Feet</span></label>
+                                <input type="number" id="heightFt" class="input" placeholder="5">
+                            </div>
+                            <div class="form-control">
+                                <label class="label"><span class="label-text">Inches</span></label>
+                                <input type="number" id="heightIn" class="input" placeholder="10">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-[rgba(93,173,216,.2)] bg-[rgba(93,173,216,.08)] px-4 py-3 mt-6 text-sm text-slate-800">
+                        Live calculation updates as you type.
+                    </div>
+                </div>
+
+                <div class="brand-card brand-card-dark p-8 site-reveal">
+                    <p class="brand-mono text-xs uppercase tracking-[0.18em] text-white/50">Important note</p>
+                    <h3 class="text-2xl font-bold mt-3 mb-3">BMI is a screening tool, not a diagnosis.</h3>
+                    <p class="text-white/70 leading-8">For muscular athletes or body recomposition goals, pair BMI with body fat assessment, waist measurements, progress photos, and trainer guidance.</p>
+                </div>
+            </div>
+
+            <div class="grid gap-5">
+                <div class="brand-card p-8 site-reveal">
+                    <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
+                        <div>
+                            <p class="brand-mono text-xs uppercase tracking-[0.18em] text-slate-500">Assessment</p>
+                            <h2 class="text-2xl font-bold mt-2">Your BMI result</h2>
+                        </div>
+                        <div id="bmiStatusBadge" class="comparison-pill secondary">Waiting</div>
+                    </div>
+
+                    <div class="relative w-full max-w-[360px] mx-auto my-8">
+                        <svg viewBox="0 0 200 120" class="w-full h-auto calculator-gauge">
+                            <path d="M22,105 A78,78 0 0,1 42,52" fill="none" stroke="#e57e42" stroke-width="20" opacity="0.55"/>
+                            <path d="M48,47 A78,78 0 0,1 97,27.5" fill="none" stroke="#5dadd8" stroke-width="20" opacity="0.7"/>
+                            <path d="M103,27.5 A78,78 0 0,1 152,47" fill="none" stroke="#e57e42" stroke-width="20" opacity="0.7"/>
+                            <path d="M158,52 A78,78 0 0,1 178,105" fill="none" stroke="#c93247" stroke-width="20" opacity="0.78"/>
+                            <g id="needleGroup" style="transform-origin: 100px 105px; transform: rotate(0deg);">
+                                <path d="M100,105 L28,105 L100,102 Z" fill="#10212b"></path>
+                                <circle cx="100" cy="105" r="7" fill="#10212b"></circle>
+                                <circle cx="100" cy="105" r="2.5" fill="#ffffff"></circle>
+                            </g>
+                        </svg>
+
+                        <div class="text-center mt-4">
+                            <div class="brand-mono text-xs uppercase tracking-[0.2em] text-slate-500">Your BMI</div>
+                            <div id="bmiValue" class="text-5xl font-extrabold text-slate-900 mt-2">--</div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-4 gap-2 text-center mt-4">
+                        <div>
+                            <div class="text-xs font-bold text-[var(--color-accent-deep)]">Under</div>
+                            <div class="brand-mono text-[11px] text-slate-500">&lt; 18.5</div>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold text-[var(--color-primary-deep)]">Normal</div>
+                            <div class="brand-mono text-[11px] text-slate-500">18.5-24.9</div>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold text-[var(--color-accent-deep)]">Over</div>
+                            <div class="brand-mono text-[11px] text-slate-500">25-29.9</div>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold text-[var(--color-secondary)]">Obesity</div>
+                            <div class="brand-mono text-[11px] text-slate-500">&gt;= 30</div>
+                        </div>
+                    </div>
+
+                    <div id="resultMetrics" class="hidden grid sm:grid-cols-2 gap-4 mt-8">
+                        <div class="calculator-stat">
+                            <div class="brand-mono text-xs uppercase tracking-[0.18em] text-slate-500">Ideal range</div>
+                            <div id="idealRange" class="text-2xl font-bold mt-2">--</div>
+                        </div>
+                        <div class="calculator-stat">
+                            <div id="diffLabel" class="brand-mono text-xs uppercase tracking-[0.18em] text-slate-500">Weight goal</div>
+                            <div id="weightDiff" class="text-2xl font-bold mt-2">--</div>
+                        </div>
+                    </div>
+
+                    <div id="noDataMessage" class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-5 py-6 text-center text-slate-500 mt-8">
+                        Enter your height and weight to see your result.
+                    </div>
+
+                    <div id="adviceWrap" class="hidden rounded-2xl border border-slate-200 bg-slate-50 px-5 py-6 mt-4">
+                        <p class="brand-mono text-xs uppercase tracking-[0.18em] text-slate-500 mb-2">Quick interpretation</p>
+                        <p id="bmiAdviceText" class="text-slate-800 leading-8">Enter your values to begin.</p>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-4 mt-8">
+                        <button onclick="shareResults()" class="btn btn-outline">
+                            <i class="fa-solid fa-share-nodes"></i>
+                            Share result
+                        </button>
+                        <a href="{% url 'contact' %}" class="btn btn-primary">
+                            Talk to FitStack
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="brand-card p-8 site-reveal">
+                    <h2 class="text-2xl font-bold mb-5">WHO-style reference ranges</h2>
+                    <div class="comparison-shell">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>BMI range</th>
+                                    <th>Classification</th>
+                                    <th>General interpretation</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="font-bold">Below 18.5</td>
+                                    <td>Underweight</td>
+                                    <td>Below recommended range</td>
+                                </tr>
+                                <tr>
+                                    <td class="font-bold">18.5 to 24.9</td>
+                                    <td>Normal</td>
+                                    <td>Within recommended range</td>
+                                </tr>
+                                <tr>
+                                    <td class="font-bold">25.0 to 29.9</td>
+                                    <td>Overweight</td>
+                                    <td>Above recommended range</td>
+                                </tr>
+                                <tr>
+                                    <td class="font-bold">30 and above</td>
+                                    <td>Obesity</td>
+                                    <td>Higher health risk indicator</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const weightInput = document.getElementById("weight");
+        const heightCm = document.getElementById("heightCm");
+        const heightFt = document.getElementById("heightFt");
+        const heightIn = document.getElementById("heightIn");
+        const metricBtn = document.getElementById("metricBtn");
+        const imperialBtn = document.getElementById("imperialBtn");
+        const hMetricCont = document.getElementById("heightMetric");
+        const hImperialCont = document.getElementById("heightImperial");
+        const weightLabel = document.getElementById("weightLabel");
+        const bmiValue = document.getElementById("bmiValue");
+        const bmiBadge = document.getElementById("bmiStatusBadge");
+        const needleGroup = document.getElementById("needleGroup");
+        const idealRangeText = document.getElementById("idealRange");
+        const diffText = document.getElementById("weightDiff");
+        const diffLabel = document.getElementById("diffLabel");
+        const adviceText = document.getElementById("bmiAdviceText");
+        const adviceWrap = document.getElementById("adviceWrap");
+        const resultMetrics = document.getElementById("resultMetrics");
+        const noDataMessage = document.getElementById("noDataMessage");
+
+        let mode = "metric";
+
+        function setBadge(label, type) {
+            bmiBadge.textContent = label;
+            bmiBadge.className = "comparison-pill " + type;
+        }
+
+        function resetView() {
+            bmiValue.textContent = "--";
+            setBadge("Waiting", "secondary");
+            needleGroup.style.transform = "rotate(0deg)";
+            resultMetrics.classList.add("hidden");
+            adviceWrap.classList.add("hidden");
+            noDataMessage.classList.remove("hidden");
+        }
+
+        function calculate() {
+            let weightKg = 0;
+            let heightM = 0;
+            const enteredWeight = parseFloat(weightInput.value);
+
+            if (mode === "metric") {
+                weightKg = enteredWeight;
+                heightM = parseFloat(heightCm.value) / 100;
+            } else {
+                if (!isNaN(enteredWeight)) {
+                    weightKg = enteredWeight * 0.453592;
+                }
+                const feet = parseFloat(heightFt.value) || 0;
+                const inches = parseFloat(heightIn.value) || 0;
+                heightM = ((feet * 12) + inches) * 0.0254;
+            }
+
+            if (!isNaN(weightKg) && !isNaN(heightM) && weightKg > 0 && heightM > 0.5) {
+                const bmi = weightKg / (heightM * heightM);
+                showResults(bmi, weightKg, heightM);
+            } else {
+                resetView();
+            }
+        }
+
+        function showResults(bmi, weightKg, heightM) {
+            let status = "Waiting";
+            let tone = "secondary";
+            let advice = "";
+            let angle = 0;
+            let color = "#10212b";
+
+            if (bmi < 18.5) {
+                const ratio = Math.max(0, Math.min(1, (bmi - 10) / (18.5 - 10)));
+                angle = ratio * 45;
+                status = "Underweight";
+                tone = "accent";
+                color = "#c7662f";
+                advice = "You are currently below the recommended range. Focus on nutrition quality, recovery, and progressive strength work.";
+            } else if (bmi < 25) {
+                const ratio = Math.max(0, Math.min(1, (bmi - 18.5) / (25 - 18.5)));
+                angle = 45 + (ratio * 45);
+                status = "Normal";
+                tone = "primary";
+                color = "#438fba";
+                advice = "Your BMI is in the recommended range. Keep your nutrition, training, and recovery habits consistent.";
+            } else if (bmi < 30) {
+                const ratio = Math.max(0, Math.min(1, (bmi - 25) / (30 - 25)));
+                angle = 90 + (ratio * 45);
+                status = "Overweight";
+                tone = "accent";
+                color = "#c7662f";
+                advice = "Your BMI is above the recommended range. A consistent training plan and improved movement habits can help over time.";
+            } else {
+                const ratio = Math.max(0, Math.min(1, (bmi - 30) / (45 - 30)));
+                angle = 135 + (ratio * 45);
+                status = "Obesity";
+                tone = "secondary";
+                color = "#c93247";
+                advice = "Your BMI indicates a higher health risk range. Structured exercise, nutrition support, and professional guidance are worth prioritizing.";
+            }
+
+            bmiValue.textContent = bmi.toFixed(1);
+            bmiValue.style.color = color;
+            setBadge(status, tone);
+            needleGroup.style.transform = `rotate(${Math.min(180, Math.max(0, angle))}deg)`;
+
+            const minIdeal = 18.5 * (heightM * heightM);
+            const maxIdeal = 24.9 * (heightM * heightM);
+
+            if (mode === "metric") {
+                idealRangeText.textContent = `${minIdeal.toFixed(1)} - ${maxIdeal.toFixed(1)} kg`;
+                if (weightKg < minIdeal) {
+                    diffLabel.textContent = "Suggested gain";
+                    diffText.textContent = `+${(minIdeal - weightKg).toFixed(1)} kg`;
+                    diffText.style.color = "#c7662f";
+                } else if (weightKg > maxIdeal) {
+                    diffLabel.textContent = "Suggested loss";
+                    diffText.textContent = `-${(weightKg - maxIdeal).toFixed(1)} kg`;
+                    diffText.style.color = "#c93247";
+                } else {
+                    diffLabel.textContent = "Current status";
+                    diffText.textContent = "Within range";
+                    diffText.style.color = "#438fba";
+                }
+            } else {
+                const minLbs = minIdeal / 0.453592;
+                const maxLbs = maxIdeal / 0.453592;
+                const weightLbs = parseFloat(weightInput.value);
+                idealRangeText.textContent = `${minLbs.toFixed(1)} - ${maxLbs.toFixed(1)} lbs`;
+                if (weightLbs < minLbs) {
+                    diffLabel.textContent = "Suggested gain";
+                    diffText.textContent = `+${(minLbs - weightLbs).toFixed(1)} lbs`;
+                    diffText.style.color = "#c7662f";
+                } else if (weightLbs > maxLbs) {
+                    diffLabel.textContent = "Suggested loss";
+                    diffText.textContent = `-${(weightLbs - maxLbs).toFixed(1)} lbs`;
+                    diffText.style.color = "#c93247";
+                } else {
+                    diffLabel.textContent = "Current status";
+                    diffText.textContent = "Within range";
+                    diffText.style.color = "#438fba";
+                }
+            }
+
+            adviceText.textContent = advice;
+            resultMetrics.classList.remove("hidden");
+            adviceWrap.classList.remove("hidden");
+            noDataMessage.classList.add("hidden");
+        }
+
+        metricBtn.addEventListener("click", () => {
+            mode = "metric";
+            metricBtn.className = "btn btn-primary btn-sm";
+            imperialBtn.className = "btn btn-ghost btn-sm";
+            hMetricCont.classList.remove("hidden");
+            hImperialCont.classList.add("hidden");
+            weightLabel.innerHTML = '<span class="label-text">Current weight (kg)</span>';
+            calculate();
+        });
+
+        imperialBtn.addEventListener("click", () => {
+            mode = "imperial";
+            imperialBtn.className = "btn btn-primary btn-sm";
+            metricBtn.className = "btn btn-ghost btn-sm";
+            hMetricCont.classList.add("hidden");
+            hImperialCont.classList.remove("hidden");
+            weightLabel.innerHTML = '<span class="label-text">Current weight (lbs)</span>';
+            calculate();
+        });
+
+        [weightInput, heightCm, heightFt, heightIn].forEach((input) => {
+            input?.addEventListener("input", calculate);
+        });
+
+        resetView();
+    });
+
+    function shareResults() {
+        const bmi = document.getElementById("bmiValue").textContent;
+        const status = document.getElementById("bmiStatusBadge").textContent;
+        const text = `My BMI is ${bmi} (${status}). Calculated with the FitStack BMI tool.`;
+
+        if (navigator.share) {
+            navigator.share({
+                title: "My BMI result",
+                text: text,
+                url: window.location.href
+            }).catch(() => {});
+            return;
+        }
+
+        navigator.clipboard.writeText(`${text} ${window.location.href}`).then(() => {
+            alert("BMI result copied to clipboard.");
+        }).catch(() => {});
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends 'superadmin/base.html' %}
+
+{% block content %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/customstyle.css' %}">
+
+<!-- Compact Breadcrumb Navigation -->
+<nav aria-label="breadcrumb" class="custom-breadcrumb mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'superadmin:dashboard' %}" class="text-decoration-none">
+                <i class="mdi mdi-home-outline mdi-18px"></i> Dashboard
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            <i class="mdi mdi-package-variant-closed mdi-18px"></i> Subscription Plans
+        </li>
+    </ol>
+</nav>
+
+<div class="col-lg-12 px-0">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Subscription Plan List</h4>
+            <a href="{% url 'superadmin:add_subscription_plan' %}" class="btn btn-light btn-sm">
+                <i class="mdi mdi-plus"></i> Add Plan
+            </a>
+        </div>
+                <div class="card-body">
+                    {% csrf_token %}
+                    <!-- Search form -->
+                    {% include 'includes/search_form.html' %}
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm table-stack-on-mobile">
+                            <thead>
+                                <tr>
+                                    <th class="font-weight-semibold py-2">#</th>
+                                    <th class="font-weight-semibold py-2">Name</th>
+                                    <th class="font-weight-semibold py-2">Price</th>
+                                    <th class="font-weight-semibold py-2">Duration (Months)</th>
+                                    <th class="font-weight-semibold py-2">Features</th>
+                                    <th class="font-weight-semibold text-center py-2">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for plan in plans %}
+                                <tr>
+                                    <td data-label="SR. No.">{{ forloop.counter }}</td>
+                                    <td data-label="Name">{{ plan.name }}</td>
+                                    <td data-label="Price">{{ plan.price }}</td>
+                                    <td data-label="Duration (Months)">{{ plan.duration_months }}</td>
+                                    <td data-label="Features">{{ plan.features }}</td>
+                                    <td data-label="Actions" class="text-center">
+                                        <div class="d-flex justify-content-center">
+                                            <a href="{% url 'superadmin:update_subscription_plan' plan.id %}" class="btn btn-sm btn-info mr-1" style="background-color: #4599cd; color: white; border: none;" data-toggle="tooltip" title="Edit"><i class="mdi mdi-pencil"></i></a>
+                                            <a href="{% url 'superadmin:assign_subscription' %}?plan_id={{ plan.id }}" class="btn btn-sm btn-success mr-1" style="background-color: #00bcd4; color: white; border: none; font-weight: 700;" data-toggle="tooltip" title="Assign to Gym">Assign</a>
+                                            <button type="button" class="btn btn-sm btn-danger" style="background-color: #f62d82; color: white; border: none;" onclick="confirmDelete('{{ plan.id }}', '{{ plan.name }}', '{% url 'superadmin:delete_subscription_plan' plan.id %}')" data-toggle="tooltip" title="Delete"><i class="mdi mdi-delete"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Pagination -->
+                    {% if plans.has_other_pages %}
+                    {% include 'includes/pagination.html' with page_obj=plans %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/delete_confirmation.js' %}"></script>
+{% endblock %}

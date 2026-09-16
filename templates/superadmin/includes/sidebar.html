@@ -1,0 +1,107 @@
+{% load static %}
+<nav class="sidebar sidebar-offcanvas" id="sidebar">
+  <div class="text-center sidebar-brand-wrapper d-flex align-items-center">
+    <a class="sidebar-brand brand-logo" href="{% url 'superadmin:gym_list' %}">
+      <img src="{% static 'images/fitstack.png' %}" alt="FitStack Logo" />
+    </a>
+    <a class="sidebar-brand brand-logo-mini pl-4 pt-3" href="{% url 'superadmin:gym_list' %}">
+      <img src="{% static 'images/logo.jpg' %}" alt="Logo" />
+    </a>
+  </div>
+  <div class="sidebar-company-info text-center py-0">
+    {% comment %} <p class="company-name">Superadmin</p> {% endcomment %}
+    <p class="company-slogan small text-muted py-2">Manage Smarter. Train Better.</p>
+  </div>
+  <ul class="nav">
+    <li class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+      <a class="nav-link" href="{% url 'superadmin:dashboard' %}">
+        <i class="mdi mdi-view-dashboard menu-icon"></i>
+        <span class="menu-title">Dashboard</span>
+      </a>
+    </li>
+
+    <li class="nav-item {% if request.resolver_match.url_name in 'gym_list,add_gym,update_gym' %}active{% endif %}">
+      <a class="nav-link" data-toggle="collapse" href="#gym-management" aria-expanded="{% if request.resolver_match.url_name in 'gym_list,add_gym,update_gym' %}true{% else %}false{% endif %}" aria-controls="gym-management">
+        <i class="mdi mdi-office-building menu-icon"></i>
+        <span class="menu-title">Gym Management</span>
+        <i class="menu-arrow"></i>
+      </a>
+      <div class="collapse {% if request.resolver_match.url_name in 'gym_list,add_gym,update_gym' %}show{% endif %}" id="gym-management">
+        <ul class="nav flex-column sub-menu">
+          <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'gym_list' %}active{% endif %}" href="{% url 'superadmin:gym_list' %}">Gyms</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'add_gym' %}active{% endif %}" href="{% url 'superadmin:add_gym' %}">Add Gym</a>
+          </li>
+        </ul>
+      </div>
+    </li>
+
+    <li class="nav-item {% if request.resolver_match.url_name in 'billing_history,submit_due' %}active{% endif %}">
+      <a class="nav-link" data-toggle="collapse" href="#billing-management" aria-expanded="{% if request.resolver_match.url_name in 'billing_history,submit_due' %}true{% else %}false{% endif %}" aria-controls="billing-management">
+        <i class="mdi mdi-currency-usd menu-icon"></i>
+        <span class="menu-title">Billings</span>
+        <i class="menu-arrow"></i>
+      </a>
+      <div class="collapse {% if request.resolver_match.url_name in 'billing_history,submit_due' %}show{% endif %}" id="billing-management">
+        <ul class="nav flex-column sub-menu">
+          <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'billing_history' %}active{% endif %}" href="{% url 'superadmin:billing_history' %}">
+              <span class="menu-title">Billing History</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'submit_due' %}active{% endif %}" href="{% url 'superadmin:submit_due' %}">
+              <span class="menu-title">Submit Due</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </li>
+
+    <li class="nav-item {% if request.resolver_match.url_name in 'subscription_plan_list,add_subscription_plan,update_subscription_plan' %}active{% endif %}">
+      <a class="nav-link" data-toggle="collapse" href="#subscription-management" aria-expanded="{% if request.resolver_match.url_name in 'subscription_plan_list,add_subscription_plan,update_subscription_plan' %}true{% else %}false{% endif %}" aria-controls="subscription-management">
+        <i class="mdi mdi-currency-usd menu-icon"></i>
+        <span class="menu-title">Subscriptions</span>
+        <i class="menu-arrow"></i>
+      </a>
+      <div class="collapse {% if request.resolver_match.url_name in 'subscription_plan_list,add_subscription_plan,update_subscription_plan' %}show{% endif %}" id="subscription-management">
+        <ul class="nav flex-column sub-menu">
+          <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'subscription_plan_list' %}active{% endif %}" href="{% url 'superadmin:subscription_plan_list' %}">
+              <span class="menu-title">Subscription Plans</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'add_subscription_plan' %}active{% endif %}" href="{% url 'superadmin:add_subscription_plan' %}">
+              <span class="menu-title">Add Plans</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </li>
+    
+
+     
+    <li class="nav-item {% if request.resolver_match.url_name == 'website_contact_submissions' %}active{% endif %}">
+      <a class="nav-link" href="{% url 'superadmin:website_contact_submissions' %}">
+        <i class="mdi mdi-email-open-outline menu-icon"></i>
+        <span class="menu-title">Website Inquiries</span>
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" href="{% url 'logout' %}">
+        <i class="mdi mdi-logout menu-icon"></i>
+        <span class="menu-title">Logout</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="http://127.0.0.1:8000/" target="_blank">
+        <i class="mdi mdi-web menu-icon"></i>
+        <span class="menu-title">Website</span>
+      </a>
+    </li>
+  </ul>
+</nav>

@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/customstyle.css' %}">
+<!-- Compact Breadcrumb Navigation -->
+<nav aria-label="breadcrumb" class="custom-breadcrumb mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                <i class="mdi mdi-home-outline mdi-18px"></i> Dashboard
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            <i class="mdi mdi-file-document-outline mdi-18px"></i> Invoices
+        </li>
+    </ol>
+</nav>
+
+<div class="col-lg-12 px-0">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Invoices List</h4>
+            <a href="{% url 'billing:trash_invoices' %}" class="btn btn-danger btn-sm"><i class="mdi mdi-delete-empty"></i> Trash</a>
+        </div>
+        <div class="card-body">
+            <!-- Search and Filter Form -->
+            <form method="get" class="mb-4">
+                {% csrf_token %}
+                <div class="row align-items-end">
+                    <div class="col-md-4">
+                        <div class="form-group mb-0">
+                            <label for="q">Search</label>
+                            <input type="text" class="form-control" name="q" id="q" placeholder="Search by name, phone or membership ID..." value="{{ query }}">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group mb-0">
+                            <label for="from_date">From</label>
+                            <input type="date" name="from_date" id="from_date" class="form-control" value="{{ from_date }}">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group mb-0">
+                            <label for="to_date">To</label>
+                            <input type="date" name="to_date" id="to_date" class="form-control" value="{{ to_date }}">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group mb-0">
+                            <label for="status">Status</label>
+                            <select name="status" id="status" class="form-control" onchange="this.form.submit()">
+                                <option value="">All Statuses</option>
+                                <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>Paid</option>
+                                <option value="unpaid" {% if status_filter == 'unpaid' %}selected{% endif %}>Unpaid</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group mb-0">
+                            <button type="submit" class="btn btn-primary btn-sm"><i class="mdi mdi-filter-variant"></i> </button>
+                            <a href="{% url 'billing:invoices_list' %}" class="btn btn-secondary btn-sm"><i class="mdi mdi-restore"></i> </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-hover table-sm table-stack-on-mobile">
+                    <thead>
+                        <tr>
+                            <th class="font-weight-semibold py-2">#</th>
+                            <th class="font-weight-semibold py-2">Invoice No</th>
+                            <th class="font-weight-semibold py-2">Profile</th>
+                            <th class="font-weight-semibold py-2">Member Name</th>
+                            <th class="font-weight-semibold py-2">Plan</th>
+                            <th class="font-weight-semibold py-2">Amount</th>
+                            <th class="font-weight-semibold py-2">Date</th>
+                            <th class="font-weight-semibold py-2">Status</th>
+                            <th class="font-weight-semibold py-2 text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for invoice in invoices %}
+                        <tr>
+                            <td data-label="Sr. No.">{{ invoices.start_index|add:forloop.counter0 }}</td>
+                            <td data-label="Invoice No">#{{ invoice.invoice_id }}</td>
+                           <td data-label="Profile">
+                                <img src="{% if invoice.member__profile_picture %}{{ invoice.member__profile_picture.url }}{% else %}{% static 'images/member_dp.jpg' %}{% endif %}"
+                                    class="rounded-circle border" style="width: 40px; height: 40px; object-fit: cover;"
+                                    alt="{{ invoice.member__first_name }} {{ invoice.member__last_name }}">
+                            </td>
+                            <td data-label="Name">
+                                {% if invoice.member_id %}
+                                    <strong> <a href="{% url 'member_profile' invoice.member_id %}" class="text-decoration-none">{{ invoice.member__first_name }} {{ invoice.member__last_name }}</a></strong><br>
+                                    <small class="text-muted">#{{ invoice.member__member_id }}</small>
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td data-label="Plan">
+                                {% if invoice.type == 'membership' %}
+                                    Membership Plan
+                                {% elif invoice.type == 'pt' %}
+                                    Personal Training
+                                {% endif %}
+                            </td>
+                            <td data-label="Amount">₹{{ invoice.amount|floatformat:2 }}</td>
+                            <td data-label="Date">{{ invoice.date|date:"d-m-Y" }}</td>
+                            <td data-label="Status">
+                                {% if invoice.due_amount <= 0 %}
+                                    <span class="badge badge-success">Paid</span>
+                                {% else %}
+                                    <span class="badge badge-warning">Unpaid</span>
+                                {% endif %}
+                            </td>
+                            <td data-label="Actions" class="text-center">
+                                {% if invoice.type == 'membership' %}
+                                    <a href="{% url 'billing:invoice' invoice.member_id invoice.invoice_id %}" class="btn btn-primary btn-sm"><i class="mdi mdi-eye-outline"></i
+                ></a>
+                                    <a href="#" class="btn btn-danger btn-sm" title="Delete this invoice" onclick="confirmDelete('{{ invoice.invoice_id }}', '{{ invoice.invoice_id }}', '{% url 'billing:delete_invoice' 'membership' invoice.invoice_id %}')"><i class="mdi mdi-delete-outline"></i></a>
+                                {% elif invoice.type == 'pt' %}
+                                    <a href="{% url 'billing:pt_invoice' invoice.member_id invoice.invoice_id %}" class="btn btn-primary btn-sm"><i class="mdi mdi-eye-outline"></i
+                ></a>
+                                    <a href="#" class="btn btn-danger btn-sm" title="Delete this invoice" onclick="confirmDelete('{{ invoice.invoice_id }}', '{{ invoice.invoice_id }}', '{% url 'billing:delete_invoice' 'pt' invoice.invoice_id %}')"><i class="mdi mdi-delete-outline"></i></a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if invoices.has_other_pages %}
+                {% include 'includes/pagination.html' with page_obj=invoices %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Compact Breadcrumb Navigation -->
+<nav aria-label="breadcrumb" class="custom-breadcrumb mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                <i class="mdi mdi-home-outline mdi-18px"></i> Dashboard
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            <i class="mdi mdi-account-group mdi-18px"></i> Billing
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            <i class="mdi mdi-currency-usd mdi-18px"></i> Due Payment List
+        </li>
+    </ol>
+</nav>
+
+
+<div class="col-md-12 px-0">
+<div class="container">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Due Payment List</h4>
+        </div>
+        <div class="card-body">
+            {% csrf_token %}
+            <!-- Search form -->
+            <form method="get" action="{% url 'billing:submit_due' %}" class="mb-4">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="q">Search</label>
+                            {% comment %} <input type="text" name="q" id="q" class="form-control" placeholder="Name, Number, ID" value="{{ request.GET.q }}"> {% endcomment %}
+                        {% include 'includes/search_form.html' with placeholder="Search by name, phone or membership ID..." %}
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label for="from_date">From</label>
+                            <input type="date" name="from_date" id="from_date" class="form-control" value="{{ request.GET.from_date }}">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label for="to_date">To</label>
+                            <input type="date" name="to_date" id="to_date" class="form-control" value="{{ request.GET.to_date }}">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label for="follow_up_date">Follow Up Date</label>
+                            <input type="date" name="follow_up_date" id="follow_up_date" class="form-control" value="{{ request.GET.follow_up_date }}">
+                        </div>
+                    </div>
+                    <div class="col-md-2 align-self-end">
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary"><i class="mdi mdi-filter-variant"></i> </button>
+                            <a href="{% url 'billing:submit_due' %}" class="btn btn-secondary"><i class="mdi mdi-reload"></i> </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+               <table class="table table-hover table-sm table-stack-on-mobile">
+                    <thead>
+                        <tr>
+                            <th class="font-weight-semibold py-2">#</th>
+                            <th class="font-weight-semibold py-2">Profile</th>
+                            <th class="font-weight-semibold py-2">Member Name</th>
+                            <th class="font-weight-semibold py-2">Number</th>
+                            <th class="font-weight-semibold py-2">Total Due</th>
+                            <th class="font-weight-semibold py-2">Due Type</th>
+                            <th class="font-weight-semibold py-2">Follow Up Date</th> 
+                            <th class="font-weight-semibold py-2 text-center" style="min-width: 200px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for member in members %}
+                        <tr>
+                            <td data-label="SR. No.">{{ forloop.counter }}</td>
+                            <td data-label="Profile">
+                                <img src="{% if member.profile_picture %}{{ member.profile_picture.url }}{% else %}{% static 'images/member_dp.jpg' %}{% endif %}"
+                                    class="rounded-circle border" style="width: 40px; height: 40px; object-fit: cover;"
+                                    alt="{{ member.first_name }} {{ member.last_name }}">
+                            </td>
+                            <td data-label="Name">
+                                <strong> <a href="{% url 'member_profile' member.id %}" class="text-decoration-none">{{ member.name }}</a></strong><br>
+                                <small class="text-muted">#{{ member.member_id }}</small>
+                            </td>
+                            <td data-label="Contact Number">{{ member.mobile_number }}</td>
+                            <td data-label="Total Due">
+                                <strong class="text-danger">
+                                    {% with membership_due=member.membership_due|default:0 pt_due=member.pt_due|default:0 %}
+                                         ₹{{ membership_due|add:pt_due }}
+                                     {% endwith %}
+                                </strong>
+                            </td>
+                            <td data-label="Due Type">
+                                {% if member.membership_due > 0 %}
+                                    <span class="badge badge-pill badge-light text-primary border border-primary shadow-sm mb-1">
+                                        <i class="mdi mdi-wallet-membership mr-1"></i> Membership
+                                    </span>
+                                {% endif %}
+                                {% if member.pt_due > 0 %}
+                                    <span class="badge badge-pill badge-light text-success border border-success shadow-sm mb-1">
+                                        <i class="mdi mdi-account-star mr-1"></i> PT
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td data-label="Follow Up Date">
+                                {% if member.latest_follow_up_date %}
+                                    {{ member.latest_follow_up_date|date:"d-m-Y" }}
+                                {% else %}
+                                    No Follow Up
+                                {% endif %}
+                            </td>
+                            <td data-label="Actions" class="text-center text-nowrap" style="white-space: nowrap;">
+                                <a href="#" class="btn btn-info btn-sm" data-toggle="modal" data-target="#followUpModal-{{ member.id }}" title="Update Follow Up Date">
+                                    <i class="mdi mdi-calendar-edit"></i> 
+                                </a>
+                                {% with total_due=member.membership_due|add:member.pt_due %}
+                                <a href="https://wa.me/91{{ member.mobile_number }}?text=Hello%20*{{ member.name|urlencode }}*,%20this%20is%20a%20reminder%20from%20*{{ member.gym.name|urlencode }}*%20regarding%20your%20pending%20due%20of%20*₹{{ total_due|urlencode }}*.%20Please%20clear%20it%20at%20your%20earliest%20convenience.%20-%20*{{ member.gym.name|urlencode }}*" target="_blank" class="btn btn-success btn-sm" title="WhatsApp">
+                                    <i class="mdi mdi-whatsapp"></i>
+                                </a>
+                                {% endwith %}
+                                <a href="tel:{{ member.mobile_number }}" class="btn btn-secondary btn-sm" title="Call">
+                                    <i class="mdi mdi-phone"></i>
+                                </a>
+                                <a class="btn btn-primary btn-sm btn-action-text font-weight-bold" href="{% url 'billing:pay_due_payment' member.id %}" title="Pay Due">
+                                    <i class="mdi mdi-cash-multiple mr-1"></i> Pay Due
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">
+                                <i class="mdi mdi-check-circle-outline mdi-36px mb-2 d-block"></i>
+                                No pending dues found.
+                            </td>
+                        </tr>
+                        {% endfor %} 
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if members.has_other_pages %}
+                {% include 'includes/pagination.html' with page_obj=members query=query %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% for member in members %}
+<!-- Follow-up Modal -->
+<div class="modal fade" id="followUpModal-{{ member.id }}" tabindex="-1" role="dialog" aria-labelledby="followUpModalLabel-{{ member.id }}" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="followUpModalLabel-{{ member.id }}">Update Follow Up Date for {{ member.first_name }} {{ member.last_name }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="{% url 'billing:update_follow_up' member.id %}" class="follow-up-form">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="follow_up_date-{{ member.id }}">New Follow Up Date</label>
+                        <input type="date" class="form-control" name="follow_up_date" id="follow_up_date-{{ member.id }}" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+    
+</div>
+
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    const followUpForms = document.querySelectorAll('.follow-up-form');
+
+    followUpForms.forEach(form => {
+        const dateInput = form.querySelector('input[type="date"]');
+        if (dateInput) {
+            dateInput.setAttribute('min', today);
+        }
+    });
+});
+</script>
+{% endblock %}

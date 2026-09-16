@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}All Equipment{% endblock title %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/customstyle.css' %}">
+<!-- Compact Breadcrumb Navigation -->
+<nav aria-label="breadcrumb" class="custom-breadcrumb mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                <i class="mdi mdi-home-outline mdi-18px"></i> Dashboard
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'inventory:dashboard' %}" class="text-decoration-none">
+                <i class="mdi mdi-store-outline mdi-18px"></i> Inventory Dashboard
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            <i class="mdi mdi-dumbbell mdi-18px"></i> All Equipment
+        </li>
+    </ol>
+</nav>
+<div class="col-lg-12 px-0">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+                <i class="mdi mdi-dumbbell"></i> All Equipment
+            </h4>
+            <div class="d-flex">
+                <a href="{% url 'inventory:add_equipment' %}" class="btn btn-light btn-sm me-2">
+                    <i class="mdi mdi-plus"></i> Add New Equipment
+                </a>
+                <a href="{% url 'inventory:maintenance_log' %}" class="btn btn-info btn-sm">
+                    <i class="mdi mdi-wrench"></i> Maintenance Log
+                </a>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <!-- Filter Form -->
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <form method="get" class="row g-3 align-items-center">
+                                <div class="col-md-3">
+                                    <input type="text" name="q" class="form-control" placeholder="Search by name or serial..." value="{{ request.GET.q }}">
+                                </div>
+                                <div class="col-md-3">
+                                    <select name="category" class="form-select">
+                                        <option value="">All Categories</option>
+                                        {% for cat in categories %}
+                                            <option value="{{ cat }}" {% if request.GET.category == cat %}selected{% endif %}>{{ cat }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select name="status" class="form-select">
+                                        <option value="">All Statuses</option>
+                                        <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active</option>
+                                        <option value="under_maintenance" {% if request.GET.status == 'under_maintenance' %}selected{% endif %}>Under Maintenance</option>
+                                        <option value="retired" {% if request.GET.status == 'retired' %}selected{% endif %}>Retired</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="mdi mdi-filter-variant"></i> Filter
+                                    </button>
+                                </div>
+                                <div class="col-md-1">
+                                    <button type="reset" class="btn btn-outline-secondary w-100" onclick="window.location.href='?'" title="Clear Filters">
+                                        <i class="mdi mdi-refresh"></i> 
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow">
+                <!-- Equipment Table -->
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm table-stack-on-mobile">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Image</th>
+                                <th>Equipment Name</th>
+                                <th>Category</th>
+                                <th>Serial Number</th>
+                                <th>Purchase Date</th>
+                                <th>Warranty End</th>
+                                <th>Location</th>
+                                <th>Condition</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for equipment in equipments %}
+                                <tr>
+                                    <td data-label="#" >{{ forloop.counter }}</td>
+                                    <td data-label="Image">
+                                        {% if equipment.image %}
+                                            <img src="{{ equipment.image.url }}" alt="{{ equipment.name }}" class="img-thumbnail equipment-image" style="width: 50px; height: 50px; cursor: pointer;">
+                                        {% else %}
+                                            <img src="{% static 'images/placeholder.png' %}" alt="No image" class="img-thumbnail" style="width: 50px; height: 50px;">
+                                        {% endif %}
+                                    </td>
+                                    <td data-label="Equipment Name" title="Click to view details">
+                                        <a href="{% url 'inventory:edit_equipment' id=equipment.id %}">{{ equipment.name }}</a>
+                                    </td>
+                                    <td data-label="Category">{{ equipment.category }}</td>
+                                    <td data-label="Serial Number">{{ equipment.serial_number }}</td>
+                                    <td data-label="Purchase Date">{{ equipment.purchase_date|date:"d M, Y" }}</td>
+                                    <td data-label="Warranty End">{{ equipment.warranty_end_date|date:"d M, Y"|default:"N/A" }}</td>
+                                    <td data-label="Location">{{ equipment.location|default:"N/A" }}</td>
+                                    <td data-label="Condition">
+                                        <span class="badge 
+                                            {% if equipment.condition == 'new' %}bg-success
+                                            {% elif equipment.condition == 'good' %}bg-primary
+                                            {% elif equipment.condition == 'fair' %}bg-warning
+                                            {% else %}bg-danger{% endif %}">
+                                            {{ equipment.get_condition_display }}
+                                        </span>
+                                    </td>
+                                    <td data-label="Status">
+                                        <span class="badge 
+                                            {% if equipment.status == 'active' %}bg-success
+                                            {% elif equipment.status == 'under_maintenance' %}bg-warning
+                                            {% else %}bg-danger{% endif %}">
+                                            {{ equipment.get_status_display }}
+                                        </span>
+                                    </td>
+                                    
+                                    <td data-label="Actions">
+                                        <a href="{% url 'inventory:edit_equipment' id=equipment.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="mdi mdi-pencil"></i> Edit
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="9" class="text-center">No equipment found.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Preview Modal -->
+<div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imagePreviewModalLabel">Image Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body text-center">
+                <img src="" id="modalImage" class="img-fluid" alt="Equipment Image">
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('.equipment-image').on('click', function() {
+        var imageUrl = $(this).attr('src');
+        var imageName = $(this).attr('alt');
+        $('#modalImage').attr('src', imageUrl);
+        $('#imagePreviewModalLabel').text(imageName);
+        var imagePreviewModal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+        imagePreviewModal.show();
+    });
+});
+</script>
+{% endblock extra_js %}

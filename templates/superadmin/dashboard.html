@@ -1,0 +1,43 @@
+{% extends 'superadmin/base.html' %}
+
+{% block content %}
+<div class="col-lg-12 px-0">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Dashboard</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card text-white bg-info mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total Gyms</h5>
+                                    <p class="card-text display-4">{{ total_gyms }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card text-white bg-success mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total Members</h5>
+                                    <p class="card-text display-4">{{ total_members }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card text-white bg-warning mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Active Subscriptions</h5>
+                                    <p class="card-text display-4">{{ active_subscriptions }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

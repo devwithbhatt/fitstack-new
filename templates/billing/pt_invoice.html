@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"><i class="mdi mdi-home"></i> Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'billing:invoices_list' %}"><i class="mdi mdi-file-document-box-outline"></i> Invoices</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'member_profile' member.id %}"><i class="mdi mdi-account"></i> {{ member.first_name }} {{ member.last_name }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page"><i class="mdi mdi-file-document"></i> PT Invoice #{{ pt_invoice.id }}</li>
+    </ol>
+</nav>
+<style>
+    .invoice-container {
+        max-width: 900px;
+        margin: auto;
+    }
+    #invoice-card {
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    }
+    .invoice-header h2 {
+        font-weight: 700;
+        letter-spacing: .5px;
+    }
+    .badge-success, .badge-danger {
+        padding: 8px 12px;
+        font-size: 13px;
+        border-radius: 8px;
+    }
+    table th {
+        font-size: 14px;
+        text-transform: uppercase;
+        border-top: none !important;
+    }
+    table td {
+        vertical-align: middle !important;
+    }
+    .table-clear td {
+        padding: 8px 0;
+        font-size: 15px;
+    }
+    .invoice-footer {
+        font-size: 14px;
+        color: #666;
+        border-top: 1px solid #eee;
+        padding-top: 10px;
+    }
+</style>
+
+<div class="container invoice-container">
+    <div class="card" id="invoice-card">
+        <div class="card-body p-5">
+
+            <!-- ================= Invoice Header ================= -->
+            <div class="row mb-5">
+                <div class="col-sm-6">
+                      {% if gym.logo %}
+                        <img src="{{ gym.logo.url }}" alt="{{ gym.name }} Logo" style="max-height: 70px; margin-bottom: 15px;">
+                    {% endif %}
+                    <p class="mb-1"><strong>{{ gym.name }}</strong></p>
+                    <p class="mt-3 mb-1 text-muted">{{ gym.slogan }}</p>
+                </div>
+
+                <div class="col-sm-6 text-sm-right text-start invoice-header">
+                    <h2 class="mb-3">PT Invoice #{{ pt_invoice.id }}</h2>
+
+                    <p class="mb-1"><strong>Date:</strong> {{ pt_invoice.created_at|date:"d M, Y" }}</p>
+                   
+
+                    <div class="mt-3">
+                        {% if pt_invoice.due_amount <= 0 %}
+                            <span class="badge badge-success">✔ Full Paid</span>
+                        {% else %}
+                            <span class="badge badge-danger">⚠ Payment Due</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= Customer Info ================= -->
+            <div class="row mb-5">
+                <div class="col-sm-6">
+                    <h6 class="mb-3 text-uppercase fw-bold">From:</h6>
+                    <p class="mb-1"><strong>{{ gym.name }}</strong></p>
+                    <p class="mb-1">{{ gym.address }}, {{ gym.city }}, {{ gym.state }}, {{ gym.country }} {{ gym.pincode }}</p>
+                    <p class="mb-1">Email: {{ gym.email }}</p>
+                    <p>Phone: {{ gym.phone }}</p>
+                </div>
+                <div class="col-sm-6">
+                    <h6 class="mb-3 text-uppercase fw-bold">Bill To:</h6>
+                    <p class="mb-1"><strong>{{ member.first_name }} {{ member.last_name }}</strong></p> <small class="text-muted">({{ member.member_id }})</small>
+                    <p class="mb-1">{{ member.address }}</p>
+                    <p class="mb-1">Email: {{ member.email }}</p>
+                    <p>Phone: {{ member.mobile_number }}</p>
+                </div>
+            </div>
+
+            <!-- ================= Items Table ================= -->
+            <div class="table-responsive mb-4">
+                <table class="table table-striped align-middle">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="center">#</th>
+                            <th>Item</th>
+                            <th class="right">Unit Cost</th>
+                            <th class="center">Qty</th>
+                            <th class="right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="center">1</td>
+                            <td class="left strong">
+                                Personal Training with {{ pt_invoice.trainer.name }}
+                                <br><small class="text-muted">Duration: {{ pt_invoice.months }} months</small>
+                                <br><small class="text-muted">Start Date: {{ pt_invoice.pt_start_date|date:"d M, Y" }}</small>
+                                <br><small class="text-muted">End Date: {{ pt_invoice.get_end_date|date:"d M, Y" }}</small>
+                            </td>
+                            <td class="right">₹{{ pt_invoice.total_amount }}</td>
+                            <td class="center">1</td>
+                            <td class="right">₹{{ pt_invoice.total_amount }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ================= Totals ================= -->
+            <div class="row justify-content-end">
+                <div class="col-lg-5 col-md-6">
+                    <table class="table table-borderless table-clear">
+                        <tbody>
+                            <tr>
+                                <td><strong>Trainer Fee</strong></td>
+                                <td class="text-right">₹{{ pt_invoice.trainer_fee }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Gym Charges</strong></td>
+                                <td class="text-right">₹{{ pt_invoice.gym_charges }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Discount</strong></td>
+                                <td class="text-right">₹{{ pt_invoice.discount }}</td>
+                            </tr>
+                            <tr class="bg-light">
+                                <td><strong>Total</strong></td>
+                                <td class="text-right"><strong>₹{{ pt_invoice.total_amount }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Paid Amount</strong></td>
+                                <td class="text-right">₹{{ pt_invoice.paid_amount }}</td>
+                            </tr>
+                            <tr class="bg-light">
+                                <td><strong>Due Amount</strong></td>
+                                <td class="text-right text-danger"><strong>₹{{ pt_invoice.due_amount }}</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ================= Comment ================= -->
+            {% if pt_invoice.transaction_id %}
+            <div class="mt-4">
+                <p><strong>Transaction ID:</strong> {{ pt_invoice.transaction_id }}</p>
+            </div>
+            {% endif %}
+            {% if pt_invoice.comment %}
+            <div class="mt-4">
+                <p><strong>Comment:</strong> {{ pt_invoice.comment }}</p>
+            </div>
+            {% endif %}
+
+    <!-- ================= Footer Buttons ================= -->
+    <div class="text-center mt-4">
+        <button class="btn btn-primary px-4 py-2" onclick="printInvoice()">
+            <i class="mdi mdi-printer"></i> Print Invoice
+        </button>
+        <a href="{% url 'member_profile' member.id %}" class="btn btn-outline-secondary px-4 py-2 ml-2">
+            <i class="mdi mdi-arrow-left"></i> Back to Profile
+        </a>
+
+        {% if previous_invoice %}
+            <a href="{% url 'billing:pt_invoice' member.id previous_invoice.id %}" class="btn btn-light px-4 py-2 ml-2">
+                <i class="mdi mdi-chevron-left"></i> Previous Invoice
+            </a>
+        {% endif %}
+        {% if next_invoice %}
+            <a href="{% url 'billing:pt_invoice' member.id next_invoice.id %}" class="btn btn-light px-4 py-2 ml-2">
+                Next Invoice <i class="mdi mdi-chevron-right"></i>
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<script src="{% static 'js/print-invoice.js' %}"></script>
+
+{% endblock %}

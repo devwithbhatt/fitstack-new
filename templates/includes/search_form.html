@@ -1,0 +1,8 @@
+<form method="get" class="mb-3">
+    {% csrf_token %}
+    <div class="input-group">
+        <input type="text" class="form-control" name="q" placeholder="Search..." value="{{ request.GET.q }}">
+        <button class="btn btn-inverse-primary" type="submit"><i class="mdi mdi-magnify"></i></button>
+        <button class="btn btn-outline-secondary" type="reset" onclick="window.location.href='?'" title="Clear Search"> <i class="mdi mdi-refresh"></i></button>
+    </div>
+</form>

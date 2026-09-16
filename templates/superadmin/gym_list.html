@@ -1,0 +1,180 @@
+{% extends 'superadmin/base.html' %}
+
+{% block content %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/customstyle.css' %}">
+
+<style>
+    /* Table Professional Styling */
+    .table thead th {
+        background-color: #f8f9fa;
+        color: #334155;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e2e8f0;
+        padding: 12px 15px;
+    }
+    .table tbody td {
+        padding: 12px 15px;
+        vertical-align: middle;
+    }
+    .table-primary-text {
+        color: #4599cd;
+        font-weight: 700;
+    }
+    .badge {
+        font-weight: 600;
+        padding: 0.4em 0.8em;
+    }
+</style>
+
+<!-- Compact Breadcrumb Navigation -->
+<nav aria-label="breadcrumb" class="custom-breadcrumb mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'superadmin:dashboard' %}" class="text-decoration-none">
+                <i class="mdi mdi-home-outline mdi-18px"></i> Dashboard
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            <i class="mdi mdi-office-building mdi-18px"></i> Gyms
+        </li>
+    </ol>
+</nav>
+
+<div class="col-lg-12 px-0">
+   
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Gyms List</h4>
+                    <div>
+                        <a href="{% url 'superadmin:add_gym' %}" class="btn btn-light btn-sm">
+                            <i class="mdi mdi-plus"></i> Add Gym
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% csrf_token %}
+                    <!-- Search form -->
+                    {% include 'includes/search_form.html' %}
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm table-stack-on-mobile">
+                            <thead>
+                                <tr>
+                                    <th class="font-weight-semibold py-2">#</th>
+                                    <th class="font-weight-semibold py-2">Logo</th>
+                                    <th class="font-weight-semibold py-2">GYM Name </th>
+                                    <th class="font-weight-semibold py-2">Membership Status</th>
+                                    <th class="font-weight-semibold py-2">Address</th>
+                                    <th class="font-weight-semibold py-2">Contact</th>
+                                    <th class="font-weight-semibold py-2">Admin</th>
+                                    <th class="font-weight-semibold text-center py-2">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for gym in gyms %}
+                                <tr>
+                                    <td data-label="SR. No.">{{ forloop.counter }}</td>
+                                    <td data-label="Logo">
+                                        <img src="{% if gym.logo %}{{ gym.logo.url }}{% else %}{% static 'images/gym-logo.jpg' %}{% endif %}"
+                                            class="rounded-circle border" style="width: 40px; height: 40px; object-fit: cover;"
+                                            alt="{{ gym.name }}">
+                                    </td>
+                                    <td data-label="Name">
+                                        <strong><a href="{% url 'superadmin:gym_profile' gym.id %}" class="table-primary-text text-decoration-none">{{ gym.name }}</a></strong>
+                                        {% if gym.is_frozen %}
+                                            <span class="badge badge-danger">Frozen</span>
+                                        {% endif %}
+                                        {% if not gym.whatsapp_enabled %}
+                                            <span class="badge badge-warning" title="WhatsApp messaging is disabled"><i class="mdi mdi-whatsapp"></i> Off</span>
+                                        {% endif %}
+                                        <br>
+                                        <small class="text-muted">#{{ gym.gym_id }}</small>
+                                    </td>
+                                    <td data-label="Membership Status">
+                                        {% if gym.membership_status == 'Active' %}
+                                            <span class="badge badge-success">Active</span>
+                                            <br>
+                                            <small class="text-muted">
+                                                Expires in: 
+                                                {% if gym.remaining_months > 0 %}
+                                                    {{ gym.remaining_months }} month{{ gym.remaining_months|pluralize }}
+                                                {% endif %}
+                                                {% if gym.remaining_days > 0 %}
+                                                    {{ gym.remaining_days }} day{{ gym.remaining_days|pluralize }}
+                                                {% endif %}
+                                            </small>
+                                        {% elif gym.membership_status == 'Expired' %}
+                                            <span class="badge badge-danger">Expired</span>
+                                            <br>
+                                            <a href="{% url 'superadmin:assign_subscription' %}?gym_id={{ gym.id }}" class="btn btn-xs btn-warning mt-1">Renew</a>
+                                        {% else %}
+                                            <span class="badge badge-secondary">No Subscription</span>
+                                            <br>
+                                            <a href="{% url 'superadmin:assign_subscription' %}?gym_id={{ gym.id }}" class="btn btn-xs btn-success mt-1">Assign Plan</a>
+                                        {% endif %}
+                                    </td>
+                                    <td data-label="Address" title="{{ gym.address }}">
+                                        {{ gym.address|truncatechars:30 }}
+                                    </td>
+                                    <td data-label="Contact">
+                                        {{ gym.phone }}<br>
+                                        <small class="text-muted">{{ gym.email }}</small>
+                                    </td>
+                                    <td data-label="Admin">
+                                        {{ gym.admin_name }}<br>
+                                        <small class="text-muted">@{{ gym.admin_username }}</small>
+                                    </td>
+                                    <td data-label="Actions" class="text-center">
+                                        <div class="d-flex justify-content-center">
+                                            <a href="{% url 'superadmin:gym_profile' gym.id %}" class="btn btn-sm btn-primary mr-1" style="background-color: #2196F3; border: none;" data-toggle="tooltip" title="View"><i class="mdi mdi-eye"></i></a>
+                                            <a href="{% url 'superadmin:update_gym' gym.id %}" class="btn btn-sm btn-info mr-1" style="background-color: #4599cd; border: none;" data-toggle="tooltip" title="Edit"><i class="mdi mdi-pencil"></i></a>
+                                            <button type="button" class="btn btn-sm btn-danger mr-1" style="background-color: #f62d82; border: none;" onclick="confirmDelete('{{ gym.id }}', '{{ gym.name }}', '{% url 'superadmin:delete_gym' gym.id %}')" data-toggle="tooltip" title="Delete">
+                                                <i class="mdi mdi-delete"></i>
+                                            </button>
+                                            {% if not gym.has_admin %}
+                                                <a href="{% url 'superadmin:create_gym_admin' gym.id %}" class="btn btn-sm btn-success" style="background-color: #00bcd4; border: none; font-weight: 700;" data-toggle="tooltip" title="Create Admin"><i class="mdi mdi-account-plus"></i> </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Pagination -->
+                    {% if gyms.has_other_pages %}
+                    {% include 'includes/pagination.html' with page_obj=gyms %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/delete_confirmation.js' %}"></script>
+<script>
+    // Auto-hide success messages after 5 seconds
+    setTimeout(function() {
+        let alert = document.querySelector('.alert-success');
+        if (alert) {
+            alert.style.display = 'none';
+        }
+    }, 5000);
+</script>
+
+{% if open_invoice_id %}
+<script>
+    window.addEventListener('DOMContentLoaded', (event) => {
+        const invoiceUrl = "{% url 'superadmin:invoice' subscription_id=open_invoice_id %}";
+        window.open(invoiceUrl, '_blank');
+    });
+</script>
+{% endif %}
+{% endblock %}

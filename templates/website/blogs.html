@@ -1,0 +1,145 @@
+{% extends 'website/base_website.html' %}
+{% load static %}
+
+{% block title %}FitStack Insights | Gym Management Blog — Tips for Gym Owners & Fitness Studios{% endblock %}
+
+{% block seo %}
+<meta name="description" content="Read FitStack's gym management blog — expert tips on member retention, gym billing systems, attendance automation, trainer management, and growing your fitness business in India.">
+<meta name="keywords" content="gym management blog, gym owner tips India, member retention strategies, gym billing tips, gym attendance automation, fitness studio operations, gym CRM tips, personal trainer management tips, growing a gym India, fitness business growth, gym software insights">
+<meta name="author" content="FitStack by BhattSquare">
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+{% endblock %}
+
+{% block canonical %}
+<link rel="canonical" href="https://fitstack.nextgenapplication.com/blogs/">
+{% endblock %}
+
+{% block og_tags %}
+<meta property="og:site_name" content="FitStack">
+<meta property="og:type" content="blog">
+<meta property="og:url" content="https://fitstack.nextgenapplication.com/blogs/">
+<meta property="og:title" content="FitStack Insights — Gym Management Blog for Fitness Business Owners">
+<meta property="og:description" content="Expert articles on gym operations, member retention, billing discipline, trainer management, and building a stronger fitness business.">
+<meta property="og:image" content="{% static 'images/about_dashboard_features.png' %}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="en_IN">
+{% endblock %}
+
+{% block twitter_tags %}
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="FitStack Insights — Gym Management Blog">
+<meta name="twitter:description" content="Practical gym operations, retention strategies, and fitness business growth tips from FitStack.">
+<meta name="twitter:image" content="{% static 'images/about_dashboard_features.png' %}">
+{% endblock %}
+
+{% block schema_ld %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Blog",
+  "name": "FitStack Insights",
+  "url": "https://fitstack.nextgenapplication.com/blogs/",
+  "description": "Expert gym management articles on member retention, billing, attendance, trainer workflows, and fitness business growth.",
+  "publisher": {
+    "@type": "Organization",
+    "name": "FitStack",
+    "logo": "https://fitstack.nextgenapplication.com/static/images/fitstack.png"
+  }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+    <img src="{% static 'images/hero_image_gym.png' %}" alt="FitStack insights" class="page-hero-media">
+    <div class="brand-container page-hero-content">
+        <div class="grid lg:grid-cols-[1fr_.9fr] gap-10 items-center">
+            <div class="site-reveal">
+                <span class="brand-eyebrow brand-eyebrow-dark">
+                    <i class="fa-solid fa-newspaper"></i>
+                    FitStack insights
+                </span>
+                <h1 class="brand-heading mt-6">Ideas for gym owners who care about clean operations and stronger retention.</h1>
+                <p class="text-white/72 text-lg leading-8 mt-6 max-w-3xl">
+                    The same product mindset behind the platform shows up here too: practical thinking, structured systems, and smarter decisions for real fitness businesses.
+                </p>
+            </div>
+            <div class="brand-card brand-card-dark article-card site-reveal">
+                <div class="article-media">
+                    <img src="{% static 'images/about_dashboard_features.png' %}" alt="Featured FitStack article">
+                </div>
+                <div class="p-8">
+                    <p class="brand-mono text-xs uppercase tracking-[0.2em] text-white/50">Featured article</p>
+                    <h2 class="text-3xl font-bold mt-4 mb-3">How gyms can increase membership retention using automation</h2>
+                    <p class="text-white/70 leading-8">A practical guide to reminders, billing systems, attendance signals, and the operating habits that help members stay longer.</p>
+                    <a href="{% url 'blog_detail' 1 %}" class="btn btn-primary mt-6">Read article</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="brand-section">
+    <div class="brand-container">
+        <div class="article-grid">
+            <article class="brand-card article-card site-reveal">
+                <div class="article-media">
+                    <img src="{% static 'images/gymaboutimage.png' %}" alt="Member retention article">
+                </div>
+                <div class="p-8">
+                    <p class="brand-mono text-xs uppercase tracking-[0.2em] text-slate-500">Retention</p>
+                    <h2 class="text-2xl font-bold mt-3 mb-3">Membership retention systems that actually hold up in daily use</h2>
+                    <p class="text-slate-800 leading-8">Use automation, follow-up discipline, and clearer member signals to improve consistency without making the experience feel robotic.</p>
+                    <a href="{% url 'blog_detail' 1 %}" class="btn btn-outline mt-6">Open article</a>
+                </div>
+            </article>
+
+            <article class="brand-card article-card site-reveal">
+                <div class="article-media">
+                    <img src="{% static 'images/about_dashboard_features.png' %}" alt="Billing operations article">
+                </div>
+                <div class="p-8">
+                    <p class="brand-mono text-xs uppercase tracking-[0.2em] text-slate-500">Billing</p>
+                    <h2 class="text-2xl font-bold mt-3 mb-3">Why billing discipline shapes the whole member experience</h2>
+                    <p class="text-slate-800 leading-8">Good billing systems reduce stress for teams, improve visibility for owners, and remove unnecessary friction for members.</p>
+                    <span class="comparison-pill secondary mt-6">More insights coming</span>
+                </div>
+            </article>
+
+            <article class="brand-card article-card site-reveal">
+                <div class="article-media">
+                    <img src="{% static 'images/hero_img.jpg' %}" alt="Fitness operations article">
+                </div>
+                <div class="p-8">
+                    <p class="brand-mono text-xs uppercase tracking-[0.2em] text-slate-500">Operations</p>
+                    <h2 class="text-2xl font-bold mt-3 mb-3">What a modern gym operating stack should really include</h2>
+                    <p class="text-slate-800 leading-8">Memberships alone are not enough. Real operators need billing, attendance, staff control, follow-ups, and cleaner business visibility.</p>
+                    <span class="comparison-pill accent mt-6">Publishing soon</span>
+                </div>
+            </article>
+        </div>
+    </div>
+</section>
+
+<section class="brand-section brand-section-soft">
+    <div class="brand-container">
+        <div class="brand-card p-8 lg:p-10 site-reveal">
+            <div class="grid lg:grid-cols-[1fr_auto] gap-8 items-center">
+                <div>
+                    <span class="brand-eyebrow">
+                        <i class="fa-solid fa-envelope-open-text"></i>
+                        Stay updated
+                    </span>
+                    <h2 class="brand-section-title mt-4">Want product thinking and fitness business insights in your inbox?</h2>
+                    <p class="brand-section-copy">Join the list for updates on operations, retention, member experience, and what we’re building next around the FitStack platform.</p>
+                </div>
+                <form class="grid sm:grid-cols-[280px_auto] gap-4">
+                    <input type="email" class="input" placeholder="Your email address">
+                    <button type="button" class="btn btn-primary">Join updates</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

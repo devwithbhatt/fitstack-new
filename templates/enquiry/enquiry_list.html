@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/customstyle.css' %}">
+<!-- Compact Breadcrumb Navigation -->
+<nav aria-label="breadcrumb" class="custom-breadcrumb mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                <i class="mdi mdi-home-outline mdi-18px"></i> Dashboard
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            <i class="mdi mdi-comment-question-outline mdi-18px"></i> Enquiries
+        </li>
+    </ol>
+</nav>
+
+<div class="col-lg-12 px-0">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Enquiry List</h4>
+            <div>
+                <a href="?export=excel{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}" class="btn btn-sm mr-2" style="background-color: #1D6F42; border-color: #1D6F42; color: white;" title="Export to Excel">
+                    <i class="mdi mdi-file-excel"></i> Export
+                </a>
+                <a href="{% url 'add_new_enquiry' %}" class="btn btn-light btn-sm">
+                    <i class="mdi mdi-plus"></i> Add Enquiry
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4 bg-light p-1 rounded">
+                <div class="col-md-4">
+                    <label for="search" class="form-label text-small">Search Enquiry</label>
+                    {% include 'includes/search_form.html' %}
+                </div>
+                <div class="col-md-8">
+                    <form method="get" class="row g-3 align-items-end">
+                        <div class="col-md-5">
+                            <label for="date_from" class="form-label text-small">Follow-up From</label>
+                            <input type="date" name="date_from" id="date_from" value="{{ request.GET.date_from }}" class="form-control">
+                        </div>
+                        <div class="col-md-5">
+                            <label for="date_to" class="form-label text-small">Follow-up To</label>
+                            <input type="date" name="date_to" id="date_to" value="{{ request.GET.date_to }}" class="form-control">
+                        </div>
+                        <div class="col-md-2">
+                            <div class="btn-group" role="group">
+                                <button type="submit" class="btn btn-primary"><i class="mdi mdi-filter-variant"></i></button>
+                                <a href="{% url 'enquiry_list' %}" class="btn btn-outline-secondary" title="Clear Filters"><i class="mdi mdi-reload"></i></a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover table-sm table-stack-on-mobile">
+                    <thead>
+                        <tr>
+                            <th class="font-weight-semibold py-2">#</th>
+                            <th class="font-weight-semibold py-2">Name</th>
+                            <th class="font-weight-semibold py-2">Contact Number</th>
+                            <th class="font-weight-semibold py-2">Interested In</th>
+                            <th class="font-weight-semibold py-2">Enquiry Date</th>
+                            <th class="font-weight-semibold py-2">Follow-up Date</th>
+                            <th class="font-weight-semibold py-2">Status</th>
+
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for enquiry in enquiries %}
+                        <tr>
+                            <td data-label="SR. No.">{{ forloop.counter0|add:enquiries.start_index }}</td>
+                            <td data-label="Name">{{ enquiry.name }}</td>
+                            <td data-label="Contact Number">{{ enquiry.mobile_number }}</td>
+                            <td data-label="Interested In">{{ enquiry.get_interested_in_display }}</td>
+                            <td data-label="Enquiry Date">{{ enquiry.enquiry_date|date:"d-m-Y" }}</td>
+                            <td data-label="Follow-up Date">{{ enquiry.next_follow_up_date|date:"d-m-Y" }}</td>
+                            <td data-label="Status">
+                                <form action="{% url 'update_enquiry_status' enquiry.id %}" method="POST" class="status-form">
+                                    {% csrf_token %}
+                                    <select name="status" class="form-control form-control-sm badge {{ enquiry.get_status_color_class }}" onchange="this.form.submit()">
+                                        {% for status_value, status_display in enquiry.STATUS_CHOICES %}
+                                            <option value="{{ status_value }}" {% if enquiry.status == status_value %}selected{% endif %}>
+                                                {{ status_display }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </form>
+                            </td>
+                            <td data-label="Actions">
+                                <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#viewEnquiryModal-{{ enquiry.id }}">
+                                    <i class="mdi mdi-eye-outline"></i>
+                                </button>
+                                <a href="{% url 'edit_enquiry' enquiry.id %}" class="btn btn-primary btn-sm"><i class="mdi mdi-pencil-outline"></i></a>
+                                <a href="#" class="btn btn-danger btn-sm" onclick="confirmDelete('{{ enquiry.id }}', '{{ enquiry.name }}', '{% url 'delete_enquiry' enquiry.id %}')"><i class="mdi mdi-delete-outline"></i></a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if enquiries.has_other_pages %}
+                {% include 'includes/pagination.html' with page_obj=enquiries %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% for enquiry in enquiries %}
+<div class="modal fade" id="viewEnquiryModal-{{ enquiry.id }}" tabindex="-1" role="dialog" aria-labelledby="viewEnquiryModalLabel-{{ enquiry.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewEnquiryModalLabel-{{ enquiry.id }}">Enquiry Details</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Name:</strong> {{ enquiry.name }}</p>
+                <p><strong>Contact Number:</strong> {{ enquiry.mobile_number }}</p>
+                <p><strong>Email:</strong> {{ enquiry.email }}</p>
+                <p><strong>Gender:</strong> {{ enquiry.get_gender_display }}</p>
+                <p><strong>Date of Birth:</strong> {{ enquiry.date_of_birth }}</p>
+                <p><strong>Address:</strong> {{ enquiry.address }}</p>
+                <p><strong>Enquiry Date:</strong> {{ enquiry.enquiry_date }}</p>
+                <p><strong>Source:</strong> {{ enquiry.get_source_display }}</p>
+                <p><strong>Interested In:</strong> {{ enquiry.get_interested_in_display }}</p>
+                <p><strong>Status:</strong> <span class="badge {{ enquiry.get_status_color_class }}">{{ enquiry.get_status_display }}</span></p>
+                <p><strong>Next Follow-up Date:</strong> {{ enquiry.next_follow_up_date }}</p>
+                <p><strong>Remark: </strong> {{ enquiry.enquiry_note }}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}

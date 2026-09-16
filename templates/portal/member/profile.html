@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% load static humanize custom_tags %}
+
+{% block title %}My Profile - {{ member.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid gym-dashboard-root px-3 px-md-4 py-3">
+
+  <div class="dashboard-hero-header">
+    <div>
+      <h2 class="dashboard-hero-title">My Profile & Security</h2>
+      <p class="dashboard-hero-subtitle">Manage your personal profile and account credentials</p>
+    </div>
+    <div>
+      <a href="{% url 'member_portal:dashboard' %}" class="btn btn-outline-secondary btn-sm px-3 rounded-pill">
+        <i class="fas fa-arrow-left mr-1"></i> Back to Dashboard
+      </a>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Member Info Card -->
+    <div class="col-lg-7 mb-4">
+      <div class="gym-card h-100">
+        <div class="gym-card-header">
+          <div class="gym-card-title">
+            <i class="mdi mdi-account-circle text-primary" style="font-size: 1.25rem;"></i>
+            <span>Personal Information</span>
+          </div>
+          <span class="badge-soft badge-soft-primary">Member ID: {{ member.member_id }}</span>
+        </div>
+        <div class="gym-card-body">
+          <div class="d-flex align-items-center mb-4">
+            <img src="{% if member.profile_picture %}{{ member.profile_picture.url }}{% else %}{% static 'images/member_dp.jpg' %}{% endif %}" 
+                 onerror="this.src='{% static 'images/member_dp.jpg' %}';"
+                 alt="{{ member.name }}" 
+                 class="rounded-circle mr-3 shadow-sm" 
+                 style="width: 80px; height: 80px; object-fit: cover; border: 3px solid #e2e8f0; background: #f8fafc;">
+            <div>
+              <h4 class="font-weight-bold text-dark mb-1">{{ member.name }}</h4>
+              <p class="text-muted small mb-1">
+                <i class="fas fa-venus-mars mr-1"></i> {{ member.gender|default:'Not specified' }} &bull; Age: {{ member.age|default:'N/A' }}
+              </p>
+              <span class="badge-soft badge-soft-success">Active Member</span>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-sm-6 mb-3">
+              <label class="small text-muted font-weight-bold mb-1">Mobile Number</label>
+              <div class="font-weight-bold text-dark">{{ member.mobile_number }}</div>
+            </div>
+            <div class="col-sm-6 mb-3">
+              <label class="small text-muted font-weight-bold mb-1">Email Address</label>
+              <div class="font-weight-bold text-dark">{{ member.email|default:'None' }}</div>
+            </div>
+            <div class="col-sm-6 mb-3">
+              <label class="small text-muted font-weight-bold mb-1">Username (Login ID)</label>
+              <div class="font-weight-bold text-primary font-monospace">{{ member.user.username }}</div>
+            </div>
+            <div class="col-sm-6 mb-3">
+              <label class="small text-muted font-weight-bold mb-1">Profession</label>
+              <div class="font-weight-bold text-dark">{{ member.profession|default:'N/A' }}</div>
+            </div>
+            <div class="col-12 mb-3">
+              <label class="small text-muted font-weight-bold mb-1">Residential Address</label>
+              <div class="font-weight-bold text-dark">
+                {{ member.address|default:'-' }}
+                {% if member.city %}, {{ member.city }}{% endif %}
+                {% if member.state %}, {{ member.state }}{% endif %}
+                {% if member.pincode %} - {{ member.pincode }}{% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Security / Change Password Card -->
+    <div class="col-lg-5 mb-4">
+      <div class="gym-card h-100">
+        <div class="gym-card-header">
+          <div class="gym-card-title">
+            <i class="mdi mdi-lock-reset text-danger" style="font-size: 1.25rem;"></i>
+            <span>Change Password</span>
+          </div>
+          <span class="badge-soft badge-soft-warning">Security</span>
+        </div>
+        <div class="gym-card-body">
+          <form method="POST">
+            {% csrf_token %}
+            <div class="form-group mb-3">
+              <label class="small text-muted font-weight-bold">New Password</label>
+              <input type="password" name="new_password" class="form-control" required placeholder="Enter new password (min 6 characters)">
+            </div>
+            <div class="form-group mb-4">
+              <label class="small text-muted font-weight-bold">Confirm Password</label>
+              <input type="password" name="confirm_password" class="form-control" required placeholder="Repeat new password">
+            </div>
+            <button type="submit" name="change_password" class="btn btn-primary btn-block font-weight-bold py-2 rounded-pill shadow-sm">
+              <i class="mdi mdi-key-variant mr-1"></i> Update My Password
+            </button>
+          </form>
+          <div class="text-muted small mt-3">
+            <i class="fas fa-info-circle mr-1 text-info"></i> You can use this new password along with your registered mobile number or username to log into your portal.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

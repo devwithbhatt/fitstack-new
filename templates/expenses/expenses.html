@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Expenses{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/customstyle.css' %}">
+
+<!-- Compact Breadcrumb Navigation -->
+<nav aria-label="breadcrumb" class="custom-breadcrumb mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                <i class="mdi mdi-home-outline mdi-18px"></i> Dashboard
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <i class="mdi mdi-cash-multiple mdi-18px"></i> Expenses
+        </li>
+    </ol>
+</nav>
+
+<div class="col-lg-12 px-0">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Expenses</h4>
+            <div>
+                <a href="{% url 'expense_trash' %}" class="btn btn-danger btn-sm me-2">
+                    <i class="mdi mdi-trash-can-outline"></i> Trash
+                </a>
+                <a href="{% url 'expense_add' %}" class="btn btn-light btn-sm">
+                    <i class="mdi mdi-plus"></i> Add Expense
+                </a>
+            </div>
+        </div>
+
+        <div class="card-body">
+            {% csrf_token %}
+
+            <!-- Search & Filters -->
+            <form method="get" class="row g-3 align-items-end mb-4 p-3 border rounded bg-light">
+                <div class="col-lg-4 col-md-6 col-12">
+                    <label for="search" class="form-label">Search</label>
+                    <input type="text" class="form-control" name="q" placeholder="Search category, vendor..." value="{{ request.GET.q }}">
+                </div>
+                <div class="col-lg-4 col-md-6 col-12">
+                    <label for="category" class="form-label">Category</label>
+                    <select name="category" id="category" class="form-control" onchange="this.form.submit()">
+                        <option value="">All</option>
+                        {% for key, val in categories %}
+                        <option value="{{ key }}" {% if request.GET.category == key %}selected{% endif %}>{{ val }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-4 col-md-6 col-12">
+                    <label for="payment_mode" class="form-label">Payment Mode</label>
+                    <select name="payment_mode" id="payment_mode" class="form-control" onchange="this.form.submit()">
+                        <option value="">All</option>
+                        {% for key, val in payment_modes %}
+                        <option value="{{ key }}" {% if request.GET.payment_mode == key %}selected{% endif %}>{{ val }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-4 col-md-6 col-12">
+                    <label for="date_from" class="form-label">From</label>
+                    <input type="date" name="date_from" id="date_from" value="{{ request.GET.date_from }}" class="form-control">
+                </div>
+                <div class="col-lg-4 col-md-6 col-12">
+                    <label for="date_to" class="form-label">To</label>
+                    <input type="date" name="date_to" id="date_to" value="{{ request.GET.date_to }}" class="form-control">
+                </div>
+               <div class="col-lg-4 col-md-12 col-12 d-flex justify-content-start">
+                        <div class="btn-group" role="group">
+                            <button type="submit" class="btn btn-primary"><i class="mdi mdi-filter-variant"></i> Filter</button>
+                            <a href="{% url 'expenses' %}" class="btn btn-outline-secondary" title="Clear Filters"><i class="mdi mdi-reload"></i> Clear</a>
+                        </div>
+                    </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-hover table-sm table-stack-on-mobile">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Vendor Details</th>
+                            <th>Payment</th>
+                            <th>Amount</th>
+                            <th>Receipt</th>
+                            <th>Description</th>
+                            <th>Added By</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for expense in expenses %}
+                        <tr>
+                            <td data-label="#">{{ forloop.counter }}</td>
+                            <td data-label="Date">{{ expense.date }}</td>
+
+                            <td data-label="Category">
+                                <span class="badge bg-dark text-white">{{ expense.get_category_display }}</span>
+                            </td>
+
+                            <td data-label="Vendor Details">
+                                {{ expense.vendor_name|default:"-" }}
+                                {% if expense.vendor_phone %}
+                                <br><small class="text-muted">Phone: {{ expense.vendor_phone }}</small>
+                                {% endif %}
+                                {% if expense.vendor_bill_number %}
+                                <br><small class="text-muted">Bill: {{ expense.vendor_bill_number }}</small>
+                                {% endif %}
+                            </td>
+
+                            <td data-label="Payment">
+                                <span class="badge bg-info text-white">{{ expense.get_payment_mode_display }}</span>
+                                {% if expense.transaction_id %}
+                                <br><small class="text-muted">TX: {{ expense.transaction_id }}</small>
+                                {% endif %}
+                            </td>
+
+                            <td data-label="Amount">
+                                ₹ {{ expense.amount }}
+                            </td>
+
+                            <td data-label="Receipt">
+                                {% if expense.receipt_image %}
+                                <a href="{{ expense.receipt_image.url }}" target="_blank">
+                                    <i class="mdi mdi-file-image mdi-24px text-primary"></i>
+                                </a>
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td data-label="Description" >
+                                {{ expense.description|default:"-" }}
+                            </td>
+                            <td data-label="Added By">
+                              {{ expense.added_by.username|default:"-" }}
+                               
+                            </td>
+                            
+
+                            <td data-label="Actions">
+
+                                <a href="{% url 'expense_edit' expense.pk %}" class="btn btn-sm btn-info">
+                                    <i class="mdi mdi-pencil"></i>
+                                </a>
+
+                                <a href="#" 
+                                   class="btn btn-sm btn-danger delete-btn"
+                                   data-item-id="{{ expense.pk }}"
+                                   data-item-name="{{ expense.category|slice:":10" }}"
+                                   data-delete-url="{% url 'expense_delete' expense.pk %}">
+                                    <i class="mdi mdi-trash-can"></i>
+                                </a>
+
+                            </td>
+                        </tr>
+
+                        {% empty %}
+                        <tr>
+                            <td colspan="14" class="text-center py-5">
+                                <i class="mdi mdi-cash-remove mdi-48px text-muted d-block mb-3"></i>
+                                <h5>No expenses found</h5>
+                                <p class="text-muted">Add an expense or adjust search filters.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <div class="mt-4">
+                {% include 'includes/pagination.html' with page_obj=page_obj %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<script src="{% static 'js/delete_confirmation.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const deleteButtons = document.querySelectorAll('.delete-btn');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const itemId = this.dataset.itemId;
+                const itemName = this.dataset.itemName;
+                const deleteUrl = this.dataset.deleteUrl;
+                confirmDelete(itemId, itemName, deleteUrl);
+            });
+        });
+    });
+</script>
+{% endblock javascript %}

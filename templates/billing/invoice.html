@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"><i class="mdi mdi-home"></i> Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'billing:invoices_list' %}"><i class="mdi mdi-file-document-box-outline"></i> Invoices</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'member_profile' member.id %}"><i class="mdi mdi-account"></i> {{ member.first_name }} {{ member.last_name }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page"><i class="mdi mdi-file-document"></i> Invoice #{{ history.id }}</li>
+    </ol>
+</nav>
+<style>
+    .invoice-container {
+        max-width: 900px;
+        margin: auto;
+    }
+    #invoice-card {
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    }
+    .invoice-header h2 {
+        font-weight: 700;
+        letter-spacing: .5px;
+    }
+    .badge-success, .badge-danger {
+        padding: 8px 12px;
+        font-size: 13px;
+        border-radius: 8px;
+    }
+    table th {
+        font-size: 14px;
+        text-transform: uppercase;
+        border-top: none !important;
+    }
+    table td {
+        vertical-align: middle !important;
+    }
+    .table-clear td {
+        padding: 8px 0;
+        font-size: 15px;
+    }
+    .invoice-footer {
+        font-size: 14px;
+        color: #666;
+        border-top: 1px solid #eee;
+        padding-top: 10px;
+    }
+</style>
+
+<div class="col-lg-12 px-0">
+    <div class="card" id="invoice-card">
+        <div class="card-body p-5">
+
+            <!-- ================= Invoice Header ================= -->
+            <div class="row mb-5">
+                <div class="col-sm-6">
+                      {% if gym.logo %}
+                        <img src="{{ gym.logo.url }}" alt="{{ gym.name }} Logo" style="max-height: 70px; margin-bottom: 15px;">
+                    {% endif %}
+                    <p class="mb-1"><strong>{{ gym.name }}</strong></p>
+                    <p class="mt-3 mb-1 text-muted">{{ gym.slogan }}</p>
+                </div>
+
+                <div class="col-sm-6 text-sm-right text-start invoice-header">
+                    <h2 class="mb-3">Invoice #{{ history.id }}</h2>
+
+                    <p class="mb-1"><strong>Date:</strong> {{ history.created_at|date:"d M, Y" }}</p>
+                    {% comment %} <p class="mb-2"><strong>Due Date:</strong> {{ history.get_end_date|date:"d M, Y" }}</p> {% endcomment %}
+
+                    <div class="mt-3">
+                        {% if history.due_amount <= 0 %}
+                            <span class="badge badge-success">✔ Full Paid</span>
+                        {% else %}
+                            <span class="badge badge-danger">⚠ Payment Due</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= Customer Info ================= -->
+            <div class="row mb-5">
+                <div class="col-sm-6">
+                    <h6 class="mb-3 text-uppercase fw-bold">From:</h6>
+                    
+                    <p class="mb-1"><strong>{{ gym.name }}</strong></p>
+                    <p class="mb-1">{{ gym.address }}, {{ gym.city }}, {{ gym.state }}, {{ gym.country }} {{ gym.pincode }}  </p>
+                    <p class="mb-1">Email: {{ gym.email }}</p>
+                    <p>Phone: {{ gym.phone }}</p>
+                </div>
+                <div class="col-sm-6">
+                    <h6 class="mb-3 text-uppercase fw-bold">Bill To:</h6>
+                    <p class="mb-1"><strong>{{ member.first_name }} {{ member.last_name }}</strong></p> <small class="text-muted">({{ member.member_id }})</small>
+                    <p class="mb-1">{{ member.address }}, {{ member.city }}, {{ member.state }}, {{ member.country }} {{ member.pincode }}  </p>
+                    <p class="mb-1">Email: {{ member.email }}</p>
+                    <p>Phone: {{ member.mobile_number }}</p>
+                </div>
+            </div>
+
+            <!-- ================= Items Table ================= -->
+            <div class="table-responsive mb-4">
+                <table class="table table-striped align-middle">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="center">#</th>
+                            <th>Subscription Details</th>
+                            <th class="right">Amount</th>
+                            <th class="center">Discount</th>
+                            <th class="right">Offer Price </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="center">1</td>
+                            <td class="left strong">
+                                {{ history.plan.title }} ({{ history.plan.get_duration_display }})
+                                <br><small class="text-muted">Start Date: {{ history.membership_start_date|date:"d M, Y" }}</small>
+                                <br><small class="text-muted">End Date: {{ history.get_end_date|date:"d M, Y" }}</small>
+                                {% if history.plan.description %}
+                                    <br><small class="text-muted">{{ history.plan.description }}</small>
+                                {% endif %}
+                            </td>
+                            <td class="right">₹{{ history.plan.amount }}</td>
+                            <td class="center">₹{{ history.plan.discount }}</td>
+                            <td class="right">₹{{ history.plan.offer_price }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ================= Totals ================= -->
+            <div class="row justify-content-end">
+                <div class="col-lg-5 col-md-6">
+                    <table class="table table-borderless table-clear">
+                        <tbody>
+                            <tr>
+                                <td><strong>Subtotal</strong></td>
+                                <td class="text-right">₹{{ history.plan.offer_price }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Registration Fee</strong></td>
+                                <td class="text-right">₹{{ history.registration_fee }}</td>
+                            </tr>
+                             <tr>
+                                <td><strong>Discount on Total</strong></td>
+                                <td class="text-right">- ₹{{ history.discount }}</td>
+                            </tr>
+                            {% if sgst > 0 and cgst > 0 %}
+                            <tr>
+                                <td><strong>SGST ({{ sgst_rate|floatformat:2 }}%)</strong></td>
+                                <td class="text-right">₹{{ sgst|floatformat:2 }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>CGST ({{ cgst_rate|floatformat:2 }}%)</strong></td>
+                                <td class="text-right">₹{{ cgst|floatformat:2 }}</td>
+                            </tr>
+                            {% endif %}
+                            <tr class="bg-light">
+                                <td><strong>Total</strong></td>
+                                <td class="text-right"><strong>₹{{ history.total_amount }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Paid Amount</strong></td>
+                                <td class="text-right">₹{{ history.paid_amount }}</td>
+                            </tr>
+                            <tr class="bg-light">
+                                <td><strong>Due Amount</strong></td>
+                                <td class="text-right text-danger"><strong>₹{{ history.due_amount }}</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ================= Comment ================= -->
+            {% if history.transaction_id %}
+            <div class="mt-4">
+                <p><strong>Transaction ID:</strong> {{ history.transaction_id }}</p>
+            </div>
+            {% endif %}
+            {% if history.comment %}
+            <div class="mt-4">
+                <p><strong>Comment:</strong> {{ history.comment }}</p>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <!-- ================= Footer Buttons ================= -->
+    <div class="text-center mt-4">
+        <button class="btn btn-primary px-4 py-2" onclick="printInvoice()">
+            <i class="mdi mdi-printer"></i> Print Invoice
+        </button>
+        <a href="{% url 'update_membership_plan' member.id history.id %}" class="btn btn-warning px-4 py-2 ml-2">
+            <i class="mdi mdi-pencil"></i> Update Invoice
+        </a>
+        <a href="{% url 'member_profile' member.id %}" class="btn btn-outline-secondary px-4 py-2 ml-2">
+            <i class="mdi mdi-arrow-left"></i> Back to Profile
+        </a>
+
+        {% if previous_invoice %}
+            <a href="{% url 'billing:invoice' member.id previous_invoice.id %}" class="btn btn-light px-4 py-2 ml-2">
+                <i class="mdi mdi-chevron-left"></i> Previous Invoice
+            </a>
+        {% endif %}
+        {% if next_invoice %}
+            <a href="{% url 'billing:invoice' member.id next_invoice.id %}" class="btn btn-light px-4 py-2 ml-2">
+                Next Invoice <i class="mdi mdi-chevron-right"></i>
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<script src="{% static 'js/print-invoice.js' %}"></script>
+
+{% endblock %}

@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/customstyle.css' %}">
+<!-- Compact Breadcrumb Navigation -->
+<nav aria-label="breadcrumb" class="custom-breadcrumb mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                <i class="mdi mdi-home-outline mdi-18px"></i> Dashboard
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            <i class="mdi mdi-currency-usd mdi-18px"></i> Payment Settings
+        </li>
+    </ol>
+</nav>
+
+<div class="col-lg-12 px-0">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Payment Settings</h4>
+        </div>
+        <div class="card-body">
+               <div class="table-responsive">
+                <table class="table table-hover table-sm table-stack-on-mobile">
+                    <thead>
+                        <tr>
+                            <th  class="font-weight-semibold py-2">Bank Name</th>
+                            <th class="font-weight-semibold py-2">Account Holder Name</th>
+                            <th class="font-weight-semibold py-2">Account Number</th>
+                            <th class="font-weight-semibold py-2">IFSC Code</th>
+                            <th class="font-weight-semibold py-2">QR Code</th>
+                            <th class="font-weight-semibold text-center py-2">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if payment_settings %}
+                        <tr>
+                            <td data-label="Bank Name">{{ payment_settings.bank_name }}</td>
+                            <td data-label="Account Holder Name">{{ payment_settings.account_holder_name }}</td>
+                            <td data-label="Account Number">{{ payment_settings.account_number }}</td>
+                            <td data-label="IFSC Code">{{ payment_settings.ifsc_code }}</td>
+                            <td data-label="QR Code">
+                                {% if payment_settings.qr_code %}
+                                    <img src="{{ payment_settings.qr_code.url }}" alt="QR Code" class="img-fluid" style="max-width: 100px; cursor: pointer;" 
+                                         data-bs-toggle="modal" data-bs-target="#imagePreviewModal" 
+                                         data-toggle="modal" data-target="#imagePreviewModal"
+                                         onclick="showImage('{{ payment_settings.qr_code.url }}')">
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td data-label="Actions" class="text-center">
+                                <button type="button" class="btn btn-primary btn-sm" 
+                                        data-bs-toggle="modal" data-bs-target="#updatePaymentSettingsModal" 
+                                        data-toggle="modal" data-target="#updatePaymentSettingsModal" title="Update Payment Settings">
+                                    <i class="mdi mdi-pencil-outline"></i> 
+                                </button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <div class="text-muted">
+                                    <p>No payment settings found. Please add them.</p>
+                                    <button type="button" class="btn btn-primary btn-sm" 
+                                            data-bs-toggle="modal" data-bs-target="#updatePaymentSettingsModal"
+                                            data-toggle="modal" data-target="#updatePaymentSettingsModal">
+                                        <i class="mdi mdi-plus"></i> Add Settings
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Update Payment Settings Modal -->
+<div class="modal fade" id="updatePaymentSettingsModal" tabindex="-1" aria-labelledby="updatePaymentSettingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updatePaymentSettingsModalLabel">Update Payment Settings</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form action="{% url 'settings:payment_setting' %}" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="form-group mb-3">
+                                <label for="id_bank_name">Bank Name</label>
+                                {{ form.bank_name }}
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="id_account_holder_name">Account Holder Name</label>
+                                {{ form.account_holder_name }}
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="id_account_number">Account Number</label>
+                                {{ form.account_number }}
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="id_ifsc_code">IFSC Code</label>
+                                {{ form.ifsc_code }}
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="form-group mb-3">
+                                <label for="id_qr_code">QR Code</label>
+                                {{ form.qr_code }}
+                                {% if payment_settings.qr_code %}
+                                    <img src="{{ payment_settings.qr_code.url }}" alt="QR Code" class="img-fluid mt-2" style="max-width: 200px;">
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Settings</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const fields = ['bank_name', 'account_holder_name', 'account_number', 'ifsc_code', 'qr_code'];
+        fields.forEach(function(field) {
+            const element = document.getElementById('id_' + field);
+            if (element) {
+                element.classList.add('form-control');
+            }
+        });
+
+        // Robust Modal Opening (Fallback)
+        const updateBtns = document.querySelectorAll('[data-bs-target="#updatePaymentSettingsModal"], [data-target="#updatePaymentSettingsModal"]');
+        updateBtns.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                // If Bootstrap 5 is available
+                if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('updatePaymentSettingsModal'));
+                    modal.show();
+                } else if (typeof jQuery !== 'undefined' && typeof jQuery.fn.modal !== 'undefined') {
+                    // Fallback to Bootstrap 4 (jQuery)
+                    jQuery('#updatePaymentSettingsModal').modal('show');
+                }
+            });
+        });
+    });
+
+    function showImage(src) {
+        const modalImg = document.getElementById("modalImage");
+        if (modalImg) {
+            modalImg.src = src;
+        }
+    }
+</script>
+{% endblock extra_js %}

@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load form_tags %}
+
+{% block content %}
+   <nav aria-label="breadcrumb" class="custom-breadcrumb mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                <i class="mdi mdi-home-outline mdi-18px"></i> Dashboard
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'member_list' %}" class="text-decoration-none">
+                <i class="mdi mdi-account-multiple-outline mdi-18px"></i> Members List
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'member_profile' member.id %}" class="text-decoration-none">
+                <i class="mdi mdi-account-outline mdi-18px"></i> Member Profile
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            <i class="mdi mdi-account-plus-outline mdi-18px"></i> Assign Personal Trainer
+        </li>
+    </ol>
+</nav>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="card-title text-white mb-0">Assign Personal Trainer to {{ member.first_name }} {{ member.last_name }}</h4>
+                </div>
+                <div class="card-body">
+                    <form class="forms-sample" action="{% url 'assign_pt_trainer' member.id %}" method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_trainer">Trainer</label>
+                                    {{ form.trainer|attr:'class:form-control' }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_months">Months</label>
+                                    {{ form.months|attr:'class:form-control' }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_trainer_fee">Trainer Fee</label>
+                                    {{ form.trainer_fee|attr:'class:form-control,readonly:true' }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_gym_charges">GYM Charges</label>
+                                    {{ form.gym_charges|attr:'class:form-control' }}
+                                </div>
+                            </div>
+                        </div>
+                       
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="id_pt_start_date">PT Start Date</label>
+                                    {{ form.pt_start_date|attr:'class:form-control' }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="id_payment_date">Payment Date</label>
+                                    {{ form.payment_date|attr:'class:form-control' }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="id_discount">Discount</label>
+                                    {{ form.discount|attr:'class:form-control' }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_total_amount">Total Amount</label>
+                                    {{ form.total_amount|attr:'class:form-control,readonly:true' }}
+                                    <h4 class="mt-2">Total: <span id="total_display">0.00</span></h4>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_paid_amount">Paid Amount</label>
+                                    {{ form.paid_amount|attr:'class:form-control' }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_payment_mode">Payment Mode</label>
+                                    {{ form.payment_mode|attr:'class:form-control' }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_transaction_id">Transaction ID</label>
+                                    <input type="text" name="transaction_id" class="form-control" id="id_transaction_id">
+                                </div>
+                            </div>
+                        </div>
+                         <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="id_comment">Comment</label>
+                                    <textarea name="comment" class="form-control" id="id_comment"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary mr-2 float-right">Assign Trainer</button>
+                        <a href="{% url 'member_profile' member.id %}" class="btn btn-light float-right">Cancel</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const trainersData = JSON.parse('{{ trainers_json|escapejs|default:"[]" }}');
+    
+    const trainerSelect = document.getElementById('id_trainer');
+    const monthsInput = document.getElementById('id_months');
+    const trainerFeeInput = document.getElementById('id_trainer_fee');
+    const gymChargesInput = document.getElementById('id_gym_charges');
+    const discountInput = document.getElementById('id_discount');
+    const totalAmountInput = document.getElementById('id_total_amount');
+    const totalDisplay = document.getElementById('total_display');
+    
+    function updateTotalAmount() {
+        const selectedTrainerId = trainerSelect.value;
+        const months = parseFloat(monthsInput.value) || 0;
+        const gymCharges = parseFloat(gymChargesInput.value) || 0;
+        const discount = parseFloat(discountInput.value) || 0;
+        
+        let trainerFee = 0;
+        if (selectedTrainerId && trainersData.length > 0) {
+            const selectedTrainer = trainersData.find(t => t.pk == selectedTrainerId);
+            if (selectedTrainer) {
+                trainerFee = parseFloat(selectedTrainer.fields.personal_training_monthly_amount);
+            }
+        }
+        
+        const totalAmount = (trainerFee * months) + gymCharges - discount;
+        totalAmountInput.value = totalAmount.toFixed(2);
+        trainerFeeInput.value = (trainerFee * months).toFixed(2);
+        totalDisplay.textContent = totalAmount.toFixed(2);
+    }
+
+    trainerSelect.addEventListener('change', updateTotalAmount);
+    monthsInput.addEventListener('input', updateTotalAmount);
+    gymChargesInput.addEventListener('input', updateTotalAmount);
+    discountInput.addEventListener('input', updateTotalAmount);
+
+    updateTotalAmount();
+});
+</script>
+{% endblock %}

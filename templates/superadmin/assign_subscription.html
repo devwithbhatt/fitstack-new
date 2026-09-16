@@ -1,0 +1,197 @@
+{% extends 'superadmin/base.html' %}
+{% load static %}
+
+{% block title %}Assign Subscription{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/customstyle.css' %}">
+
+<!-- Compact Breadcrumb Navigation -->
+<nav aria-label="breadcrumb" class="custom-breadcrumb mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'superadmin:dashboard' %}" class="text-decoration-none">
+                <i class="mdi mdi-home-outline mdi-18px"></i> Dashboard
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'superadmin:billing_history' %}" class="text-decoration-none">
+                <i class="mdi mdi-history mdi-18px"></i> Billing
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            <i class="mdi mdi-plus-circle mdi-18px"></i> Assign Subscription
+        </li>
+    </ol>
+</nav>
+
+<div class="col-lg-12 px-0">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Assign Subscription to Gym</h4>
+            <a href="{% url 'superadmin:billing_history' %}" class="btn btn-light btn-sm shadow-sm">
+                <i class="mdi mdi-arrow-left"></i> Back
+            </a>
+        </div>
+        <div class="card-body">
+            <form method="post" class="p-3">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                            <label for="gym" class="font-weight-bold">Select Gym <span class="text-danger">*</span></label>
+                            <select class="form-control" id="gym" name="gym" required>
+                                <option value="" disabled selected>-- Select Gym --</option>
+                                {% for gym in gyms %}
+                                    <option value="{{ gym.id }}" {% if selected_gym_id|add:0 == gym.id %}selected{% endif %}>
+                                        {{ gym.name }} ({{ gym.gym_id }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                            <label for="subscription" class="font-weight-bold">Subscription Plan <span class="text-danger">*</span></label>
+                            <select class="form-control" id="subscription" name="subscription" required>
+                                <option value="" disabled selected>-- Select Plan --</option>
+                                {% for subscription in subscriptions %}
+                                    <option value="{{ subscription.id }}" 
+                                            data-price="{{ subscription.price }}" 
+                                            data-duration="{{ subscription.duration_months }}"
+                                            {% if selected_plan_id|add:0 == subscription.id %}selected{% endif %}>
+                                        {{ subscription.name }} (₹{{ subscription.price }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group mb-4">
+                            <label for="start_date" class="font-weight-bold">Start Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" required value="{{ today|date:'Y-m-d' }}">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group mb-4">
+                            <label for="duration" class="font-weight-bold">Duration (Months)</label>
+                            <input type="text" class="form-control bg-light" id="duration" name="duration" readonly placeholder="Auto-calculated">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group mb-4">
+                            <label for="discount" class="font-weight-bold">Discount (₹)</label>
+                            <input type="number" step="0.01" class="form-control" id="discount" name="discount" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                            <label for="total_amount" class="font-weight-bold text-primary">Total Payable Amount (₹)</label>
+                            <input type="text" class="form-control bg-light font-weight-bold text-primary" id="total_amount" name="total_amount" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                            <label for="paid_amount" class="font-weight-bold text-success">Paid Amount (₹) <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" class="form-control border-success" id="paid_amount" name="paid_amount" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                            <label for="payment_mode" class="font-weight-bold">Payment Mode</label>
+                            <select class="form-control" id="payment_mode" name="payment_mode">
+                                <option value="cash">Cash</option>
+                                <option value="upi">UPI</option>
+                                <option value="credit_card">Credit Card</option>
+                                <option value="debit_card">Debit Card</option>
+                                <option value="net_banking">Net Banking</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                            <label for="transaction_id" class="font-weight-bold">Transaction ID / Reference</label>
+                            <input type="text" class="form-control" id="transaction_id" name="transaction_id" placeholder="Optional">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group mb-4">
+                            <label for="remark" class="font-weight-bold">Remarks</label>
+                            <textarea class="form-control" id="remark" name="remark" rows="2" placeholder="Any additional notes..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-3">
+                    <button type="submit" class="btn btn-primary px-5 shadow-sm">
+                        <i class="mdi mdi-check-circle mr-1"></i> Assign Subscription Plan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const subscriptionSelect = document.getElementById('subscription');
+    const durationInput = document.getElementById('duration');
+    const discountInput = document.getElementById('discount');
+    const totalAmountInput = document.getElementById('total_amount');
+    const paidAmountInput = document.getElementById('paid_amount');
+
+    function updateTotalAmount() {
+        const selectedOption = subscriptionSelect.options[subscriptionSelect.selectedIndex];
+        if (!selectedOption || selectedOption.value === "") return;
+        
+        const price = parseFloat(selectedOption.dataset.price) || 0;
+        const discount = parseFloat(discountInput.value) || 0;
+        const totalAmount = price - discount;
+        totalAmountInput.value = totalAmount.toFixed(2);
+        
+        // Auto-fill paid amount if empty
+        if (paidAmountInput.value === "") {
+            paidAmountInput.value = totalAmount.toFixed(2);
+        }
+    }
+
+    function updateDuration() {
+        const selectedOption = subscriptionSelect.options[subscriptionSelect.selectedIndex];
+        if (!selectedOption || selectedOption.value === "") return;
+        durationInput.value = selectedOption.dataset.duration || '';
+    }
+
+    subscriptionSelect.addEventListener('change', function() {
+        updateDuration();
+        updateTotalAmount();
+    });
+    
+    discountInput.addEventListener('input', updateTotalAmount);
+
+    // Initial calculation
+    if (subscriptionSelect.value !== "") {
+        updateDuration();
+        updateTotalAmount();
+    }
+    
+    // Set today's date if empty
+    const dateInput = document.getElementById('start_date');
+    if (!dateInput.value) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
+});
+</script>
+{% endblock %}

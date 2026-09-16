@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/customstyle.css' %}">
+<!-- Compact Breadcrumb Navigation -->
+<nav aria-label="breadcrumb" class="custom-breadcrumb mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                <i class="mdi mdi-home-outline mdi-18px"></i> Dashboard
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'trainer_list' %}" class="text-decoration-none">
+                <i class="mdi mdi-account-multiple-outline mdi-18px"></i> Trainers
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            <i class="mdi mdi-plus-circle-outline mdi-18px"></i> Add New Trainer
+        </li>
+    </ol>
+</nav>
+
+<div class="col-lg-12 px-0">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Add New Trainer</h4>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                {% csrf_token %}
+                {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <strong>Error:</strong>
+                        <ul>
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                    <li>{{ field }}: {{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="id_name" class="form-label">Name <span class="text-danger">*</span></label>
+                        {{ form.name }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="id_email" class="form-label">Email</label>
+                        {{ form.email }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="id_phone" class="form-label">Phone <span class="text-danger">*</span></label>
+                        {{ form.phone }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="id_address" class="form-label">Address</label>
+                        {{ form.address }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="id_joining_date" class="form-label">Joining Date <span class="text-danger">*</span></label>
+                        {{ form.joining_date }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="id_salary" class="form-label">Salary</label>
+                        {{ form.salary }}
+                    </div>
+                </div>
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+                        <label for="id_specialization" class="form-label">Specialization</label>
+                        {{ form.specialization }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="id_personal_training_monthly_amount" class="form-label">Personal Training Monthly Amount <span class="text-danger">*</span></label>
+                        {{ form.personal_training_monthly_amount }}
+                    </div>
+                    
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="id_photo" class="form-label">Photo</label>
+                        <div class="input-group">
+                            {{ form.photo }}
+                            <button type="button" class="btn btn-outline-primary capture-btn" data-target="id_photo">
+                                <i class="mdi mdi-camera"></i> 
+                            </button>
+                        </div>
+                        <div id="preview_id_photo" class="mt-2" style="display: none;">
+                            <img src="" class="img-thumbnail" style="max-height: 150px;">
+                        </div>
+                        {% if form.photo.errors %}
+                            {% for error in form.photo.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="id_time_slot" class="form-label">Time Slot</label>
+                        {{ form.time_slot }}
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary me-2">Submit</button>
+                    <a href="{% url 'trainer_list' %}" class="btn btn-light">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

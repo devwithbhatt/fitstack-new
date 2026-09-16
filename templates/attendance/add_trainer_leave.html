@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add Trainer Leave{% endblock title %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/customstyle.css' %}">
+
+<style>
+    .form-section {
+        max-width: 700px;
+        margin: 0 auto;
+    }
+    .card-header {
+        background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+    }
+</style>
+
+<!-- Breadcrumb Navigation -->
+<nav aria-label="breadcrumb" class="custom-breadcrumb mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                <i class="mdi mdi-home-outline mdi-18px"></i> Dashboard
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'attendance:leave_management' %}" class="text-decoration-none">
+                Leave Management
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            Add Trainer Leave
+        </li>
+    </ol>
+</nav>
+
+<div class="col-lg-12 px-0">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+                <i class="mdi mdi-file-document-edit-outline"></i> 
+                Add New Trainer Leave Request
+            </h4>
+            <a href="{% url 'attendance:leave_management' %}" class="btn btn-light btn-sm">
+                <i class="mdi mdi-arrow-left"></i> Back to Leave Management
+            </a>
+        </div>
+
+        <div class="card-body">
+            {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'success' %}success{% elif message.tags == 'error' %}danger{% else %}info{% endif %} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="POST">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <label for="trainer_id" class="form-label">Select Trainer <span class="text-danger">*</span></label>
+                        <select class="form-control" id="trainer_id" name="trainer_id" required>
+                            <option value="">-- Choose a trainer --</option>
+                            {% for trainer in trainers %}
+                            <option value="{{ trainer.id }}">{{ trainer.name }} - {{ trainer.email|default:"No email" }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="start_date" class="form-label">Start Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="start_date" name="start_date" required min="{{ today|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="end_date" class="form-label">End Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="end_date" name="end_date" required min="{{ today|date:'Y-m-d' }}">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <label for="leave_type" class="form-label">Leave Type <span class="text-danger">*</span></label>
+                        <select class="form-control" id="leave_type" name="leave_type" required>
+                            <option value="">-- Select leave type --</option>
+                            {% for type_value, type_name in leave_types %}
+                            <option value="{{ type_value }}">{{ type_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <label for="reason" class="form-label">Reason (Optional)</label>
+                        <textarea class="form-control" id="reason" name="reason" rows="4" placeholder="Provide any additional details about the leave request..."></textarea>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary me-2">Submit</button>
+                    <a href="{% url 'attendance:leave_management' %}" class="btn btn-light">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Add date validation to ensure end date is after start date
+document.getElementById('start_date').addEventListener('change', function() {
+    const startDate = this.value;
+    document.getElementById('end_date').min = startDate;
+});
+
+document.getElementById('end_date').addEventListener('change', function() {
+    const endDate = this.value;
+    document.getElementById('start_date').max = endDate;
+});
+
+// Set today's date as default
+const today = new Date().toISOString().split('T')[0];
+document.getElementById('start_date').value = today;
+document.getElementById('end_date').value = today;
+</script>
+
+{% endblock content %}

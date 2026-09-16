@@ -1,0 +1,170 @@
+{% load static custom_tags %}
+<nav class="navbar col-lg-12 col-12 p-lg-0 fixed-top d-flex flex-row" >
+  <div class="navbar-menu-wrapper d-flex align-items-stretch justify-content-between  " style="height: 60px; background: linear-gradient(to right, #e6e5f2, #4599cd);"> 
+    <a class="navbar-brand brand-logo-mini align-self-center d-lg-none" href="{% url 'dashboard' %}">
+      {% comment %} <img src="{% static 'images/SquareFitlogo.jpg' %}" alt="logo" style="height: 40px; filter: invert(1);"/>
+        {% endcomment %}
+           {% if gym.logo %}
+      <img src="{{ gym.logo.url }}" alt="{{ gym.name }} Logo" class="img-fluid rounded-circle mb-2" style="width: 40px; height: 40px; object-fit: cover; border: 2px solid #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+    {% endif %}
+    </a>
+    {% comment %} <button class="navbar-toggler navbar-toggler align-self-center mr-2" type="button" data-toggle="minimize">
+      <i class="mdi mdi-menu"></i>
+    </button> {% endcomment %}
+    <ul class="navbar-nav">
+      
+    </ul>
+    <ul class="navbar-nav navbar-nav-right ml-lg-auto ">
+      {% if not request.user.member_profile and not request.user.trainer_profile %}
+      <li class="nav-item dropdown d-none d-xl-flex border-0 ">
+        <a class="nav-link dropdown-toggle text-dark" id="languageDropdown" href="#" data-toggle="dropdown">
+          <i class="mdi mdi-earth" ></i> Quick Actions </a>
+        <div class="dropdown-menu navbar-dropdown" aria-labelledby="languageDropdown">
+          {% if request.user|has_permission:'add_enquiry' %}
+          <a class="dropdown-item" href="{% url 'add_new_enquiry' %}"> 
+            <i class="mdi mdi-comment-question-outline mr-2 text-danger"></i> Add New Enquiry
+          </a>
+          {% endif %}
+          {% if request.user|has_permission:'add_member' %}
+          <a class="dropdown-item" href="{% url 'add_new_member' %}"> 
+            <i class="mdi mdi-account-plus-outline mr-2 text-success"></i> Add New Member 
+          </a>
+          {% endif %}
+          {% if request.user|has_permission:'add_trainer' %}
+          <a class="dropdown-item" href="{% url 'add_trainer' %}"> 
+            <i class="mdi mdi-account-star-outline mr-2 text-primary"></i> Add New Trainer 
+          </a>
+          {% endif %}
+          {% if request.user|has_permission:'view_payment' %}
+          <a class="dropdown-item" href="{% url 'billing:submit_due' %}"> 
+            <i class="mdi mdi-receipt mr-2 text-danger"></i> Make a Bill 
+          </a>
+          {% endif %}
+        </div>
+      </li>
+      {% endif %}
+      <li class="nav-item">
+        {% if payment_settings.qr_code %}
+          <a class="nav-link"
+             href="#"
+             data-bs-toggle="modal"
+             data-bs-target="#imagePreviewModal"
+             data-toggle="modal"
+             data-target="#imagePreviewModal"
+             onclick="showImage('{{ payment_settings.qr_code.url }}')">
+              <i class="mdi mdi-qrcode-scan text-dark"></i>
+          </a>
+        {% else %}
+          <a class="nav-link"
+             href="#"
+             onclick="alert('QR code not uploaded yet'); return false;">
+              <i class="mdi mdi-qrcode-scan text-muted"></i>
+          </a>
+        {% endif %}
+      </li>
+      <li class="nav-item dropdown">
+        <a class="nav-link count-indicator dropdown-toggle" id="notificationDropdown" href="#" data-toggle="dropdown">
+          <i class="mdi mdi-bell"></i>
+          <span class="count-symbol bg-danger"></span>
+        </a>
+        <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list  text-dark" aria-labelledby="notificationDropdown">
+          <h6 class="p-3 mb-0 bg-primary text-white py-4">Notifications</h6>
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item preview-item">
+            <div class="preview-thumbnail">
+              <div class="preview-icon bg-success">
+                <i class="mdi mdi-calendar"></i>
+              </div>
+            </div>
+            <div class="preview-item-content d-flex align-items-start flex-column justify-content-center">
+              <h6 class="preview-subject font-weight-normal mb-1">Event today</h6>
+              <p class="text-gray ellipsis mb-0"> Just a reminder that you have an event today </p>
+            </div>
+          </a>
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item preview-item">
+            <div class="preview-thumbnail">
+              <div class="preview-icon bg-warning">
+                <i class="mdi mdi-settings"></i>
+              </div>
+            </div>
+            <div class="preview-item-content d-flex align-items-start flex-column justify-content-center">
+              <h6 class="preview-subject font-weight-normal mb-1">Settings</h6>
+              <p class="text-gray ellipsis mb-0"> Update dashboard </p>
+            </div>
+          </a>
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item preview-item">
+            <div class="preview-thumbnail">
+              <div class="preview-icon bg-info">
+                <i class="mdi mdi-link-variant"></i>
+              </div>
+            </div>
+            <div class="preview-item-content d-flex align-items-start flex-column justify-content-center">
+              <h6 class="preview-subject font-weight-normal mb-1">Launch Admin</h6>
+              <p class="text-gray ellipsis mb-0"> New admin wow! </p>
+            </div>
+          </a>
+          <div class="dropdown-divider"></div>
+          <h6 class="p-3 mb-0 text-center">See all notifications</h6>
+        </div>
+      </li>
+  
+      <li class="nav-item nav-profile dropdown border-0 mr-4">
+        <a class="nav-link dropdown-toggle text-dark" id="profileDropdown" href="#" data-toggle="dropdown">
+          {% if request.user.member_profile and request.user.member_profile.profile_picture %}
+            <img class="nav-profile-img mr-2" alt="{{ request.user.member_profile.name }}" src="{{ request.user.member_profile.profile_picture.url }}" style="object-fit: cover;" />
+          {% elif request.user.trainer_profile and request.user.trainer_profile.photo %}
+            <img class="nav-profile-img mr-2" alt="{{ request.user.trainer_profile.name }}" src="{{ request.user.trainer_profile.photo.url }}" style="object-fit: cover;" />
+          {% else %}
+            <img class="nav-profile-img mr-2" alt="" src="{% static 'images/face16.png' %}" />
+          {% endif %}
+          <span class="profile-name">
+            {% if request.user.member_profile %}
+              {{ request.user.member_profile.first_name }}
+            {% elif request.user.trainer_profile %}
+              {{ request.user.trainer_profile.name }}
+            {% else %}
+              {{ user.username }}
+            {% endif %}
+          </span>
+        </a>
+        <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown">
+          {% if request.user.member_profile %}
+            <a class="dropdown-item" href="{% url 'member_portal:profile' %}">
+              <i class="mdi mdi-account text-primary"></i>
+              My Profile
+            </a>
+          {% elif request.user.trainer_profile %}
+            <a class="dropdown-item" href="{% url 'trainer_portal:profile' %}">
+              <i class="mdi mdi-account text-primary"></i>
+              My Profile
+            </a>
+          {% else %}
+            <a class="dropdown-item">
+              <i class="mdi mdi-settings text-primary"></i>
+              Profile
+            </a>
+            {% if request.session.role == 'gym_admin' %}
+            <a class="dropdown-item" href="{% url 'add_gym_subadmin' %}">
+              <i class="mdi mdi-account-plus text-primary"></i>
+              Add Subadmin
+            </a>
+            <a class="dropdown-item" href="{% url 'view_subadmins' %}">
+              <i class="mdi mdi-account-multiple text-primary"></i>
+              View Subadmins
+            </a>
+            {% endif %}
+          {% endif %}
+          <a class="dropdown-item" href="{% url 'logout' %}">
+            <i class="mdi mdi-logout text-primary"></i>
+            Logout
+          </a>
+        </div>
+      </li>
+    </ul>
+    <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button" data-toggle="offcanvas">
+      <span class="mdi mdi-menu text-dark"></span>
+    </button>
+  </div>
+</nav>

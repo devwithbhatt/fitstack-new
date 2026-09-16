@@ -1,0 +1,241 @@
+<!doctype html>
+{% load static %}
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>
+      {% block title %} FitStack GYM Management Software {% endblock title %}
+    </title>
+    <link
+      rel="stylesheet"
+      href="{% static 'vendors/mdi/css/materialdesignicons.min.css' %}"
+    />
+    <link
+      rel="stylesheet"
+      href="{% static 'vendors/flag-icon-css/css/flag-icon.min.css' %}"
+    />
+    <link
+      rel="stylesheet"
+      href="{% static 'vendors/css/vendor.bundle.base.css' %}"
+    />
+    <link
+      rel="stylesheet"
+      href="{% static 'vendors/font-awesome/css/font-awesome.min.css' %}"
+    />
+    <link
+      rel="stylesheet"
+      href="{% static 'vendors/bootstrap-datepicker/bootstrap-datepicker.min.css' %}"
+    />
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    {% comment %}
+    <link rel="stylesheet" href="{% static 'css/login.css' %}" />
+    {% endcomment %}
+    <link rel="stylesheet" href="{% static 'css/customstyle.css' %}?v=2.6" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/dashboard_modern.css' %}?v=2.6">
+    <link rel="shortcut icon" href="{% static 'images/favicon.png' %}" />
+
+    <link rel="manifest" href="{% static 'manifest.json' %}" />
+    <!-- PWA Icons -->
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="192x192"
+      href="{% static 'images/favicon.png' %}"
+    />
+    <link rel="apple-touch-icon" href="{% static 'images/favicon.png' %}" />
+    <meta name="theme-color" content="#0d6efd" />
+
+    <meta name="google-site-verification" content="WXgpCm7smrPbuCEaiWjSUBw0P5-NHi7MG_IilJc86t4" />
+
+    {% block extra_css %}{% endblock extra_css %}
+
+    <style>
+      .codex-loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #ffffffcb;
+        z-index: 9999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Loader Start-->
+    <div class="codex-loader">
+      <img src="{% static 'images/loader.gif' %}" alt="" class="img-fluid" />
+    </div>
+
+    <div class="container-scroller">
+      {% include 'includes/sidebar.html' %}
+      <div class="container-fluid page-body-wrapper">
+        {% include 'includes/top-nav.html' %}
+        <div class="main-panel">
+          <div class="content-wrapper px-0 pb-0 pt-3">
+            {% block content %} {% endblock content %}
+          </div>
+          {% include 'includes/footer.html' %}
+        </div>
+      </div>
+    </div>
+    {% comment %} QR Code Preview Modal {% endcomment %}
+    <div
+      class="modal fade"
+      id="imagePreviewModal"
+      tabindex="-1"
+      aria-labelledby="imagePreviewModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="imagePreviewModalLabel">QR Code</h5>
+            <button
+              type="button"
+              class="close"
+              data-dismiss="modal"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body text-center">
+            <img src="" id="modalImage" class="img-fluid" alt="QR Code" />
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Camera Capture Modal -->
+    <div class="modal fade" id="cameraModal" tabindex="-1" aria-labelledby="cameraModalLabel" aria-hidden="true" data-bs-backdrop="static">
+      <div class="modal-dialog modal-md modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 bg-white" style="overflow: hidden;">
+          
+          <div class="modal-header border-0 pb-0 pt-4 px-4 bg-white d-flex justify-content-between align-items-center">
+            <h5 class="modal-title fw-bold text-dark d-flex align-items-center" id="cameraModalLabel">
+              <i class="mdi mdi-camera-outline text-primary me-2 fs-5"></i> Capture Photo
+            </h5>
+             {% comment %} <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> {% endcomment %}
+          </div>
+
+          <div class="modal-body p-4">
+            <div class="position-relative bg-dark rounded-4 overflow-hidden shadow-sm mx-auto" style="aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center;">
+              <video id="video" style="width: 100%; height: 100%; object-fit: cover;" autoplay playsinline></video>
+              <canvas id="canvas" style="display:none;"></canvas>
+              
+              <!-- Scanning Corners Overlay -->
+              <div class="position-absolute top-0 start-0 w-100 h-100 p-3 pointer-events-none d-flex flex-column justify-content-between" style="pointer-events: none; opacity: 0.8;">
+                <div class="d-flex justify-content-between">
+                  <div style="width: 35px; height: 35px; border-top: 4px solid #0d6efd; border-left: 4px solid #0d6efd; border-top-left-radius: 12px;"></div>
+                  <div style="width: 35px; height: 35px; border-top: 4px solid #0d6efd; border-right: 4px solid #0d6efd; border-top-right-radius: 12px;"></div>
+                </div>
+                <div class="d-flex justify-content-between align-items-end">
+                  <div style="width: 35px; height: 35px; border-bottom: 4px solid #0d6efd; border-left: 4px solid #0d6efd; border-bottom-left-radius: 12px;"></div>
+                  <div style="width: 35px; height: 35px; border-bottom: 4px solid #0d6efd; border-right: 4px solid #0d6efd; border-bottom-right-radius: 12px;"></div>
+                </div>
+              </div>
+
+              <!-- Floating Switch Camera Button -->
+              <button type="button" class="btn btn-primary rounded-circle shadow-lg position-absolute p-0 d-flex align-items-center justify-content-center" id="switch-camera-btn" style="width: 48px; height: 48px; top: 15px; right: 15px; opacity: 0.9; border: 2px solid rgba(255,255,255,0.2) !important; z-index: 10;">
+                <i class="mdi mdi-camera-switch mdi-24px"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="modal-footer border-0 pt-0 pb-4 px-4 d-flex justify-content-center gap-3 bg-white">
+            <button type="button" class="btn btn-light btn-lg rounded-pill px-4 fw-medium text-muted" id="cancel-camera-btn" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow-sm d-flex align-items-center" id="take-photo-btn">
+              <i class="mdi mdi-camera-iris me-2 fs-5"></i> Capture
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- plugins:js -->
+    <script src="{% static 'vendors/js/vendor.bundle.base.js' %}"></script>
+    <!-- endinject -->
+    <!-- Plugin js for this page -->
+    <script src="{% static 'vendors/chart.js/Chart.min.js' %}" defer></script>
+    <script
+      src="{% static 'vendors/bootstrap-datepicker/bootstrap-datepicker.min.js' %}"
+      defer
+    ></script>
+    <script src="{% static 'vendors/flot/jquery.flot.js' %}" defer></script>
+    <script
+      src="{% static 'vendors/flot/jquery.flot.resize.js' %}"
+      defer
+    ></script>
+    <script
+      src="{% static 'vendors/flot/jquery.flot.categories.js' %}"
+      defer
+    ></script>
+    <script
+      src="{% static 'vendors/flot/jquery.flot.fillbetween.js' %}"
+      defer
+    ></script>
+    <script
+      src="{% static 'vendors/flot/jquery.flot.stack.js' %}"
+      defer
+    ></script>
+    <script src="{% static 'vendors/flot/jquery.flot.pie.js' %}" defer></script>
+    <!-- End plugin js for this page -->
+    <!-- inject:js -->
+    <script src="{% static 'js/off-canvas.js' %}" defer></script>
+    <script src="{% static 'js/hoverable-collapse.js' %}" defer></script>
+    <script src="{% static 'js/misc.js' %}" defer></script>
+    <!-- endinject -->
+    <!-- Custom js for this page -->
+    <script src="{% static 'js/dashboard.js' %}" defer></script>
+    <script src="{% static 'js/tabs.js' %}" defer></script>
+    <script src="{% static 'js/typeahead.js' %}" defer></script>
+    <script src="{% static 'js/select2.js' %}" defer></script>
+    <script src="{% static 'js/validation.js' %}" defer></script>
+    <script src="{% static 'js/form-navigation.js' %}" defer></script>
+    <script src="{% static 'js/address-api.js' %}" defer></script>
+    <script src="{% static 'js/profession-autocomplete.js' %}" defer></script>
+    <script src="{% static 'js/camera-capture.js' %}" defer></script>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{% static 'js/delete_confirmation.js' %}"></script>
+
+    {% include 'includes/swal_messages.html' %}
+    {% block javascript %}{% endblock javascript %}
+    {% block extra_js %}{% endblock extra_js %} 
+    {% block scripts %}{% endblock %}
+    <script>
+      // Hide loader when page is fully loaded
+      window.addEventListener("load", function () {
+        const loader = document.querySelector(".codex-loader");
+        loader.style.display = "none";
+      });
+      function showImage(src) {
+        document.getElementById("modalImage").src = src;
+      }
+    </script>
+  </body>
+</html>

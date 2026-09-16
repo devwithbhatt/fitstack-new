@@ -1,0 +1,339 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+    .card-hover { transition: transform 0.2s, box-shadow 0.2s; border: none; }
+    .card-hover:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
+    .border-left-primary { border-left: 0.25rem solid #4e73df !important; }
+    .border-left-success { border-left: 0.25rem solid #1cc88a !important; }
+    .border-left-info { border-left: 0.25rem solid #36b9cc !important; }
+    .border-left-warning { border-left: 0.25rem solid #f6c23e !important; }
+    .border-left-danger { border-left: 0.25rem solid #e74a3b !important; }
+    .table-responsive { border-radius: 8px; }
+    .table thead th { background-color: #f8f9fc; border-top: none; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05rem; }
+    .badge-soft-success { background-color: #eafaf1; color: #2ecc71; border: 1px solid #d5f5e3; }
+    .badge-soft-warning { background-color: #fef9e7; color: #f1c40f; border: 1px solid #fcf3cf; }
+</style>
+
+<!-- Compact Breadcrumb Navigation -->
+<nav aria-label="breadcrumb" class="custom-breadcrumb mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                <i class="mdi mdi-home-outline mdi-18px"></i> Dashboard
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            <i class="mdi mdi-file-document-outline mdi-18px"></i> Business Report
+        </li>
+    </ol>
+</nav>
+
+<div class="col-lg-12 px-0">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Business Report</h4>
+             <small class="text-white">Key financial metrics for your gym</small>
+        </div>
+
+        <div class="card-body">
+
+    <form method="get" action="">
+        <div class="row mb-3 align-items-end">
+            <div class="col-md-3">
+                <div class="form-group mb-0">
+                    <label for="q">Search Transactions</label>
+                    <input type="text" class="form-control" name="q" id="q" placeholder="Name, ID, or Number" value="{{ query|default:'' }}">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group mb-0">
+                    <label for="from_date">From Date</label>
+                    <input type="date" class="form-control" id="from_date" name="from_date" value="{{ request.GET.from_date }}">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group mb-0">
+                    <label for="to_date">To Date</label>
+                    <input type="date" class="form-control" id="to_date" name="to_date" value="{{ request.GET.to_date }}">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group mb-0">
+                    <button type="submit" class="btn btn-primary form-control">Filter</button>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group mb-0">
+                    <a href="{% url 'business_report' %}" class="btn btn-secondary form-control">Reset</a>  
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- KPIs -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card shadow-sm border-left-primary card-hover">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Income {% if is_filtered %}(Filtered){% else %}(All Time){% endif %}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">₹ {{ total_income|floatformat:2 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-rupee-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card shadow-sm border-left-danger card-hover">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Total Expense {% if is_filtered %}(Filtered){% else %}(All Time){% endif %}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">₹ {{ total_expense|floatformat:2 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-receipt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card shadow-sm border-left-success card-hover">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Gross Income {% if is_filtered %}(Filtered){% else %}(All Time){% endif %}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">₹ {{ gross_income|floatformat:2 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-money-bill-wave fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card shadow-sm border-left-warning card-hover">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Total Due {% if is_filtered %}(Filtered){% else %}(All Time){% endif %}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">₹ {{ total_due|floatformat:2 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row">
+        <div class="col-lg-8 d-flex align-items-stretch">
+            <div class="card shadow-sm mb-4 w-100">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Income vs. Expense (Last 6 Months)</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="incomeExpenseChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 d-flex align-items-stretch">
+            <div class="card shadow-sm mb-4 w-100">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Expense Breakdown (Current Month)</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="expenseBreakdownChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tables -->
+    
+        <div class="col-lg-12 px-0">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        Recent Transactions
+                        {% comment %} <span class="badge badge-primary rounded-pill ml-1" style="font-size: 0.7rem; vertical-align: middle;">
+                            {{ transactions_list|length }} results
+                        </span> {% endcomment %}
+                    </h6>
+                    <a href="?export=transactions&q={{ query|default:'' }}&from_date={{ request.GET.from_date|default:'' }}&to_date={{ request.GET.to_date|default:'' }}" class="btn btn-sm" style="background-color: #1d6f42; border-color: #1d6f42; color: #ffffff;">Export Transactions</a>
+                </div>
+                <div class="card-body px-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm table-stack-on-mobile" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th class="font-weight-semibold py-2">#</th>
+                                    <th class="font-weight-semibold py-2">Invoice</th>
+                                    <th class="font-weight-semibold py-2">Date</th>
+                                    <th class="font-weight-semibold py-2">Profile</th>
+                                    <th class="font-weight-semibold py-2">Member</th>
+                                    <th class="font-weight-semibold py-2">Amount</th>
+                                    <th class="font-weight-semibold py-2">Paid</th>
+                                    <th class="font-weight-semibold py-2">Due</th>
+                                    <th class="font-weight-semibold py-2">Status / Mode</th>
+                                    <th class="font-weight-semibold py-2">Type</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in transactions_list %}
+                                <tr>
+                                    <td data-label="S.No.">{{ latest_transactions.start_index|add:forloop.counter0 }}</td>
+                                    <td data-label="Invoice ID">
+                                        {% if transaction.invoice %}
+                                            {% if transaction.invoice_type == 'membership' %}
+                                                <a href="{% url 'billing:invoice' transaction.member.id transaction.invoice.id %}">#{{ transaction.invoice.id }}</a>
+                                            {% elif transaction.invoice_type == 'pt' %}
+                                                <a href="{% url 'billing:pt_invoice' transaction.member.id transaction.invoice.id %}">#{{ transaction.invoice.id }}</a>
+                                            {% endif %}
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
+                                    <td data-label="Date">{{ transaction.date|date:"d-m-Y" }}</td>
+                                    <td data-label="Profile">
+                                        <img src="{% if transaction.member.profile_picture %}{{ transaction.member.profile_picture.url }}{% else %}{% static 'images/member_dp.jpg' %}{% endif %}"
+                                            class="rounded-circle border" style="width: 40px; height: 40px; object-fit: cover;"
+                                            alt="{{ transaction.member.name }}">
+                                    </td>
+                                    <td data-label="Profile">
+                                        <a href="{% url 'member_profile' transaction.member.id %}" class="text-decoration-none">
+                                            <strong>{{ transaction.member.name }}</strong>
+                                        </a>
+                                        <br>
+                                        <small class="text-muted">#{{ transaction.member.member_id }}</small>
+                                    </td>
+                                    <td data-label="Amount">₹ {{ transaction.amount|floatformat:2 }}</td>
+                                    <td data-label="Paid">₹ {{ transaction.paid|floatformat:2 }}</td>
+                                    <td data-label="Due">₹ {{ transaction.due|floatformat:2 }}</td>
+                                    <td data-label="Mode">
+                                        <span class="badge badge-{% if transaction.status == 'Paid' or transaction.status == 'Completed' %}success{% else %}warning{% endif %}">
+                                            {{ transaction.status }}
+                                        </span> / {{ transaction.mode|default:'N/A' }}
+                                    </td>
+                                    <td>{{ transaction.type }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="10" class="text-center">No recent transactions.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% if latest_transactions.has_other_pages %}
+                            {% include 'includes/pagination.html' with page_obj=latest_transactions query=query %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-12 px-0"> 
+            <div class="card shadow-sm mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-danger">Recent Expenses</h6>
+                    <a href="?export=expenses" class="btn btn-sm" style="background-color: #1d6f42; border-color: #1d6f42; color: #ffffff;">Export Expenses</a>
+                </div>
+                <div class="card-body px-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm table-stack-on-mobile" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Date</th>
+                                    <th>Category</th>
+                                    <th>Amount</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for expense in latest_expenses|slice:":10" %}
+                                <tr>
+                                    <td data-label="Sr. NO.">{{ forloop.counter }}</td>
+                                    <td data-label="Date">{{ expense.date|date:"Y-m-d" }}</td>
+                                    <td data-label="Category">{{ expense.get_category_display }}</td>
+                                    <td data-label="Amount">₹ {{ expense.amount|floatformat:2 }}</td>
+                                    <td data-label="Description">{{ expense.description|truncatechars:30 }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No recent expenses.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <div class="text-center mt-3">
+                            <a href="#" class="btn btn-danger">See All</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Line Chart: Income vs. Expense
+    const incomeExpenseCtx = document.getElementById('incomeExpenseChart').getContext('2d');
+    new Chart(incomeExpenseCtx, {
+        type: 'line',
+        data: {
+            labels: {{ line_chart_labels|safe }},
+            datasets: [{
+                label: 'Income',
+                data: {{ line_chart_income_data|safe }},
+                borderColor: '#4e73df',
+                backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                fill: true,
+            }, {
+                label: 'Expense',
+                data: {{ line_chart_expense_data|safe }},
+                borderColor: '#e74a3b',
+                backgroundColor: 'rgba(231, 74, 59, 0.05)',
+                fill: true,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Pie Chart: Expense Breakdown
+    const expenseBreakdownCtx = document.getElementById('expenseBreakdownChart').getContext('2d');
+    new Chart(expenseBreakdownCtx, {
+        type: 'pie',
+        data: {
+            labels: {{ pie_chart_labels|safe }},
+            datasets: [{
+                data: {{ pie_chart_data|safe }},
+                backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796', '#5a5c69'],
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+        }
+    });
+</script>
+{% endblock %}

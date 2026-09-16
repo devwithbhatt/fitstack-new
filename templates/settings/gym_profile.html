@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}GYM Profile{% endblock title %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="page-header-section">
+        <div class="row align-items-center">
+            <div class="col-md-2 text-center">
+                <img src="{% if gym.logo %}{{ gym.logo.url }}{% else %}{% static 'images/default_logo.jpg' %}{% endif %}" alt="logo" class="rounded-circle" style="width: 120px; height: 120px;">
+            </div>
+            <div class="col-md-10">
+                <h1 class="display-4">{{ gym.name }}</h1>
+                <p class="lead">{{ gym.slogan }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-lg-12">
+            <div class="card shadow-custom mb-4">
+                <div class="card-body">
+                    <fieldset class="border p-4 rounded mb-4">
+                        <legend class="w-auto px-2 h5">Personal Info</legend>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Gym Name:</strong> {{ gym.name }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Slogan:</strong> {{ gym.slogan }}</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <p><strong>Pincode:</strong> {{ gym.pincode }}</p>
+                            </div>
+                            <div class="col-md-4">
+                                <p><strong>Address:</strong> {{ gym.address }}</p>
+                            </div>
+                            <div class="col-md-4">
+                                <p><strong>Area:</strong> {{ gym.area }}</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <p><strong>City:</strong> {{ gym.city }}</p>
+                            </div>
+                            <div class="col-md-4">
+                                <p><strong>State:</strong> {{ gym.state }}</p>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="border p-4 rounded mb-4">
+                        <legend class="w-auto px-2 h5">Contact Information</legend>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Phone:</strong> {{ gym.phone }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Landline:</strong> {{ gym.landline }}</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Email:</strong> {{ gym.email }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Website:</strong> {{ gym.website }}</p>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="border p-4 rounded mb-4">
+                        <legend class="w-auto px-2 h5">GST Information</legend>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <p><strong>GST Enabled:</strong> {% if gym.gst_enabled %}Yes{% else %}No{% endif %}</p>
+                            </div>
+                            <div class="col-md-4">
+                                <p><strong>GST Rate:</strong> {{ gym.gst_rate }}%</p>
+                            </div>
+                            <div class="col-md-4">
+                                <p><strong>GST Number:</strong> {{ gym.gst_number }}</p>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="border p-4 rounded mb-4">
+                        <legend class="w-auto px-2 h5">Other Information</legend>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <p><strong>Gym ID Prefix:</strong> {{ gym.gym_id_prefix }}</p>
+                            </div>
+                            <div class="col-md-8">
+                                <p><strong>Note:</strong> {{ gym.note }}</p>
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
+                 <!-- Action Button -->
+    <div class="text-center mt-1 mb-4">
+        <a href="{% url 'settings:general_settings' %}" class="btn btn-primary btn-sm">Update Profile</a>
+        {% comment %} <p class="mt-2 text-muted">Last updated: {{ gym.updated_at|date:"F d, Y H:i" }}</p> {% endcomment %}
+    </div>
+            </div>
+        </div>
+    </div>
+
+   
+</div>
+{% endblock content %}
