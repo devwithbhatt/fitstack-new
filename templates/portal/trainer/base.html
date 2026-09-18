@@ -204,8 +204,18 @@
         </a>
       </div>
 
-      <!-- Trainer Profile & Logout -->
+      <!-- Trainer Profile, Notifications & Logout -->
       <div class="d-flex align-items-center gap-2">
+        <!-- Notification Bell Trigger -->
+        <a class="cursor-pointer d-flex align-items-center justify-content-center mr-2" href="javascript:void(0);" onclick="openNotificationDrawer()" title="Notifications" style="text-decoration: none; position: relative;">
+          <div style="width: 34px; height: 34px; border-radius: 50%; background: #3f3f40; display: flex; align-items: center; justify-content: center; color: #ffffff; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+            <i class="mdi mdi-bell" style="font-size: 18px; color: #ffffff; line-height: 1;"></i>
+          </div>
+          {% if unread_notifications_count > 0 %}
+            <span class="count-symbol" id="navNotifCountDot" style="background-color: #dc2626; width: 10px; height: 10px; position: absolute; top: -1px; right: -1px; border-radius: 50%; border: 2px solid #ffffff;"></span>
+          {% endif %}
+        </a>
+
         <a href="{% url 'trainer_portal:profile' %}" class="trainer-badge-chip text-decoration-none">
           <img src="{% if trainer.photo %}{{ trainer.photo.url }}{% else %}{% static 'images/member_dp.jpg' %}{% endif %}" alt="{{ trainer.name }}" class="trainer-avatar-small">
           <span class="d-none d-sm-inline">{{ trainer.name }}</span>
@@ -216,6 +226,7 @@
       </div>
     </div>
   </nav>
+  {% include 'includes/notification_drawer.html' %}
 
   <!-- Main Content Area -->
   <main class="portal-content">
@@ -264,6 +275,7 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  {% include 'includes/popup_dispatcher.html' %}
   {% block extra_js %}{% endblock %}
 </body>
 </html>

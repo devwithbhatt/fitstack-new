@@ -418,3 +418,406 @@ def estimate_audience(target_type, target_gym_id=None, target_user_id=None):
             })
 
     return result
+
+
+def send_system_notification(
+    title,
+    message,
+    notification_type='info',
+    target_type='specific_user',
+    target_gym=None,
+    target_user=None,
+    show_popup=False,
+    popup_frequency='once',
+    action_label=None,
+    action_url=None,
+    image=None,
+    created_by=None,
+    expires_at=None,
+):
+    """
+    Creates and dispatches a platform notification to a specific user, gym, or group.
+    """
+    try:
+        notification = PlatformNotification.objects.create(
+            title=title,
+            message=message,
+            notification_type=notification_type,
+            target_type=target_type,
+            target_gym=target_gym,
+            target_user=target_user,
+            show_popup=show_popup,
+            popup_frequency=popup_frequency,
+            action_label=action_label,
+            action_url=action_url,
+            image=image,
+            created_by=created_by,
+            expires_at=expires_at,
+            is_active=True
+        )
+        return notification
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error creating notification: {e}")
+        return None
+
+
+def get_or_create_member_user(member):
+    """
+    Ensures a member has a linked auth.User account so they can receive notifications.
+    """
+    if not member:
+        return None
+    if member.user:
+        return member.user
+    try:
+        user, _ = member.create_or_update_user_account()
+        return user
+    except Exception:
+        return None
+
+
+def notify_membership_activated(member, history, is_upgrade=False):
+    """
+    Dispatches notifications when a member's membership plan is assigned, renewed, or upgraded.
+    """
+    if not member or not history:
+        return None
+
+    gym = member.gym
+    plan_title = history.plan.title if history.plan else "Membership Plan"
+    start_date_str = history.membership_start_date.strftime('%d %b %Y') if history.membership_start_date else 'Today'
+    end_date = history.get_end_date()
+    end_date_str = end_date.strftime('%d %b %Y') if end_date else 'N/A'
+    due_amount = history.total_amount - history.paid_amount
+
+    # 1. Member Notification
+    user = get_or_create_member_user(member)
+    member_notif = None
+    if user:
+        action_verb = "upgraded" if is_upgrade else "activated"
+        msg = (
+            f"Your membership plan '{plan_title}' has been successfully {action_verb}. "
+            f"Valid from {start_date_str} to {end_date_str}. "
+            f"Amount Paid: ₹{history.paid_amount:,.2f}"
+        )
+        if due_amount > 0:
+            msg += f", Balance Due: ₹{due_amount:,.2f}."
+        else:
+            msg += ". All plan fees are fully cleared."
+
+        member_notif = send_system_notification(
+            title=f"Membership Plan {action_verb.title()}: {plan_title}",
+            message=msg,
+            notification_type='success',
+            target_type='specific_user',
+            target_user=user,
+            target_gym=gym,
+            show_popup=True,
+            popup_frequency='once',
+            action_label='View Billing & Receipt',
+            action_url='/member-portal/billing/'
+        )
+
+    # 2. Gym Staff Notification
+    send_system_notification(
+        title=f"Plan Enrollment: {member.name}",
+        message=(
+            f"Member {member.name} ({member.member_id}) enrolled in '{plan_title}'. "
+            f"Paid: ₹{history.paid_amount:,.2f}, Due: ₹{due_amount:,.2f}."
+        ),
+        notification_type='info',
+        target_type='specific_gym_staff',
+        target_gym=gym,
+        show_popup=False,
+        action_label='View Member Profile',
+        action_url=f'/members/profile/{member.id}/'
+    )
+
+    return member_notif
+
+
+def notify_pt_assigned(member, pt_assignment):
+    """
+    Dispatches notifications when a Personal Trainer is assigned.
+    Targets both the Member and the assigned Trainer.
+    """
+    if not member or not pt_assignment:
+        return None
+
+    gym = member.gym
+    trainer = pt_assignment.trainer
+    start_date_str = pt_assignment.pt_start_date.strftime('%d %b %Y') if pt_assignment.pt_start_date else 'Today'
+    end_date = pt_assignment.get_end_date()
+    end_date_str = end_date.strftime('%d %b %Y') if end_date else 'N/A'
+
+    # 1. Member Notification
+    user = get_or_create_member_user(member)
+    member_notif = None
+    if user:
+        member_notif = send_system_notification(
+            title=f"Personal Trainer Assigned: {trainer.name}",
+            message=(
+                f"Coach {trainer.name} has been assigned as your Personal Trainer for {pt_assignment.months} month(s). "
+                f"Schedule: {start_date_str} to {end_date_str}. Let's reach your fitness goals together!"
+            ),
+            notification_type='info',
+            target_type='specific_user',
+            target_user=user,
+            target_gym=gym,
+            show_popup=True,
+            popup_frequency='once',
+            action_label='View Trainer Details',
+            action_url='/member-portal/personal-training/'
+        )
+
+    # 2. Trainer Notification
+    if trainer and trainer.user:
+        send_system_notification(
+            title=f"New PT Client Assigned: {member.name}",
+            message=(
+                f"Member {member.name} (Phone: {member.mobile_number}) has been assigned to you for Personal Training "
+                f"for {pt_assignment.months} month(s). Active until {end_date_str}."
+            ),
+            notification_type='info',
+            target_type='specific_user',
+            target_user=trainer.user,
+            target_gym=gym,
+            show_popup=True,
+            popup_frequency='once',
+            action_label='View Client Profile',
+            action_url=f'/trainer-portal/client/{member.id}/'
+        )
+
+    # 3. Gym Staff Notification
+    send_system_notification(
+        title=f"PT Assignment: {member.name} &rarr; {trainer.name}",
+        message=f"{member.name} ({member.member_id}) was assigned to trainer {trainer.name} ({pt_assignment.months} mo).",
+        notification_type='info',
+        target_type='specific_gym_staff',
+        target_gym=gym,
+        show_popup=False,
+        action_label='View Client',
+        action_url=f'/members/profile/{member.id}/'
+    )
+
+    return member_notif
+
+
+def notify_payment_submitted(payment, member, invoice=None, invoice_type='membership'):
+    """
+    Dispatches payment confirmation notifications to the member and receipt alerts to gym staff.
+    """
+    if not payment or not member:
+        return None
+
+    gym = member.gym or payment.gym
+    amount = payment.amount
+    mode = (payment.payment_mode or 'Cash').upper()
+    payment_date_str = payment.payment_date.strftime('%d %b %Y') if hasattr(payment.payment_date, 'strftime') else str(payment.payment_date)
+
+    # Plan name
+    if invoice_type == 'membership' and invoice and hasattr(invoice, 'plan'):
+        plan_desc = f"Membership ({invoice.plan.title})"
+        remaining_due = (invoice.total_amount - invoice.paid_amount) if hasattr(invoice, 'total_amount') else 0
+    elif invoice_type == 'pt' and invoice and hasattr(invoice, 'trainer'):
+        plan_desc = f"Personal Training ({invoice.trainer.name})"
+        remaining_due = (invoice.total_amount - invoice.paid_amount) if hasattr(invoice, 'total_amount') else 0
+    else:
+        plan_desc = "Gym Fee / Subscription"
+        remaining_due = 0
+
+    # 1. Member Notification
+    user = get_or_create_member_user(member)
+    if user:
+        msg = (
+            f"Payment of ₹{amount:,.2f} for {plan_desc} has been successfully recorded via {mode} on {payment_date_str}."
+        )
+        if remaining_due > 0:
+            msg += f" Remaining balance due: ₹{remaining_due:,.2f}."
+        else:
+            msg += " All dues for this invoice are fully cleared. Thank you!"
+
+        member_notif = send_system_notification(
+            title=f"Payment Received: ₹{amount:,.2f}",
+            message=msg,
+            notification_type='success',
+            target_type='specific_user',
+            target_user=user,
+            target_gym=gym,
+            show_popup=True,
+            popup_frequency='once',
+            action_label='View Payment History',
+            action_url='/member-portal/billing/'
+        )
+    else:
+        member_notif = None
+
+    # 2. Gym Staff Notification
+    send_system_notification(
+        title=f"Payment Recorded: ₹{amount:,.2f} from {member.name}",
+        message=f"Received ₹{amount:,.2f} from {member.name} ({member.member_id}) via {mode} for {plan_desc}.",
+        notification_type='success',
+        target_type='specific_gym_staff',
+        target_gym=gym,
+        show_popup=False,
+        action_label='View Invoices',
+        action_url='/billing/invoices/'
+    )
+
+    return member_notif
+
+
+def notify_membership_expiring(member, history, days_left):
+    """
+    Dispatches expiry warnings (4-day, 2-day) with popups to the member and notice to gym staff.
+    Includes deduplication within 24 hours.
+    """
+    if not member or not history:
+        return None
+
+    user = get_or_create_member_user(member)
+    gym = member.gym
+    plan_title = history.plan.title if history.plan else "Membership Plan"
+    end_date = history.get_end_date()
+    end_date_str = end_date.strftime('%d %b %Y') if end_date else 'Soon'
+
+    # Deduplication check: avoid spamming multiple identical warnings in the same day
+    if user:
+        today = timezone.localdate()
+        recent_exists = PlatformNotification.objects.filter(
+            target_user=user,
+            title__icontains="Expiring",
+            created_at__date=today
+        ).exists()
+        if not recent_exists:
+            is_urgent = days_left <= 2
+            title = f"Urgent: Membership Expiring in {days_left} Day{'s' if days_left != 1 else ''}" if is_urgent else f"Membership Expiring Soon ({days_left} Days Left)"
+            msg = (
+                f"Your '{plan_title}' membership expires on {end_date_str}. "
+                f"Please renew your membership promptly to maintain uninterrupted access to gym facilities and classes."
+            )
+            send_system_notification(
+                title=title,
+                message=msg,
+                notification_type='danger' if is_urgent else 'warning',
+                target_type='specific_user',
+                target_user=user,
+                target_gym=gym,
+                show_popup=True,
+                popup_frequency='every_login',
+                action_label='Check Membership Details',
+                action_url='/member-portal/dashboard/'
+            )
+
+    # Gym Staff reminder
+    send_system_notification(
+        title=f"Member Expiring Soon: {member.name} ({days_left}d left)",
+        message=f"{member.name}'s ({member.member_id}) '{plan_title}' expires on {end_date_str}. Contact for renewal.",
+        notification_type='warning',
+        target_type='specific_gym_staff',
+        target_gym=gym,
+        show_popup=False,
+        action_label='Member Profile',
+        action_url=f'/members/profile/{member.id}/'
+    )
+
+
+def notify_membership_expired(member, history):
+    """
+    Dispatches plan expired notifications to the member and alerts to gym staff.
+    """
+    if not member or not history:
+        return None
+
+    user = get_or_create_member_user(member)
+    gym = member.gym
+    plan_title = history.plan.title if history.plan else "Membership Plan"
+    end_date = history.get_end_date()
+    end_date_str = end_date.strftime('%d %b %Y') if end_date else 'Recently'
+
+    if user:
+        today = timezone.localdate()
+        recent_exists = PlatformNotification.objects.filter(
+            target_user=user,
+            title__icontains="Membership Expired",
+            created_at__date=today
+        ).exists()
+        if not recent_exists:
+            send_system_notification(
+                title=f"Membership Expired: {plan_title}",
+                message=(
+                    f"Your '{plan_title}' membership expired on {end_date_str}. "
+                    f"Please contact the front desk or renew your plan to restore full gym access."
+                ),
+                notification_type='danger',
+                target_type='specific_user',
+                target_user=user,
+                target_gym=gym,
+                show_popup=True,
+                popup_frequency='every_login',
+                action_label='Renew Membership',
+                action_url='/member-portal/dashboard/'
+            )
+
+    send_system_notification(
+        title=f"Membership Expired: {member.name}",
+        message=f"{member.name}'s ({member.member_id}) '{plan_title}' expired on {end_date_str}. Follow up for renewal.",
+        notification_type='danger',
+        target_type='specific_gym_staff',
+        target_gym=gym,
+        show_popup=False,
+        action_label='Member Profile',
+        action_url=f'/members/profile/{member.id}/'
+    )
+
+
+def notify_pt_expiring(member, pt_assignment, days_left):
+    """
+    Dispatches Personal Training expiration notices to member and trainer.
+    """
+    if not member or not pt_assignment:
+        return None
+
+    trainer = pt_assignment.trainer
+    gym = member.gym
+    end_date = pt_assignment.get_end_date()
+    end_date_str = end_date.strftime('%d %b %Y') if end_date else 'Soon'
+
+    # 1. Member
+    user = get_or_create_member_user(member)
+    if user:
+        send_system_notification(
+            title=f"Personal Training Expiring ({days_left} Days Left)",
+            message=(
+                f"Your training package with Coach {trainer.name} expires on {end_date_str}. "
+                f"Speak with your trainer or visit the reception to extend your package."
+            ),
+            notification_type='warning',
+            target_type='specific_user',
+            target_user=user,
+            target_gym=gym,
+            show_popup=True,
+            popup_frequency='once',
+            action_label='View PT Details',
+            action_url='/member-portal/personal-training/'
+        )
+
+    # 2. Trainer
+    if trainer and trainer.user:
+        send_system_notification(
+            title=f"Client PT Expiring: {member.name} ({days_left}d left)",
+            message=(
+                f"Your client {member.name}'s PT package expires on {end_date_str}. "
+                f"Discuss renewal options before their sessions conclude."
+            ),
+            notification_type='warning',
+            target_type='specific_user',
+            target_user=trainer.user,
+            target_gym=gym,
+            show_popup=False,
+            action_label='View Client',
+            action_url=f'/trainer-portal/client/{member.id}/'
+        )
+

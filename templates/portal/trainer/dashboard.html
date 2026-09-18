@@ -28,6 +28,28 @@
     </div>
   </div>
 
+  {% if expiring_clients %}
+    <div class="alert alert-warning shadow-sm border-0 mb-4 p-3 d-flex align-items-center justify-content-between flex-wrap rounded-3" style="background-color: #fffbeb; border-left: 4px solid #f59e0b !important;">
+      <div class="d-flex align-items-center mb-2 mb-md-0">
+        <div style="width: 40px; height: 40px; border-radius: 50%; background: #fef3c7; display: flex; align-items: center; justify-content: center; color: #d97706; margin-right: 14px; font-size: 20px; flex-shrink: 0;">
+          <i class="mdi mdi-alert-circle-outline"></i>
+        </div>
+        <div>
+          <h6 class="font-weight-bold text-dark mb-0" style="font-size: 14.5px;">Client PT Package Alert &bull; {{ expiring_clients|length }} Client{{ expiring_clients|pluralize }} Expiring Soon</h6>
+          <p class="text-muted mb-0 small">
+            {% for c in expiring_clients %}
+              <strong>{{ c.member.name }}</strong> ({{ c.days_left }}d left){% if not forloop.last %}, {% endif %}
+            {% endfor %}
+            &mdash; Follow up with clients to schedule package renewals.
+          </p>
+        </div>
+      </div>
+      <a href="{% url 'trainer_portal:personal_training' %}" class="btn btn-sm btn-warning px-3 font-weight-bold shadow-sm" style="border-radius: 6px; background-color: #f59e0b; border-color: #f59e0b; color: #ffffff;">
+        <i class="mdi mdi-account-group mr-1"></i> View PT Clients
+      </a>
+    </div>
+  {% endif %}
+
   <!-- TRAINER SELF-ATTENDANCE CONTROL DESK (NATIVE PORTAL GYM-CARD) -->
   <div class="gym-card mb-4">
     <div class="gym-card-header d-flex align-items-center justify-content-between flex-wrap">

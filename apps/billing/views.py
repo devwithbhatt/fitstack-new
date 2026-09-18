@@ -16,6 +16,7 @@ from django.http import JsonResponse
 from django.utils import timezone
 import logging
 from apps.whatsapp.services import WhatsAppService
+from apps.superadmin.notifications import notify_payment_submitted
 
 logger = logging.getLogger(__name__)
 
@@ -154,6 +155,12 @@ def pay_due_payment(request, member_id):
                 invoice.paid_amount += payment.amount
                 invoice.save()
                 payment.save()
+
+                # Dispatch in-app platform notification & receipt
+                try:
+                    notify_payment_submitted(payment=payment, member=member, invoice=invoice, invoice_type=invoice_type)
+                except Exception as notif_err:
+                    logger.error(f"Failed to dispatch payment notification: {notif_err}")
 
                 messages.success(request, 'Payment submitted successfully.')
 
