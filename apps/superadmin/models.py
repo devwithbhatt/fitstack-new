@@ -106,3 +106,83 @@ class GymSubscription(models.Model):
     @property
     def due_amount(self):
         return self.total_amount - self.paid_amount
+
+
+class PlatformNotification(models.Model):
+    TYPE_CHOICES = [
+        ('info', 'Information'),
+        ('warning', 'Notice / Warning'),
+        ('success', 'Update / Success'),
+        ('danger', 'Urgent / Critical Alert'),
+    ]
+
+    TARGET_CHOICES = [
+        ('all', 'All Users (Gyms, Staff & Members)'),
+        ('all_gyms', 'All Gym Admins & Staff Only'),
+        ('all_members', 'All Gym Members Across All Gyms'),
+        ('specific_gym', 'Specific Gym (Admins, Staff & Members)'),
+        ('specific_gym_staff', 'Specific Gym Admins & Staff Only'),
+        ('specific_gym_members', 'Specific Gym Members Only'),
+        ('specific_user', 'Specific User / Member'),
+    ]
+
+    title = models.CharField(max_length=255)
+    message = models.TextField(help_text="Notification message body")
+    notification_type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='info')
+    target_type = models.CharField(max_length=30, choices=TARGET_CHOICES, default='all')
+    target_gym = models.ForeignKey(Gym, on_delete=models.CASCADE, null=True, blank=True, related_name='targeted_notifications')
+    target_user = models.ForeignKey("auth.User", on_delete=models.CASCADE, null=True, blank=True, related_name='direct_notifications')
+
+    # Image / Banner
+    image = models.ImageField(upload_to="notification_images/", null=True, blank=True, help_text="Optional banner/graphic image")
+
+    # Popup announcement options
+    show_popup = models.BooleanField(default=False, help_text="Display as an instant interactive popup modal to recipients")
+    is_dismissible = models.BooleanField(default=True, help_text="Can the user dismiss without action?")
+    
+    POPUP_FREQUENCY_CHOICES = [
+        ('once', 'Once Only (Dismissed after first view)'),
+        ('every_login', 'On Every Login (Once per session until expired)'),
+        ('fixed_count', 'Impression Cap (Show up to set number of times)'),
+        ('until_expired', 'Persistent (Show on every page visit until expired)'),
+    ]
+    popup_frequency = models.CharField(max_length=30, choices=POPUP_FREQUENCY_CHOICES, default='once', help_text="Frequency of showing popup to users")
+    max_popup_views = models.PositiveIntegerField(default=1, help_text="Maximum times a user will see this popup (if fixed count is selected)")
+
+    # Action button
+    action_label = models.CharField(max_length=100, blank=True, null=True, help_text="e.g. 'View Details', 'Renew Now'")
+    action_url = models.CharField(max_length=255, blank=True, null=True, help_text="URL or path for button")
+
+    # Lifecycle & Audit
+    is_active = models.BooleanField(default=True)
+    expires_at = models.DateTimeField(null=True, blank=True, help_text="Optional auto-expiry datetime")
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey("auth.User", on_delete=models.SET_NULL, null=True, blank=True, related_name='authored_notifications')
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"[{self.get_notification_type_display()}] {self.title}"
+
+
+class NotificationUserStatus(models.Model):
+    notification = models.ForeignKey(PlatformNotification, on_delete=models.CASCADE, related_name='user_statuses')
+    user = models.ForeignKey("auth.User", on_delete=models.CASCADE, related_name='notification_statuses')
+    is_read = models.BooleanField(default=False)
+    read_at = models.DateTimeField(null=True, blank=True)
+    popup_acknowledged = models.BooleanField(default=False)
+    popup_acknowledged_at = models.DateTimeField(null=True, blank=True)
+    popup_view_count = models.PositiveIntegerField(default=0)
+    popup_last_shown_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('notification', 'user')
+        indexes = [
+            models.Index(fields=['user', 'is_read']),
+            models.Index(fields=['user', 'popup_acknowledged']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.notification.title} (Read: {self.is_read}, Views: {self.popup_view_count})"

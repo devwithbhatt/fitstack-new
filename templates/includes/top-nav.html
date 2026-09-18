@@ -65,48 +65,42 @@
       <li class="nav-item dropdown">
         <a class="nav-link count-indicator dropdown-toggle" id="notificationDropdown" href="#" data-toggle="dropdown">
           <i class="mdi mdi-bell"></i>
-          <span class="count-symbol bg-danger"></span>
+          {% if unread_notifications_count > 0 %}
+            <span class="count-symbol bg-danger" id="navNotifCountDot"></span>
+          {% endif %}
         </a>
-        <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list  text-dark" aria-labelledby="notificationDropdown">
-          <h6 class="p-3 mb-0 bg-primary text-white py-4">Notifications</h6>
-          <div class="dropdown-divider"></div>
-          <a class="dropdown-item preview-item">
-            <div class="preview-thumbnail">
-              <div class="preview-icon bg-success">
-                <i class="mdi mdi-calendar"></i>
-              </div>
+        <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list text-dark shadow-lg border-0 rounded-lg" aria-labelledby="notificationDropdown" style="width: 320px; max-height: 480px; overflow-y: auto;">
+          <div class="p-3 bg-primary text-white d-flex justify-content-between align-items-center">
+            <h6 class="mb-0 font-weight-bold">Notifications</h6>
+            {% if unread_notifications_count > 0 %}
+              <span class="badge badge-light text-primary font-weight-bold">{{ unread_notifications_count }} new</span>
+            {% endif %}
+          </div>
+          {% if recent_notifications %}
+            {% for n in recent_notifications %}
+              <a class="dropdown-item preview-item py-2 px-3 {% if not n.is_read %}bg-light{% endif %}" href="{% if n.action_url %}{{ n.action_url }}{% else %}{% url 'notifications:inbox' %}{% endif %}">
+                <div class="preview-thumbnail">
+                  <div class="preview-icon {% if n.notification_type == 'danger' %}bg-danger{% elif n.notification_type == 'warning' %}bg-warning{% elif n.notification_type == 'success' %}bg-success{% else %}bg-info{% endif %} text-white">
+                    <i class="mdi {% if n.notification_type == 'danger' %}mdi-alert-circle{% elif n.notification_type == 'warning' %}mdi-alert{% elif n.notification_type == 'success' %}mdi-check-bold{% else %}mdi-information-variant{% endif %}"></i>
+                  </div>
+                </div>
+                <div class="preview-item-content d-flex align-items-start flex-column justify-content-center" style="min-width: 0;">
+                  <h6 class="preview-subject font-weight-bold text-dark text-truncate mb-0" style="max-width: 200px; font-size: 13px;">{{ n.title }}</h6>
+                  <p class="text-muted ellipsis mb-0" style="font-size: 11px; max-width: 200px;">{{ n.message }}</p>
+                  <small class="text-muted" style="font-size: 10px;">{{ n.created_at|timesince }} ago</small>
+                </div>
+              </a>
+              <div class="dropdown-divider my-0"></div>
+            {% endfor %}
+          {% else %}
+            <div class="p-4 text-center text-muted">
+              <i class="mdi mdi-bell-sleep-outline d-block mb-1" style="font-size: 28px;"></i>
+              <small>No notifications yet</small>
             </div>
-            <div class="preview-item-content d-flex align-items-start flex-column justify-content-center">
-              <h6 class="preview-subject font-weight-normal mb-1">Event today</h6>
-              <p class="text-gray ellipsis mb-0"> Just a reminder that you have an event today </p>
-            </div>
-          </a>
-          <div class="dropdown-divider"></div>
-          <a class="dropdown-item preview-item">
-            <div class="preview-thumbnail">
-              <div class="preview-icon bg-warning">
-                <i class="mdi mdi-settings"></i>
-              </div>
-            </div>
-            <div class="preview-item-content d-flex align-items-start flex-column justify-content-center">
-              <h6 class="preview-subject font-weight-normal mb-1">Settings</h6>
-              <p class="text-gray ellipsis mb-0"> Update dashboard </p>
-            </div>
-          </a>
-          <div class="dropdown-divider"></div>
-          <a class="dropdown-item preview-item">
-            <div class="preview-thumbnail">
-              <div class="preview-icon bg-info">
-                <i class="mdi mdi-link-variant"></i>
-              </div>
-            </div>
-            <div class="preview-item-content d-flex align-items-start flex-column justify-content-center">
-              <h6 class="preview-subject font-weight-normal mb-1">Launch Admin</h6>
-              <p class="text-gray ellipsis mb-0"> New admin wow! </p>
-            </div>
-          </a>
-          <div class="dropdown-divider"></div>
-          <h6 class="p-3 mb-0 text-center">See all notifications</h6>
+          {% endif %}
+          <div class="p-2 text-center bg-white border-top">
+            <a href="{% url 'notifications:inbox' %}" class="small font-weight-bold text-primary">View All Notifications</a>
+          </div>
         </div>
       </li>
   

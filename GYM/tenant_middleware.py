@@ -51,6 +51,7 @@ class TenantMiddleware:
             '/admin/',
             '/superadmin/',
             '/accounts/',
+            '/notifications/',
             '/whatsapp/webhook/',
             '/attendance/scan-attendance/',
             settings.STATIC_URL,

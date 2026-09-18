@@ -2,15 +2,24 @@ from django.utils import timezone
 from django.shortcuts import render,get_object_or_404, redirect
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from .forms import GymForm, GymAdminForm, SubscriptionPlanForm
-from .models import Gym, GymAdmin, SubscriptionPlan, GymSubscription
+from .models import Gym, GymAdmin, SubscriptionPlan, GymSubscription, PlatformNotification, NotificationUserStatus
+from .notifications import (
+    get_user_applicable_notifications_qs,
+    get_active_popup_for_user,
+    acknowledge_popup,
+    mark_notification_as_read,
+    mark_all_notifications_as_read,
+    estimate_audience,
+)
 from apps.members.models import Member, MembershipHistory
 from apps.billing.models import Payment
-from django.db.models import Q, Sum
+from django.db import models
+from django.db.models import Q, Sum, F, Count
+from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from .decorators import superadmin_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from django.db.models import F
 from decimal import Decimal
 from datetime import date, datetime, timedelta
 from django.contrib import messages
@@ -795,3 +804,264 @@ def permanent_delete_billing(request, item_id, item_type):
     item.delete()
     messages.success(request, 'Record deleted permanently.')
     return JsonResponse({'status': 'success'})
+
+
+# ====================================================
+# SUPERADMIN NOTIFICATIONS & BROADCAST MANAGEMENT
+# ====================================================
+
+@login_required
+@superadmin_required
+def notification_list(request):
+    """
+    Displays list of all platform notifications with status, recipient metrics, and filters.
+    """
+    notifications = PlatformNotification.objects.annotate(
+        read_count=Sum(
+            models.Case(
+                models.When(user_statuses__is_read=True, then=1),
+                default=0,
+                output_field=models.IntegerField()
+            )
+        ),
+        popup_ack_count=Sum(
+            models.Case(
+                models.When(user_statuses__popup_acknowledged=True, then=1),
+                default=0,
+                output_field=models.IntegerField()
+            )
+        )
+    ).select_related('target_gym', 'target_user', 'created_by').order_by('-created_at')
+
+    # Status filter
+    status_filter = request.GET.get('status', 'all')
+    now = timezone.now()
+    if status_filter == 'active':
+        notifications = notifications.filter(is_active=True).filter(Q(expires_at__isnull=True) | Q(expires_at__gt=now))
+    elif status_filter == 'inactive':
+        notifications = notifications.filter(is_active=False)
+    elif status_filter == 'popups':
+        notifications = notifications.filter(show_popup=True)
+
+    # Search filter
+    q = request.GET.get('q', '').strip()
+    if q:
+        notifications = notifications.filter(Q(title__icontains=q) | Q(message__icontains=q))
+
+    paginator = Paginator(notifications, 15)
+    page = request.GET.get('page')
+    notifications_page = paginator.get_page(page)
+
+    context = {
+        'notifications': notifications_page,
+        'status_filter': status_filter,
+        'q': q,
+        'now': now,
+    }
+    return render(request, 'superadmin/notification_list.html', context)
+
+
+@login_required
+@superadmin_required
+def create_notification(request):
+    """
+    Form view to compose and send a new broadcast notification / popup.
+    """
+    if request.method == 'POST':
+        title = request.POST.get('title', '').strip()
+        message_body = request.POST.get('message', '').strip()
+        notification_type = request.POST.get('notification_type', 'info')
+        target_type = request.POST.get('target_type', 'all')
+        target_gym_id = request.POST.get('target_gym') or None
+        target_user_id = request.POST.get('target_user') or None
+        show_popup = request.POST.get('show_popup') == 'on'
+        is_dismissible = request.POST.get('is_dismissible') == 'on'
+        action_label = request.POST.get('action_label', '').strip() or None
+        action_url = request.POST.get('action_url', '').strip() or None
+        expires_at_str = request.POST.get('expires_at', '').strip()
+
+        if not title or not message_body:
+            messages.error(request, 'Please provide both a Title and Message.')
+            return redirect('superadmin:create_notification')
+
+        expires_at = None
+        if expires_at_str:
+            try:
+                expires_at = datetime.strptime(expires_at_str, '%Y-%m-%dT%H:%M')
+                expires_at = timezone.make_aware(expires_at)
+            except ValueError:
+                pass
+
+        target_gym = None
+        if target_gym_id:
+            target_gym = Gym.objects.filter(id=target_gym_id).first()
+
+        target_user = None
+        if target_user_id:
+            target_user = User.objects.filter(id=target_user_id).first()
+
+        image = request.FILES.get('image')
+        popup_frequency = request.POST.get('popup_frequency', 'once')
+        max_popup_views_str = request.POST.get('max_popup_views', '1').strip()
+        try:
+            max_popup_views = max(1, int(max_popup_views_str))
+        except (ValueError, TypeError):
+            max_popup_views = 1
+
+        notification = PlatformNotification.objects.create(
+            title=title,
+            message=message_body,
+            notification_type=notification_type,
+            target_type=target_type,
+            target_gym=target_gym,
+            target_user=target_user,
+            image=image,
+            show_popup=show_popup,
+            is_dismissible=is_dismissible,
+            popup_frequency=popup_frequency,
+            max_popup_views=max_popup_views,
+            action_label=action_label,
+            action_url=action_url,
+            expires_at=expires_at,
+            created_by=request.user,
+        )
+
+        messages.success(request, f"Notification '{notification.title}' broadcasted successfully!")
+        return redirect('superadmin:notification_list')
+
+    gyms = Gym.objects.all().order_by('name')
+    users = User.objects.filter(is_active=True).order_by('username')[:100]
+
+    context = {
+        'gyms': gyms,
+        'users': users,
+    }
+    return render(request, 'superadmin/create_notification.html', context)
+
+
+@login_required
+@superadmin_required
+def toggle_notification_status(request, notification_id):
+    """
+    Toggles the active state of a notification.
+    """
+    notification = get_object_or_404(PlatformNotification, id=notification_id)
+    notification.is_active = not notification.is_active
+    notification.save(update_fields=['is_active'])
+    status_str = 'activated' if notification.is_active else 'deactivated'
+    messages.success(request, f"Notification '{notification.title}' has been {status_str}.")
+    return redirect('superadmin:notification_list')
+
+
+@login_required
+@superadmin_required
+@require_POST
+def delete_notification(request, notification_id):
+    """
+    Deletes a notification and its delivery statuses.
+    """
+    notification = get_object_or_404(PlatformNotification, id=notification_id)
+    title = notification.title
+    notification.delete()
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'status': 'success', 'message': f"Notification '{title}' deleted."})
+    messages.success(request, f"Notification '{title}' was deleted successfully.")
+    return redirect('superadmin:notification_list')
+
+
+@login_required
+@superadmin_required
+def estimate_audience_api(request):
+    """
+    AJAX endpoint returning estimated recipient count breakdown.
+    """
+    target_type = request.GET.get('target_type', 'all')
+    target_gym_id = request.GET.get('target_gym_id')
+    target_user_id = request.GET.get('target_user_id')
+
+    breakdown = estimate_audience(target_type, target_gym_id, target_user_id)
+    return JsonResponse({'status': 'success', 'data': breakdown})
+
+
+# ====================================================
+# CLIENT-FACING NOTIFICATIONS & POPUP APIS
+# ====================================================
+
+@login_required
+def get_active_popup_api(request):
+    """
+    Returns active unacknowledged popup announcement for the current user.
+    """
+    popup = get_active_popup_for_user(request.user, session=request.session)
+    if popup:
+        return JsonResponse({'status': 'success', 'has_popup': True, 'popup': popup})
+    return JsonResponse({'status': 'success', 'has_popup': False})
+
+
+@login_required
+@require_POST
+def acknowledge_popup_api(request, notification_id):
+    """
+    Records popup acknowledgment so the user is not shown this modal again.
+    """
+    success = acknowledge_popup(request.user, notification_id, session=request.session)
+    return JsonResponse({'status': 'success' if success else 'error'})
+
+
+@login_required
+@require_POST
+def mark_notification_read_api(request, notification_id):
+    """
+    Marks an individual notification as read.
+    """
+    success = mark_notification_as_read(request.user, notification_id)
+    return JsonResponse({'status': 'success' if success else 'error'})
+
+
+@login_required
+@require_POST
+def mark_all_notifications_read_api(request):
+    """
+    Marks all notifications as read for current user.
+    """
+    count = mark_all_notifications_as_read(request.user)
+    return JsonResponse({'status': 'success', 'updated_count': count})
+
+
+@login_required
+def user_notifications_inbox(request):
+    """
+    Dedicated notifications inbox for any authenticated user.
+    """
+    all_notifications = get_user_applicable_notifications_qs(request.user)
+    
+    statuses = {
+        s.notification_id: s
+        for s in NotificationUserStatus.objects.filter(user=request.user, notification__in=all_notifications)
+    }
+
+    filter_type = request.GET.get('filter', 'all')
+    items = []
+    for n in all_notifications:
+        status = statuses.get(n.id)
+        is_read = status.is_read if status else False
+        if filter_type == 'unread' and is_read:
+            continue
+        items.append({
+            'notification': n,
+            'is_read': is_read,
+            'read_at': status.read_at if status else None,
+        })
+
+    paginator = Paginator(items, 15)
+    page = request.GET.get('page')
+    page_obj = paginator.get_page(page)
+
+    context = {
+        'page_obj': page_obj,
+        'filter_type': filter_type,
+        'total_count': len(items),
+    }
+
+    template_name = 'superadmin/notifications_inbox.html' if request.user.is_superuser else 'notifications/inbox.html'
+    return render(request, template_name, context)

@@ -32,4 +32,10 @@ urlpatterns = [
     path('billing_history/trash/', views.billing_trash, name='billing_trash'),
     path('billing_history/restore/<int:item_id>/<str:item_type>/', views.restore_billing, name='restore_billing'),
     path('billing_history/permanent_delete/<int:item_id>/<str:item_type>/', views.permanent_delete_billing, name='permanent_delete_billing'),
+    # Superadmin Notifications & Popup Management
+    path('notifications/', views.notification_list, name='notification_list'),
+    path('notifications/create/', views.create_notification, name='create_notification'),
+    path('notifications/<int:notification_id>/toggle/', views.toggle_notification_status, name='toggle_notification_status'),
+    path('notifications/<int:notification_id>/delete/', views.delete_notification, name='delete_notification'),
+    path('notifications/estimate-audience/', views.estimate_audience_api, name='estimate_audience_api'),
 ]
