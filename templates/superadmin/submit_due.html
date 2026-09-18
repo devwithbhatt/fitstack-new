@@ -181,4 +181,15 @@
 </script>
 {% endif %}
 
+{% if selected_gym_id %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var modalId = '#payModal-{{ selected_gym_id }}';
+        if (typeof $ !== 'undefined' && $(modalId).length) {
+            $(modalId).modal('show');
+        }
+    });
+</script>
+{% endif %}
+
 {% endblock content %}

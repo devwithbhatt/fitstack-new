@@ -46,13 +46,63 @@ def toggle_whatsapp(request, gym_id):
 @superadmin_required
 def dashboard(request):
     total_gyms = Gym.objects.count()
+    active_gyms = Gym.objects.filter(is_frozen=False).count()
+    frozen_gyms = Gym.objects.filter(is_frozen=True).count()
     total_members = Member.objects.count()
-    active_subscriptions = MembershipHistory.objects.filter(status='active').count()
+
+    today = timezone.now().date()
+    subscriptions = GymSubscription.objects.filter(is_deleted=False)
+    
+    # Financial metrics for Superadmin
+    total_sub_revenue = subscriptions.aggregate(Sum('paid_amount'))['paid_amount__sum'] or Decimal('0.00')
+    total_due_payment_rev = Payment.objects.filter(member__isnull=True, is_deleted=False).aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
+    total_platform_revenue = total_sub_revenue + total_due_payment_rev
+
+    due_agg = subscriptions.aggregate(
+        total=Sum('total_amount'),
+        paid=Sum('paid_amount')
+    )
+    total_due_amount = (due_agg['total'] or Decimal('0.00')) - (due_agg['paid'] or Decimal('0.00'))
+
+    # Active gym subscriptions (SaaS plans)
+    active_gym_subscriptions = subscriptions.filter(start_date__lte=today, end_date__gte=today).count()
+    
+    # Subscriptions expiring soon (within next 15 days)
+    upcoming_limit = today + timedelta(days=15)
+    expiring_soon_subscriptions = subscriptions.filter(
+        end_date__gte=today,
+        end_date__lte=upcoming_limit
+    ).select_related('gym', 'subscription').order_by('end_date')
+
+    # Expired subscriptions
+    expired_subscriptions = subscriptions.filter(end_date__lt=today).select_related('gym', 'subscription').order_by('-end_date')[:5]
+
+    # Recent gym payments to Superadmin
+    sub_payments = list(subscriptions.filter(paid_amount__gt=0).select_related('gym', 'subscription'))
+    platform_due_payments = list(Payment.objects.filter(member__isnull=True, is_deleted=False).select_related('gym'))
+    recent_transactions = sorted(
+        sub_payments + platform_due_payments,
+        key=lambda item: item.start_date if isinstance(item, GymSubscription) else item.payment_date.date(),
+        reverse=True
+    )[:8]
+
+    # Website inquiries
+    recent_inquiries = WebsiteContactSubmission.objects.order_by('-created_at')[:5]
+    unread_inquiries_count = WebsiteContactSubmission.objects.filter(is_read=False).count()
 
     context = {
         'total_gyms': total_gyms,
+        'active_gyms': active_gyms,
+        'frozen_gyms': frozen_gyms,
         'total_members': total_members,
-        'active_subscriptions': active_subscriptions,
+        'total_platform_revenue': total_platform_revenue,
+        'total_due_amount': total_due_amount,
+        'active_gym_subscriptions': active_gym_subscriptions,
+        'expiring_soon_subscriptions': expiring_soon_subscriptions,
+        'expired_subscriptions': expired_subscriptions,
+        'recent_transactions': recent_transactions,
+        'recent_inquiries': recent_inquiries,
+        'unread_inquiries_count': unread_inquiries_count,
     }
     return render(request, 'superadmin/dashboard.html', context)
 
@@ -80,7 +130,14 @@ def add_gym(request):
             messages.success(request, f"Gym '{gym.name}' has been added successfully.")
             return redirect('superadmin:create_gym_admin', gym_id=gym.id)
     else:
-        form = GymForm()
+        initial_data = {}
+        if request.GET.get('name'):
+            initial_data['name'] = request.GET.get('name')
+        if request.GET.get('phone'):
+            initial_data['phone'] = request.GET.get('phone')
+        if request.GET.get('email'):
+            initial_data['email'] = request.GET.get('email')
+        form = GymForm(initial=initial_data)
     return render(request, 'superadmin/add_gym.html', {'form': form, 'page_title': 'Add Gym', 'button_text': 'Add Gym'})
 
 
@@ -120,16 +177,26 @@ def create_gym_admin(request, gym_id):
 @superadmin_required
 def gym_list(request):
     query = request.GET.get('q')
+    status_filter = request.GET.get('status')
+    
+    gyms_qs = Gym.objects.all().order_by('-id')
     if query:
-        gyms_list = Gym.objects.filter(
+        gyms_qs = gyms_qs.filter(
             Q(name__icontains=query) |
             Q(gym_id__icontains=query) |
-            Q(address__icontains=query)
+            Q(address__icontains=query) |
+            Q(city__icontains=query) |
+            Q(phone__icontains=query)
         ).distinct()
-    else:
-        gyms_list = Gym.objects.all()
 
-    for gym in gyms_list:
+    today = timezone.now().date()
+    gym_items = []
+    total_active_count = 0
+    total_expired_count = 0
+    total_expiring_soon_count = 0
+    total_frozen_count = 0
+
+    for gym in gyms_qs:
         admin = GymAdmin.objects.filter(gym=gym).first()
         gym.has_admin = bool(admin)
         gym.admin_name = f"{admin.user.first_name} {admin.user.last_name}".strip() or admin.user.username if admin else "N/A"
@@ -137,30 +204,71 @@ def gym_list(request):
 
         latest_subscription = GymSubscription.objects.filter(gym=gym, is_deleted=False).order_by('-end_date').first()
         if latest_subscription:
+            gym.latest_subscription = latest_subscription
             gym.expiry_date = latest_subscription.end_date
-            today = timezone.now().date()
             if gym.expiry_date < today:
                 gym.membership_status = 'Expired'
-                gym.remaining_months = 0
-                gym.remaining_days = 0
+                gym.days_remaining = 0
+                total_expired_count += 1
             else:
-                gym.membership_status = 'Active'
                 remaining_time = gym.expiry_date - today
                 total_days = remaining_time.days
+                gym.days_remaining = total_days
+                if total_days <= 7:
+                    gym.membership_status = 'Expiring Soon'
+                    total_expiring_soon_count += 1
+                else:
+                    gym.membership_status = 'Active'
+                    total_active_count += 1
                 gym.remaining_months = total_days // 30
                 gym.remaining_days = total_days % 30
         else:
+            gym.latest_subscription = None
             gym.expiry_date = None
             gym.membership_status = 'No Subscription'
+            gym.days_remaining = 0
             gym.remaining_months = 0
             gym.remaining_days = 0
 
-    paginator = Paginator(gyms_list, 10)  # Show 10 gyms per page
+        if gym.is_frozen:
+            total_frozen_count += 1
+
+        # Calculate due amount for this gym
+        due_agg = GymSubscription.objects.filter(gym=gym, is_deleted=False).aggregate(
+            tot=Sum('total_amount'),
+            pd=Sum('paid_amount')
+        )
+        gym.due_amount = (due_agg['tot'] or Decimal('0.00')) - (due_agg['pd'] or Decimal('0.00'))
+
+        # Apply status filter if selected
+        if status_filter:
+            if status_filter == 'active' and (gym.membership_status != 'Active' or gym.is_frozen):
+                continue
+            elif status_filter == 'expiring_soon' and gym.membership_status != 'Expiring Soon':
+                continue
+            elif status_filter == 'expired' and gym.membership_status != 'Expired':
+                continue
+            elif status_filter == 'frozen' and not gym.is_frozen:
+                continue
+
+        gym_items.append(gym)
+
+    paginator = Paginator(gym_items, 10)  # Show 10 gyms per page
     page = request.GET.get('page')
     gyms = paginator.get_page(page)
 
     open_invoice_id = request.session.pop('open_invoice_id', None)
-    return render(request, 'superadmin/gym_list.html', {'gyms': gyms, 'open_invoice_id': open_invoice_id})
+    return render(request, 'superadmin/gym_list.html', {
+        'gyms': gyms,
+        'open_invoice_id': open_invoice_id,
+        'query': query,
+        'status_filter': status_filter,
+        'total_gyms_count': Gym.objects.count(),
+        'total_active_count': total_active_count,
+        'total_expiring_soon_count': total_expiring_soon_count,
+        'total_expired_count': total_expired_count,
+        'total_frozen_count': total_frozen_count,
+    })
 
 
 @login_required
@@ -196,9 +304,36 @@ def gym_profile(request, gym_id):
     gym = get_object_or_404(Gym, pk=gym_id)
     form = GymForm(instance=gym)
 
-    # Paginate payment history
-    payment_list = Payment.objects.filter(gym=gym, is_deleted=False).order_by('-payment_date')
-    paginator_payments = Paginator(payment_list, 10)  # Show 10 payments per page
+    # Subscriptions of this gym
+    gym_subscriptions = GymSubscription.objects.filter(gym=gym, is_deleted=False).order_by('-start_date')
+    today = timezone.now().date()
+    active_subscription = gym_subscriptions.filter(start_date__lte=today, end_date__gte=today).first()
+    gym_admins = GymAdmin.objects.filter(gym=gym)
+    admin_form = GymAdminForm()
+
+    # Calculate SaaS financial metrics for this gym
+    aggregation = gym_subscriptions.aggregate(
+        total_amount=Sum('total_amount'),
+        paid_amount=Sum('paid_amount')
+    )
+    total_billed = aggregation['total_amount'] or Decimal('0.00')
+    total_paid = aggregation['paid_amount'] or Decimal('0.00')
+    due_amount = total_billed - total_paid
+
+    # Platform payments from this gym (only member__isnull=True, eliminating all member payments)
+    platform_due_payments = list(Payment.objects.filter(gym=gym, member__isnull=True, is_deleted=False).order_by('-payment_date'))
+    
+    # Subscriptions that had an upfront payment
+    subscription_payments = [sub for sub in gym_subscriptions if sub.paid_amount > 0]
+
+    # Combine into a unified payment timeline showing only payments from this Gym to Superadmin
+    combined_history = sorted(
+        subscription_payments + platform_due_payments,
+        key=lambda item: item.start_date if isinstance(item, GymSubscription) else item.payment_date.date(),
+        reverse=True
+    )
+
+    paginator_payments = Paginator(combined_history, 10)  # Show 10 payments per page
     page_payments = request.GET.get('page_payments')
     try:
         payment_history = paginator_payments.page(page_payments)
@@ -207,17 +342,7 @@ def gym_profile(request, gym_id):
     except EmptyPage:
         payment_history = paginator_payments.page(paginator_payments.num_pages)
 
-    gym_subscriptions = GymSubscription.objects.filter(gym=gym, is_deleted=False)
-    active_subscription = gym_subscriptions.filter(start_date__lte=date.today(), end_date__gte=date.today()).first()
-    gym_admins = GymAdmin.objects.filter(gym=gym)
-    admin_form = GymAdminForm()
-
-    # Calculate due amount
-    aggregation = gym_subscriptions.aggregate(
-        total_amount=Sum('total_amount'),
-        paid_amount=Sum('paid_amount')
-    )
-    due_amount = (aggregation['total_amount'] or 0) - (aggregation['paid_amount'] or 0)
+    payment_modes = GymSubscription.PAYMENT_MODE_CHOICES
 
     return render(request, 'superadmin/gym_profile.html', {
         'gym': gym,
@@ -227,8 +352,35 @@ def gym_profile(request, gym_id):
         'active_subscription': active_subscription,
         'gym_admins': gym_admins,
         'admin_form': admin_form,
-        'due_amount': due_amount
+        'total_billed': total_billed,
+        'total_paid': total_paid,
+        'due_amount': due_amount,
+        'payment_modes': payment_modes,
     })
+
+
+@login_required
+@superadmin_required
+@require_POST
+def update_gym_settings(request, gym_id):
+    gym = get_object_or_404(Gym, pk=gym_id)
+    gym.attendance_code_required = request.POST.get('attendance_code_required') == 'on'
+    new_attendance_code = request.POST.get('attendance_code', '').strip()
+    if new_attendance_code:
+        gym.attendance_code = new_attendance_code
+
+    gym.gst_enabled = request.POST.get('gst_enabled') == 'on'
+    if gym.gst_enabled:
+        gym.gst_number = request.POST.get('gst_number', '').strip()
+        gst_rate = request.POST.get('gst_rate', '0').strip()
+        gym.gst_rate = int(gst_rate) if gst_rate.isdigit() else 0
+    else:
+        gym.gst_number = None
+        gym.gst_rate = 0
+
+    gym.save()
+    messages.success(request, f"Settings for '{gym.name}' updated successfully.")
+    return redirect('superadmin:gym_profile', gym_id=gym.id)
 
 @login_required
 @superadmin_required
@@ -476,6 +628,9 @@ def submit_due(request):
                     last_sub = subscriptions.last()
                     request.session['open_invoice_id'] = last_sub.id
         
+        next_url = request.POST.get('next')
+        if next_url:
+            return redirect(next_url)
         return redirect('superadmin:submit_due')
 
     gyms_with_due = Gym.objects.filter(gymsubscription__is_deleted=False).annotate(
@@ -491,6 +646,7 @@ def submit_due(request):
         gym.latest_subscription = GymSubscription.objects.filter(gym=gym).latest('start_date')
 
     query = request.GET.get('q')
+    selected_gym_id = request.GET.get('gym_id')
     if query:
         gyms_with_due = gyms_with_due.filter(
             Q(name__icontains=query) |
@@ -503,7 +659,8 @@ def submit_due(request):
     return render(request, 'superadmin/submit_due.html', {
         'gyms': gyms_with_due, 
         'query': query,
-        'open_invoice_id': open_invoice_id
+        'open_invoice_id': open_invoice_id,
+        'selected_gym_id': selected_gym_id,
     })
 
 @login_required

@@ -121,16 +121,39 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'GYM.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.postgresql'),
-        'NAME': os.environ.get('DB_NAME', 'gymdb'),
-        'USER': os.environ.get('DB_USER', 'gymuser'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
-        'HOST': os.environ.get('DB_HOST', 'localhost'),    
-        'PORT': os.environ.get('DB_PORT', '5432'),
+db_engine = os.environ.get('DB_ENGINE')
+db_password = os.environ.get('DB_PASSWORD')
+db_user = os.environ.get('DB_USER')
+
+if db_engine:
+    DATABASES = {
+        'default': {
+            'ENGINE': db_engine,
+            'NAME': os.environ.get('DB_NAME', 'gymdb'),
+            'USER': db_user or 'gymuser',
+            'PASSWORD': db_password or '',
+            'HOST': os.environ.get('DB_HOST', 'localhost'),
+            'PORT': os.environ.get('DB_PORT', '5432'),
+        }
     }
-}
+elif db_password or db_user:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('DB_NAME', 'gymdb'),
+            'USER': db_user or 'gymuser',
+            'PASSWORD': db_password or '',
+            'HOST': os.environ.get('DB_HOST', 'localhost'),
+            'PORT': os.environ.get('DB_PORT', '5432'),
+        }
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},

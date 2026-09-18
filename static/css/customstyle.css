@@ -7,7 +7,7 @@
   --success-color: #00cccd;
   --info-color: #198ae3;
   --warning-color: #ffab2d;
-  --danger-color: #ac0661;
+  --danger-color: #dc2626;
   --light-color: #f8f9fa;
   --dark-color: #3e4b5b;
   --white: #ffffff;
@@ -18,10 +18,10 @@
   --border-color: #ebedf2;
   --content-bg: #f2f2f2;
   --card-shadow: 0 2px 10px 0 rgba(197, 191, 191, 0.5);
-  --gradient-primary: linear-gradient(135deg, #4599cd 0%, #5e50f9 100%);
-  --gradient-success: linear-gradient(135deg, #00cccd 0%, #46c35f 100%);
-  --gradient-info: linear-gradient(135deg, #198ae3 0%, #57c7d4 100%);
-  --gradient-warning: linear-gradient(135deg, #ffab2d 0%, #f6e84e 100%);
+  --gradient-primary: #2563eb;
+  --gradient-success: #10b981;
+  --gradient-info: #0284c7;
+  --gradient-warning: #f59e0b;
 }
 
 /* Compact Breadcrumb Styles */
@@ -671,31 +671,96 @@ td[data-label="Actions"] .btn:hover {
   box-shadow: 0 8px 25px rgba(0,0,0,0.15);
 }
 
-/* Professional Badges */
+/* Professional Badges - Clean Flat Solid Colors (No Gradients) */
 .badge {
-  font-weight: 500;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
+  font-weight: 600;
+  padding: 0.35rem 0.65rem;
+  border-radius: 4px;
 }
 
 .badge-primary {
-  background: var(--gradient-primary);
-  color: var(--white);
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  background-image: none !important;
 }
 
 .badge-success {
-  background: var(--gradient-success);
-  color: var(--white);
+  background-color: #10b981 !important;
+  color: #ffffff !important;
+  background-image: none !important;
 }
 
 .badge-info {
-  background: var(--gradient-info);
-  color: var(--white);
+  background-color: #0ea5e9 !important;
+  color: #ffffff !important;
+  background-image: none !important;
 }
 
 .badge-warning {
-  background: var(--gradient-warning);
-  color: var(--dark-color);
+  background-color: #f59e0b !important;
+  color: #ffffff !important;
+  background-image: none !important;
+}
+
+.badge-danger {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+  background-image: none !important;
+}
+
+.badge-secondary {
+  background-color: #64748b !important;
+  color: #ffffff !important;
+  background-image: none !important;
+}
+
+/* Clean Flat Button & Danger Palette Overrides (Eliminates Neon Pink) */
+.btn {
+  white-space: nowrap !important;
+}
+
+.btn-danger {
+  color: #ffffff !important;
+  background-color: #dc2626 !important;
+  border-color: #dc2626 !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.btn-danger:hover,
+.btn-danger:focus,
+.btn-danger:active {
+  color: #ffffff !important;
+  background-color: #b91c1c !important;
+  border-color: #b91c1c !important;
+  box-shadow: none !important;
+}
+
+.bg-danger {
+  background-color: #dc2626 !important;
+  color: #ffffff !important;
+}
+
+.text-danger {
+  color: #dc2626 !important;
+}
+
+.border-danger {
+  border-color: #fee2e2 !important;
+}
+
+.btn-outline-danger {
+  color: #dc2626 !important;
+  border-color: #dc2626 !important;
+  background-color: transparent !important;
+}
+
+.btn-outline-danger:hover,
+.btn-outline-danger:focus,
+.btn-outline-danger:active {
+  background-color: #dc2626 !important;
+  border-color: #dc2626 !important;
+  color: #ffffff !important;
 }
 
 /* SweetAlert Custom Styling */
