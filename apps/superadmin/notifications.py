@@ -517,7 +517,7 @@ def notify_membership_activated(member, history, is_upgrade=False):
             show_popup=True,
             popup_frequency='once',
             action_label='View Billing & Receipt',
-            action_url='/member-portal/billing/'
+            action_url='/portal/member/billing/'
         )
 
     # 2. Gym Staff Notification
@@ -569,7 +569,7 @@ def notify_pt_assigned(member, pt_assignment):
             show_popup=True,
             popup_frequency='once',
             action_label='View Trainer Details',
-            action_url='/member-portal/personal-training/'
+            action_url='/portal/member/personal-training/'
         )
 
     # 2. Trainer Notification
@@ -587,7 +587,7 @@ def notify_pt_assigned(member, pt_assignment):
             show_popup=True,
             popup_frequency='once',
             action_label='View Client Profile',
-            action_url=f'/trainer-portal/client/{member.id}/'
+            action_url=f'/portal/trainer/client/{member.id}/'
         )
 
     # 3. Gym Staff Notification
@@ -649,7 +649,7 @@ def notify_payment_submitted(payment, member, invoice=None, invoice_type='member
             show_popup=True,
             popup_frequency='once',
             action_label='View Payment History',
-            action_url='/member-portal/billing/'
+            action_url='/portal/member/billing/'
         )
     else:
         member_notif = None
@@ -708,7 +708,7 @@ def notify_membership_expiring(member, history, days_left):
                 show_popup=True,
                 popup_frequency='every_login',
                 action_label='Check Membership Details',
-                action_url='/member-portal/dashboard/'
+                action_url='/portal/member/'
             )
 
     # Gym Staff reminder
@@ -758,7 +758,7 @@ def notify_membership_expired(member, history):
                 show_popup=True,
                 popup_frequency='every_login',
                 action_label='Renew Membership',
-                action_url='/member-portal/dashboard/'
+                action_url='/portal/member/billing/'
             )
 
     send_system_notification(
@@ -801,7 +801,7 @@ def notify_pt_expiring(member, pt_assignment, days_left):
             show_popup=True,
             popup_frequency='once',
             action_label='View PT Details',
-            action_url='/member-portal/personal-training/'
+            action_url='/portal/member/personal-training/'
         )
 
     # 2. Trainer
@@ -818,6 +818,6 @@ def notify_pt_expiring(member, pt_assignment, days_left):
             target_gym=gym,
             show_popup=False,
             action_label='View Client',
-            action_url=f'/trainer-portal/client/{member.id}/'
+            action_url=f'/portal/trainer/client/{member.id}/'
         )
 
