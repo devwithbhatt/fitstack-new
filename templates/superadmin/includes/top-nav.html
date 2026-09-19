@@ -32,13 +32,31 @@
         </a>
       </li>
       <li class="nav-item nav-profile dropdown border-0">
-        <a class="nav-link dropdown-toggle" id="profileDropdown" href="#" data-toggle="dropdown">
-          <img class="nav-profile-img mr-2" alt="" src="{% static 'images/face16.png' %}" />
-          <span class="profile-name">Superadmin</span>
+        <a class="nav-link dropdown-toggle d-flex align-items-center text-dark text-decoration-none px-2 py-1" id="profileDropdown" href="#" data-toggle="dropdown" style="background: rgba(255,255,255,0.85); border-radius: 30px; border: 1px solid #e2e8f0; box-shadow: 0 2px 6px rgba(0,0,0,0.06);">
+          <div class="position-relative mr-2">
+            <img class="rounded-circle" alt="Superadmin" src="{% static 'images/face16.png' %}" style="width: 32px; height: 32px; object-fit: cover; border: 1.5px solid #fff;" />
+            <span style="position: absolute; bottom: 0; right: 0; width: 8.5px; height: 8.5px; border-radius: 50%; background: #10b981; border: 1.5px solid #fff;"></span>
+          </div>
+          <div class="d-none d-sm-flex flex-column text-left mr-1">
+            <span class="font-weight-bold" style="font-size: 13px; color: #0f172a; line-height: 1.15;">{{ user.username|default:"Superadmin" }}</span>
+            <span class="badge badge-pill mt-0.5 px-2 py-0.5" style="background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; font-size: 9.5px; font-weight: 700; text-transform: uppercase;">
+              <i class="mdi mdi-shield-crown mr-1"></i>Super Admin
+            </span>
+          </div>
+          <i class="mdi mdi-chevron-down text-muted ml-1"></i>
         </a>
-        <div class="dropdown-menu navbar-dropdown w-100" aria-labelledby="profileDropdown">
-          <a class="dropdown-item" href="{% url "logout" %}">
-            <i class="mdi mdi-logout mr-2 text-primary"></i> Logout
+        <div class="dropdown-menu dropdown-menu-right shadow-lg border-0 py-0" style="min-width: 250px; border-radius: 12px; overflow: hidden;" aria-labelledby="profileDropdown">
+          <div class="p-3 bg-light border-bottom">
+            <h6 class="font-weight-bold mb-0 text-dark">{{ user.get_full_name|default:user.username }}</h6>
+            <small class="text-muted">{{ user.email|default:"superadmin@system.local" }}</small>
+            <div class="mt-1">
+              <span class="badge badge-pill px-2 py-0.5" style="background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; font-size: 9.5px; font-weight: 700;">
+                <i class="mdi mdi-shield-crown mr-1"></i>SUPER ADMIN
+              </span>
+            </div>
+          </div>
+          <a class="dropdown-item py-2 px-3 text-danger font-weight-bold" href="{% url "logout" %}">
+            <i class="mdi mdi-logout mr-2 text-danger"></i> Sign Out
           </a>
         </div>
       </li>
@@ -48,4 +66,16 @@
     </button>
   </div>
 </nav>
-{% include 'includes/notification_drawer.html' %}
+<style>
+.navbar .navbar-menu-wrapper .navbar-nav .nav-item.dropdown .dropdown-toggle i:before,
+.navbar .navbar-menu-wrapper .navbar-nav .nav-item .dropdown-toggle i:before,
+.navbar .navbar-menu-wrapper .navbar-nav .dropdown-toggle i:before {
+  width: auto !important;
+  height: auto !important;
+  background: transparent !important;
+  line-height: inherit !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+</style>
+{% include 'includes/notification_drawer.html' %}

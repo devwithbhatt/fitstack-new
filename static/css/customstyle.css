@@ -1183,4 +1183,23 @@ legend {
   margin-top: 3px !important;
   display: block !important;
   line-height: 1.2 !important;
-}
+}
+
+/* Topbar Dropdown Icon Fix - Neutralize style.css 34px dark grey bubble */
+.navbar .navbar-menu-wrapper .navbar-nav .nav-item.dropdown .dropdown-toggle i,
+.navbar .navbar-menu-wrapper .navbar-nav .nav-item .dropdown-toggle i,
+.navbar .navbar-menu-wrapper .navbar-nav .dropdown-toggle i {
+  font-size: inherit;
+  line-height: inherit;
+}
+.navbar .navbar-menu-wrapper .navbar-nav .nav-item.dropdown .dropdown-toggle i:before,
+.navbar .navbar-menu-wrapper .navbar-nav .nav-item .dropdown-toggle i:before,
+.navbar .navbar-menu-wrapper .navbar-nav .dropdown-toggle i:before {
+  width: auto !important;
+  height: auto !important;
+  background: transparent !important;
+  line-height: inherit !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+

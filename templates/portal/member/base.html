@@ -235,9 +235,10 @@
           {% endif %}
         </a>
 
-        <a href="{% url 'member_portal:profile' %}" class="member-badge-chip text-decoration-none">
+        <a href="{% url 'member_portal:profile' %}" class="member-badge-chip text-decoration-none" title="Member Profile">
           <img src="{% if member.profile_picture %}{{ member.profile_picture.url }}{% else %}{% static 'images/member_dp.jpg' %}{% endif %}" alt="{{ member.name }}" class="member-avatar-small">
-          <span class="d-none d-sm-inline">{{ member.first_name }}</span>
+          <span class="d-none d-sm-inline font-weight-bold mr-1">{{ member.first_name }}</span>
+          <span class="badge badge-pill px-2 py-0.5" style="background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; font-size: 10px; font-weight: 700; text-transform: uppercase;"><i class="mdi mdi-account-check mr-1"></i>Member</span>
         </a>
         <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-danger px-3 ml-2" title="Sign Out">
           <i class="mdi mdi-logout mr-1"></i> Logout

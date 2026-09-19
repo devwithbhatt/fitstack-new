@@ -1,135 +1,437 @@
 {% load static custom_tags %}
-<nav class="navbar col-lg-12 col-12 p-lg-0 fixed-top d-flex flex-row" >
-  <div class="navbar-menu-wrapper d-flex align-items-stretch justify-content-between  " style="height: 60px; background: linear-gradient(to right, #e6e5f2, #4599cd);"> 
-    <a class="navbar-brand brand-logo-mini align-self-center d-lg-none" href="{% url 'dashboard' %}">
-      {% comment %} <img src="{% static 'images/SquareFitlogo.jpg' %}" alt="logo" style="height: 40px; filter: invert(1);"/>
-        {% endcomment %}
-           {% if gym.logo %}
-      <img src="{{ gym.logo.url }}" alt="{{ gym.name }} Logo" class="img-fluid rounded-circle mb-2" style="width: 40px; height: 40px; object-fit: cover; border: 2px solid #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
-    {% endif %}
+<nav class="navbar col-lg-12 col-12 p-lg-0 fixed-top d-flex flex-row">
+  <div class="navbar-menu-wrapper d-flex align-items-center justify-content-between" style="height: 60px; background: linear-gradient(to right, #e6e5f2, #4599cd);"> 
+    
+    <!-- Mini Brand Logo (Mobile) -->
+    <a class="navbar-brand brand-logo-mini align-self-center d-lg-none" href="{% if is_member %}{% url 'member_portal:dashboard' %}{% elif is_trainer %}{% url 'trainer_portal:dashboard' %}{% elif is_superadmin %}{% url 'superadmin:dashboard' %}{% else %}{% url 'dashboard' %}{% endif %}">
+      {% if gym and gym.logo %}
+        <img src="{{ gym.logo.url }}" alt="{{ gym.name }} Logo" class="img-fluid rounded-circle" style="width: 38px; height: 38px; object-fit: cover; border: 2px solid #fff; box-shadow: 0 0 8px rgba(0,0,0,0.15);">
+      {% else %}
+        <img src="{% static 'images/face16.png' %}" alt="Logo" class="img-fluid rounded-circle" style="width: 38px; height: 38px; object-fit: cover; border: 2px solid #fff;">
+      {% endif %}
     </a>
-    {% comment %} <button class="navbar-toggler navbar-toggler align-self-center mr-2" type="button" data-toggle="minimize">
-      <i class="mdi mdi-menu"></i>
-    </button> {% endcomment %}
+
     <ul class="navbar-nav">
       
     </ul>
-    <ul class="navbar-nav navbar-nav-right ml-lg-auto ">
-      {% if not request.user.member_profile and not request.user.trainer_profile %}
-      <li class="nav-item dropdown d-none d-xl-flex border-0 ">
-        <a class="nav-link dropdown-toggle text-dark" id="languageDropdown" href="#" data-toggle="dropdown">
-          <i class="mdi mdi-earth" ></i> Quick Actions </a>
-        <div class="dropdown-menu navbar-dropdown" aria-labelledby="languageDropdown">
+
+    <!-- Right Side Actions & Profile -->
+    <ul class="navbar-nav navbar-nav-right ml-auto d-flex align-items-center mb-0">
+      
+      <!-- Quick Actions (Only for Admin / Staff with permissions) -->
+      {% if not is_member and not is_trainer %}
+      <li class="nav-item dropdown d-none d-xl-flex border-0 mr-2">
+        <a class="nav-link dropdown-toggle topbar-action-btn d-flex align-items-center" id="quickActionsDropdown" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <i class="mdi mdi-flash mr-1 text-warning font-weight-bold" style="font-size: 16px;"></i>
+          <span>Quick Actions</span>
+        </a>
+        <div class="dropdown-menu dropdown-menu-right navbar-dropdown shadow-sm" aria-labelledby="quickActionsDropdown">
+          <div class="dropdown-header px-3 py-2 text-uppercase font-weight-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">
+            Quick Shortcuts
+          </div>
           {% if request.user|has_permission:'add_enquiry' %}
-          <a class="dropdown-item" href="{% url 'add_new_enquiry' %}"> 
-            <i class="mdi mdi-comment-question-outline mr-2 text-danger"></i> Add New Enquiry
+          <a class="dropdown-item d-flex align-items-center" href="{% url 'add_new_enquiry' %}"> 
+            <span class="action-icon-pill bg-soft-danger text-danger mr-2">
+              <i class="mdi mdi-comment-question-outline"></i>
+            </span>
+            <span>Add New Enquiry</span>
           </a>
           {% endif %}
           {% if request.user|has_permission:'add_member' %}
-          <a class="dropdown-item" href="{% url 'add_new_member' %}"> 
-            <i class="mdi mdi-account-plus-outline mr-2 text-success"></i> Add New Member 
+          <a class="dropdown-item d-flex align-items-center" href="{% url 'add_new_member' %}"> 
+            <span class="action-icon-pill bg-soft-success text-success mr-2">
+              <i class="mdi mdi-account-plus-outline"></i>
+            </span>
+            <span>Add New Member</span>
           </a>
           {% endif %}
           {% if request.user|has_permission:'add_trainer' %}
-          <a class="dropdown-item" href="{% url 'add_trainer' %}"> 
-            <i class="mdi mdi-account-star-outline mr-2 text-primary"></i> Add New Trainer 
+          <a class="dropdown-item d-flex align-items-center" href="{% url 'add_trainer' %}"> 
+            <span class="action-icon-pill bg-soft-primary text-primary mr-2">
+              <i class="mdi mdi-account-star-outline"></i>
+            </span>
+            <span>Add New Trainer</span>
           </a>
           {% endif %}
           {% if request.user|has_permission:'view_payment' %}
-          <a class="dropdown-item" href="{% url 'billing:submit_due' %}"> 
-            <i class="mdi mdi-receipt mr-2 text-danger"></i> Make a Bill 
+          <a class="dropdown-item d-flex align-items-center" href="{% url 'billing:submit_due' %}"> 
+            <span class="action-icon-pill bg-soft-warning text-warning mr-2">
+              <i class="mdi mdi-receipt"></i>
+            </span>
+            <span>Make a Bill</span>
           </a>
           {% endif %}
         </div>
       </li>
       {% endif %}
-      <li class="nav-item">
+
+      <!-- QR Code Pay / Check-In -->
+      <li class="nav-item d-flex align-items-center px-1">
         {% if payment_settings.qr_code %}
-          <a class="nav-link"
+          <a class="topbar-circle-btn"
              href="#"
+             title="Scan & Pay QR"
              data-bs-toggle="modal"
              data-bs-target="#imagePreviewModal"
              data-toggle="modal"
              data-target="#imagePreviewModal"
              onclick="showImage('{{ payment_settings.qr_code.url }}')">
-              <i class="mdi mdi-qrcode-scan text-dark"></i>
+              <i class="mdi mdi-qrcode-scan"></i>
           </a>
         {% else %}
-          <a class="nav-link"
+          <a class="topbar-circle-btn text-muted"
              href="#"
+             title="QR code not uploaded"
              onclick="alert('QR code not uploaded yet'); return false;">
-              <i class="mdi mdi-qrcode-scan text-muted"></i>
+              <i class="mdi mdi-qrcode-scan"></i>
           </a>
         {% endif %}
       </li>
+
       <!-- Notification Bell Drawer Trigger -->
-      <li class="nav-item position-relative mr-2 d-flex align-items-center">
-        <a class="nav-link cursor-pointer d-flex align-items-center justify-content-center p-0" href="javascript:void(0);" onclick="openNotificationDrawer()" title="Notifications" style="text-decoration: none; position: relative;">
-          <div class="nav-bell-circle" style="width: 34px; height: 34px; border-radius: 50%; background: #3f3f40; display: flex; align-items: center; justify-content: center; color: #ffffff; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: background 0.15s ease;">
-            <i class="mdi mdi-bell" style="font-size: 18px; color: #ffffff; line-height: 1;"></i>
-          </div>
+      <li class="nav-item position-relative d-flex align-items-center px-1">
+        <a class="topbar-circle-btn bell-btn cursor-pointer" href="javascript:void(0);" onclick="openNotificationDrawer()" title="Notifications" style="text-decoration: none; position: relative;">
+          <i class="mdi mdi-bell"></i>
           {% if unread_notifications_count > 0 %}
-            <span class="count-symbol" id="navNotifCountDot" style="background-color: #dc2626; width: 10px; height: 10px; position: absolute; top: -1px; right: -1px; border-radius: 50%; border: 2px solid #ffffff;"></span>
+            <span class="topbar-badge-dot" id="navNotifCountDot"></span>
           {% endif %}
         </a>
       </li>
   
-      <li class="nav-item nav-profile dropdown border-0 mr-4">
-        <a class="nav-link dropdown-toggle text-dark" id="profileDropdown" href="#" data-toggle="dropdown">
-          {% if request.user.member_profile and request.user.member_profile.profile_picture %}
-            <img class="nav-profile-img mr-2" alt="{{ request.user.member_profile.name }}" src="{{ request.user.member_profile.profile_picture.url }}" style="object-fit: cover;" />
-          {% elif request.user.trainer_profile and request.user.trainer_profile.photo %}
-            <img class="nav-profile-img mr-2" alt="{{ request.user.trainer_profile.name }}" src="{{ request.user.trainer_profile.photo.url }}" style="object-fit: cover;" />
+      <!-- User Profile & Clean Inline Role Badge -->
+      <li class="nav-item nav-profile dropdown border-0 pl-2 pr-1">
+        <a class="nav-link dropdown-toggle topbar-profile-pill text-dark d-flex align-items-center" id="profileDropdown" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="text-decoration: none;">
+          <!-- Avatar -->
+          {% if user_avatar_url %}
+            <img class="nav-profile-img" alt="{{ user_display_name }}" src="{{ user_avatar_url }}" />
           {% else %}
-            <img class="nav-profile-img mr-2" alt="" src="{% static 'images/face16.png' %}" />
+            <img class="nav-profile-img" alt="{{ user_display_name }}" src="{% static 'images/face16.png' %}" />
           {% endif %}
-          <span class="profile-name">
-            {% if request.user.member_profile %}
-              {{ request.user.member_profile.first_name }}
-            {% elif request.user.trainer_profile %}
-              {{ request.user.trainer_profile.name }}
-            {% else %}
-              {{ user.username }}
-            {% endif %}
+          
+          <!-- Name & Role Badge in one clean row -->
+          <span class="profile-name font-weight-bold text-dark ml-2 text-truncate" style="max-width: 120px;">
+            {{ user_display_name }}
+          </span>
+          <span class="topbar-role-badge {{ user_role_badge_class }} ml-1.5">
+            {{ user_role_label }}
           </span>
         </a>
-        <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown">
-          {% if request.user.member_profile %}
+
+        <!-- Dropdown Menu -->
+        <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown" style="min-width: 240px;">
+          <div class="px-3 py-2 border-bottom bg-light">
+            <div class="font-weight-bold text-dark text-truncate" style="font-size: 13px;">{{ user_full_name|default:user_display_name }}</div>
+            <div class="d-flex align-items-center mt-1">
+              <span class="topbar-role-badge {{ user_role_badge_class }}">{{ user_role_label }}</span>
+              {% if gym %}
+                <small class="text-muted ml-2 text-truncate font-weight-bold" style="font-size: 11px;" title="{{ gym.name }}">{{ gym.name }}</small>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Role-specific items -->
+          {% if is_member %}
+            <a class="dropdown-item" href="{% url 'member_portal:dashboard' %}">
+              <i class="mdi mdi-view-dashboard text-primary mr-2"></i> Dashboard
+            </a>
             <a class="dropdown-item" href="{% url 'member_portal:profile' %}">
-              <i class="mdi mdi-account text-primary"></i>
-              My Profile
+              <i class="mdi mdi-account text-primary mr-2"></i> My Profile
             </a>
-          {% elif request.user.trainer_profile %}
+            <a class="dropdown-item" href="{% url 'member_portal:billing' %}">
+              <i class="mdi mdi-receipt text-primary mr-2"></i> Billing & Receipts
+            </a>
+            <a class="dropdown-item" href="{% url 'member_portal:workout_plan' %}">
+              <i class="mdi mdi-dumbbell text-primary mr-2"></i> Workout & Diet
+            </a>
+          {% elif is_trainer %}
+            <a class="dropdown-item" href="{% url 'trainer_portal:dashboard' %}">
+              <i class="mdi mdi-view-dashboard text-primary mr-2"></i> Dashboard
+            </a>
             <a class="dropdown-item" href="{% url 'trainer_portal:profile' %}">
-              <i class="mdi mdi-account text-primary"></i>
-              My Profile
+              <i class="mdi mdi-account text-primary mr-2"></i> My Profile
             </a>
-          {% else %}
-            <a class="dropdown-item">
-              <i class="mdi mdi-settings text-primary"></i>
-              Profile
+            <a class="dropdown-item" href="{% url 'trainer_portal:clients' %}">
+              <i class="mdi mdi-account-multiple text-primary mr-2"></i> My Clients
             </a>
-            {% if request.session.role == 'gym_admin' %}
+          {% elif is_gym_admin %}
+            <a class="dropdown-item" href="{% url 'settings:gym_profile' %}">
+              <i class="mdi mdi-settings text-primary mr-2"></i> Gym Settings
+            </a>
             <a class="dropdown-item" href="{% url 'add_gym_subadmin' %}">
-              <i class="mdi mdi-account-plus text-primary"></i>
-              Add Subadmin
+              <i class="mdi mdi-account-plus text-primary mr-2"></i> Add Subadmin
             </a>
             <a class="dropdown-item" href="{% url 'view_subadmins' %}">
-              <i class="mdi mdi-account-multiple text-primary"></i>
-              View Subadmins
+              <i class="mdi mdi-account-multiple text-primary mr-2"></i> View Subadmins
             </a>
-            {% endif %}
+          {% elif is_subadmin %}
+            <a class="dropdown-item" href="{% url 'dashboard' %}">
+              <i class="mdi mdi-view-dashboard text-primary mr-2"></i> Dashboard
+            </a>
+          {% elif is_superadmin %}
+            <a class="dropdown-item" href="{% url 'superadmin:dashboard' %}">
+              <i class="mdi mdi-shield-crown text-primary mr-2"></i> Superadmin Console
+            </a>
+            <a class="dropdown-item" href="{% url 'superadmin:gym_list' %}">
+              <i class="mdi mdi-domain text-primary mr-2"></i> Manage Gyms
+            </a>
+          {% else %}
+            <a class="dropdown-item" href="{% url 'dashboard' %}">
+              <i class="mdi mdi-view-dashboard text-primary mr-2"></i> Dashboard
+            </a>
           {% endif %}
-          <a class="dropdown-item" href="{% url 'logout' %}">
-            <i class="mdi mdi-logout text-primary"></i>
-            Logout
+
+          <div class="dropdown-divider my-1"></div>
+
+          <a class="dropdown-item text-danger font-weight-bold" href="{% url 'logout' %}">
+            <i class="mdi mdi-logout text-danger mr-2"></i> Logout
           </a>
         </div>
       </li>
     </ul>
-    <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button" data-toggle="offcanvas">
-      <span class="mdi mdi-menu text-dark"></span>
+
+    <!-- Mobile Offcanvas Toggler -->
+    <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button" data-toggle="offcanvas" aria-label="Toggle navigation">
+      <span class="mdi mdi-menu text-dark" style="font-size: 24px;"></span>
     </button>
   </div>
 </nav>
+
+<style>
+/* Clean Navbar & User Profile Styles (Zero Collisions with style.css) */
+.navbar .navbar-menu-wrapper {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+/* Nav Item Layout */
+.navbar-nav .nav-item {
+  border: none !important;
+  margin: 0;
+}
+
+/* Prevent style.css from adding 34px dark grey circle inside any dropdown-toggle icon */
+.navbar .navbar-menu-wrapper .navbar-nav .nav-item.dropdown .dropdown-toggle i,
+.navbar .navbar-menu-wrapper .navbar-nav .nav-item .dropdown-toggle i,
+.navbar .navbar-menu-wrapper .navbar-nav .dropdown-toggle i {
+  font-size: inherit;
+  line-height: inherit;
+}
+.navbar .navbar-menu-wrapper .navbar-nav .nav-item.dropdown .dropdown-toggle i:before,
+.navbar .navbar-menu-wrapper .navbar-nav .nav-item .dropdown-toggle i:before,
+.navbar .navbar-menu-wrapper .navbar-nav .dropdown-toggle i:before {
+  width: auto !important;
+  height: auto !important;
+  background: transparent !important;
+  line-height: inherit !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Quick Actions Button */
+.topbar-action-btn {
+  padding: 5px 14px !important;
+  border-radius: 20px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #1e293b !important;
+  background: rgba(255, 255, 255, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.7) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease !important;
+  text-decoration: none !important;
+  line-height: 1.4 !important;
+}
+.topbar-action-btn:hover, .topbar-action-btn:focus, .nav-item.show .topbar-action-btn {
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: #0f172a !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+.topbar-action-btn:after {
+  margin-left: 6px !important;
+  vertical-align: middle !important;
+  color: #475569 !important;
+}
+
+/* Circle Icon Buttons (QR, Notifications) */
+.topbar-circle-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  color: #1e293b;
+  font-size: 18px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  position: relative;
+  text-decoration: none !important;
+}
+.topbar-circle-btn:hover {
+  background: rgba(255, 255, 255, 0.9);
+  color: #0284c7;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Bell Button specifically */
+.topbar-circle-btn.bell-btn {
+  background: #3f3f40;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+.topbar-circle-btn.bell-btn:hover {
+  background: #232324;
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
+}
+.topbar-circle-btn.bell-btn i {
+  font-size: 18px;
+  color: #ffffff !important;
+  line-height: 1;
+}
+
+/* Notification Dot */
+.topbar-badge-dot {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 9px;
+  height: 9px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 4px rgba(239, 68, 68, 0.6);
+  animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+  0% { transform: scale(0.95); opacity: 0.9; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.9; }
+}
+
+/* Profile Pill Container */
+.topbar-profile-pill {
+  padding: 3px 12px 3px 4px !important;
+  border-radius: 24px !important;
+  background: rgba(255, 255, 255, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.7) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease !important;
+  text-decoration: none !important;
+}
+.topbar-profile-pill:hover, .topbar-profile-pill:focus, .nav-item.show .topbar-profile-pill {
+  background: rgba(255, 255, 255, 0.9) !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+/* User Avatar */
+.nav-profile-img {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  border: 2px solid #ffffff !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15) !important;
+  flex-shrink: 0;
+}
+
+/* Profile Name */
+.nav-profile .profile-name {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+  line-height: 1.2 !important;
+  display: inline-block;
+}
+
+/* Topbar Role Badge - Clean, compact, native pill */
+.topbar-role-badge {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em;
+  padding: 2.5px 8px !important;
+  border-radius: 12px !important;
+  text-transform: uppercase !important;
+  line-height: 1.2 !important;
+  display: inline-block !important;
+  vertical-align: middle;
+}
+
+/* Modern Dropdowns */
+.navbar-dropdown {
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+  border-radius: 12px !important;
+  padding: 6px !important;
+  margin-top: 8px !important;
+  background: #ffffff !important;
+}
+.navbar-dropdown .dropdown-item {
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: #334155 !important;
+  transition: all 0.15s ease !important;
+}
+.navbar-dropdown .dropdown-item:hover {
+  background: #f1f5f9 !important;
+  color: #0284c7 !important;
+  transform: translateX(2px);
+}
+.navbar-dropdown .dropdown-item.text-danger:hover {
+  background: #fef2f2 !important;
+  color: #dc2626 !important;
+}
+
+/* Icon Badges for Action Items */
+.action-icon-pill {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+.bg-soft-primary { background: #e0f2fe; }
+.bg-soft-success { background: #dcfce7; }
+.bg-soft-danger { background: #fee2e2; }
+.bg-soft-warning { background: #fef3c7; }
+
+/* Caret styling */
+.nav-profile .dropdown-toggle:after {
+  margin-left: 6px !important;
+  vertical-align: middle !important;
+  color: #334155 !important;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .navbar .navbar-menu-wrapper {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .nav-profile .profile-name {
+    max-width: 75px !important;
+  }
+  .topbar-role-badge {
+    font-size: 9px !important;
+    padding: 1.5px 6px !important;
+  }
+}
+</style>
+
 {% include 'includes/notification_drawer.html' %}

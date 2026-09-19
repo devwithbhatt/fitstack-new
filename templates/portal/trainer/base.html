@@ -216,9 +216,10 @@
           {% endif %}
         </a>
 
-        <a href="{% url 'trainer_portal:profile' %}" class="trainer-badge-chip text-decoration-none">
+        <a href="{% url 'trainer_portal:profile' %}" class="trainer-badge-chip text-decoration-none" title="Trainer Profile">
           <img src="{% if trainer.photo %}{{ trainer.photo.url }}{% else %}{% static 'images/member_dp.jpg' %}{% endif %}" alt="{{ trainer.name }}" class="trainer-avatar-small">
-          <span class="d-none d-sm-inline">{{ trainer.name }}</span>
+          <span class="d-none d-sm-inline font-weight-bold mr-1">{{ trainer.name }}</span>
+          <span class="badge badge-pill px-2 py-0.5" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-size: 10px; font-weight: 700; text-transform: uppercase;"><i class="mdi mdi-dumbbell mr-1"></i>Trainer</span>
         </a>
         <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-danger px-3 ml-2" title="Sign Out">
           <i class="mdi mdi-logout mr-1"></i> Logout
