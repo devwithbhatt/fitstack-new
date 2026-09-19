@@ -21,44 +21,29 @@
       <!-- Quick Actions (Only for Admin / Staff with permissions) -->
       {% if not is_member and not is_trainer %}
       <li class="nav-item dropdown d-none d-xl-flex border-0 mr-2">
-        <a class="nav-link dropdown-toggle topbar-action-btn d-flex align-items-center" id="quickActionsDropdown" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          <i class="mdi mdi-flash mr-1 text-warning font-weight-bold" style="font-size: 16px;"></i>
+        <a class="nav-link dropdown-toggle text-dark font-weight-bold d-flex align-items-center topbar-nav-link" id="quickActionsDropdown" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="font-size: 13px; text-decoration: none;">
+          <i class="mdi mdi-flash text-dark mr-1" style="font-size: 18px; vertical-align: middle;"></i>
           <span>Quick Actions</span>
         </a>
-        <div class="dropdown-menu dropdown-menu-right navbar-dropdown shadow-sm" aria-labelledby="quickActionsDropdown">
-          <div class="dropdown-header px-3 py-2 text-uppercase font-weight-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">
-            Quick Shortcuts
-          </div>
+        <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="quickActionsDropdown" style="min-width: 200px;">
           {% if request.user|has_permission:'add_enquiry' %}
-          <a class="dropdown-item d-flex align-items-center" href="{% url 'add_new_enquiry' %}"> 
-            <span class="action-icon-pill bg-soft-danger text-danger mr-2">
-              <i class="mdi mdi-comment-question-outline"></i>
-            </span>
-            <span>Add New Enquiry</span>
+          <a class="dropdown-item" href="{% url 'add_new_enquiry' %}"> 
+            <i class="mdi mdi-comment-question-outline mr-2 text-danger"></i> Add New Enquiry
           </a>
           {% endif %}
           {% if request.user|has_permission:'add_member' %}
-          <a class="dropdown-item d-flex align-items-center" href="{% url 'add_new_member' %}"> 
-            <span class="action-icon-pill bg-soft-success text-success mr-2">
-              <i class="mdi mdi-account-plus-outline"></i>
-            </span>
-            <span>Add New Member</span>
+          <a class="dropdown-item" href="{% url 'add_new_member' %}"> 
+            <i class="mdi mdi-account-plus-outline mr-2 text-success"></i> Add New Member 
           </a>
           {% endif %}
           {% if request.user|has_permission:'add_trainer' %}
-          <a class="dropdown-item d-flex align-items-center" href="{% url 'add_trainer' %}"> 
-            <span class="action-icon-pill bg-soft-primary text-primary mr-2">
-              <i class="mdi mdi-account-star-outline"></i>
-            </span>
-            <span>Add New Trainer</span>
+          <a class="dropdown-item" href="{% url 'add_trainer' %}"> 
+            <i class="mdi mdi-account-star-outline mr-2 text-primary"></i> Add New Trainer 
           </a>
           {% endif %}
           {% if request.user|has_permission:'view_payment' %}
-          <a class="dropdown-item d-flex align-items-center" href="{% url 'billing:submit_due' %}"> 
-            <span class="action-icon-pill bg-soft-warning text-warning mr-2">
-              <i class="mdi mdi-receipt"></i>
-            </span>
-            <span>Make a Bill</span>
+          <a class="dropdown-item" href="{% url 'billing:submit_due' %}"> 
+            <i class="mdi mdi-receipt mr-2 text-warning"></i> Make a Bill 
           </a>
           {% endif %}
         </div>
@@ -68,7 +53,7 @@
       <!-- QR Code Pay / Check-In -->
       <li class="nav-item d-flex align-items-center px-1">
         {% if payment_settings.qr_code %}
-          <a class="topbar-circle-btn"
+          <a class="nav-link p-0 d-flex align-items-center topbar-nav-icon-link"
              href="#"
              title="Scan & Pay QR"
              data-bs-toggle="modal"
@@ -76,31 +61,33 @@
              data-toggle="modal"
              data-target="#imagePreviewModal"
              onclick="showImage('{{ payment_settings.qr_code.url }}')">
-              <i class="mdi mdi-qrcode-scan"></i>
+              <i class="mdi mdi-qrcode-scan" style="font-size: 20px; color: #1e293b;"></i>
           </a>
         {% else %}
-          <a class="topbar-circle-btn text-muted"
+          <a class="nav-link p-0 d-flex align-items-center topbar-nav-icon-link"
              href="#"
              title="QR code not uploaded"
              onclick="alert('QR code not uploaded yet'); return false;">
-              <i class="mdi mdi-qrcode-scan"></i>
+              <i class="mdi mdi-qrcode-scan" style="font-size: 20px; color: #1e293b; opacity: 0.85;"></i>
           </a>
         {% endif %}
       </li>
 
       <!-- Notification Bell Drawer Trigger -->
-      <li class="nav-item position-relative d-flex align-items-center px-1">
-        <a class="topbar-circle-btn bell-btn cursor-pointer" href="javascript:void(0);" onclick="openNotificationDrawer()" title="Notifications" style="text-decoration: none; position: relative;">
-          <i class="mdi mdi-bell"></i>
+      <li class="nav-item position-relative d-flex align-items-center px-2">
+        <a class="nav-link cursor-pointer d-flex align-items-center justify-content-center p-0" href="javascript:void(0);" onclick="openNotificationDrawer()" title="Notifications" style="text-decoration: none; position: relative;">
+          <div class="nav-bell-circle">
+            <i class="mdi mdi-bell" style="font-size: 18px; color: #ffffff; line-height: 1;"></i>
+          </div>
           {% if unread_notifications_count > 0 %}
-            <span class="topbar-badge-dot" id="navNotifCountDot"></span>
+            <span class="count-symbol" id="navNotifCountDot" style="background-color: #dc2626; width: 10px; height: 10px; position: absolute; top: -1px; right: -1px; border-radius: 50%; border: 2px solid #ffffff;"></span>
           {% endif %}
         </a>
       </li>
   
       <!-- User Profile & Clean Inline Role Badge -->
-      <li class="nav-item nav-profile dropdown border-0 pl-2 pr-1">
-        <a class="nav-link dropdown-toggle topbar-profile-pill text-dark d-flex align-items-center" id="profileDropdown" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="text-decoration: none;">
+      <li class="nav-item nav-profile dropdown border-0 pl-2 pr-1 pr-sm-2">
+        <a class="nav-link dropdown-toggle text-dark d-flex align-items-center topbar-profile-trigger p-1" id="profileDropdown" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="text-decoration: none;">
           <!-- Avatar -->
           {% if user_avatar_url %}
             <img class="nav-profile-img" alt="{{ user_display_name }}" src="{{ user_avatar_url }}" />
@@ -109,16 +96,16 @@
           {% endif %}
           
           <!-- Name & Role Badge in one clean row -->
-          <span class="profile-name font-weight-bold text-dark ml-2 text-truncate" style="max-width: 120px;">
+          <span class="profile-name font-weight-bold text-dark ml-2 text-truncate" style="font-size: 13.5px; max-width: 120px;">
             {{ user_display_name }}
           </span>
-          <span class="topbar-role-badge {{ user_role_badge_class }} ml-1.5">
+          <span class="topbar-role-badge {{ user_role_badge_class }} ml-2">
             {{ user_role_label }}
           </span>
         </a>
 
         <!-- Dropdown Menu -->
-        <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown" style="min-width: 240px;">
+        <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown" style="min-width: 230px;">
           <div class="px-3 py-2 border-bottom bg-light">
             <div class="font-weight-bold text-dark text-truncate" style="font-size: 13px;">{{ user_full_name|default:user_display_name }}</div>
             <div class="d-flex align-items-center mt-1">
@@ -197,19 +184,18 @@
 </nav>
 
 <style>
-/* Clean Navbar & User Profile Styles (Zero Collisions with style.css) */
+/* Clean Navbar Layout */
 .navbar .navbar-menu-wrapper {
   padding-left: 16px;
   padding-right: 16px;
 }
 
-/* Nav Item Layout */
 .navbar-nav .nav-item {
   border: none !important;
   margin: 0;
 }
 
-/* Prevent style.css from adding 34px dark grey circle inside any dropdown-toggle icon */
+/* Neutralize style.css dark grey 34px circle on all dropdown toggle icons (single and double colon) */
 .navbar .navbar-menu-wrapper .navbar-nav .nav-item.dropdown .dropdown-toggle i,
 .navbar .navbar-menu-wrapper .navbar-nav .nav-item .dropdown-toggle i,
 .navbar .navbar-menu-wrapper .navbar-nav .dropdown-toggle i {
@@ -217,8 +203,11 @@
   line-height: inherit;
 }
 .navbar .navbar-menu-wrapper .navbar-nav .nav-item.dropdown .dropdown-toggle i:before,
+.navbar .navbar-menu-wrapper .navbar-nav .nav-item.dropdown .dropdown-toggle i::before,
 .navbar .navbar-menu-wrapper .navbar-nav .nav-item .dropdown-toggle i:before,
-.navbar .navbar-menu-wrapper .navbar-nav .dropdown-toggle i:before {
+.navbar .navbar-menu-wrapper .navbar-nav .nav-item .dropdown-toggle i::before,
+.navbar .navbar-menu-wrapper .navbar-nav .dropdown-toggle i:before,
+.navbar .navbar-menu-wrapper .navbar-nav .dropdown-toggle i::before {
   width: auto !important;
   height: auto !important;
   background: transparent !important;
@@ -227,115 +216,63 @@
   box-shadow: none !important;
 }
 
-/* Quick Actions Button */
-.topbar-action-btn {
-  padding: 5px 14px !important;
-  border-radius: 20px !important;
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  color: #1e293b !important;
-  background: rgba(255, 255, 255, 0.5) !important;
-  border: 1px solid rgba(255, 255, 255, 0.7) !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease !important;
-  text-decoration: none !important;
-  line-height: 1.4 !important;
+/* Subtle, native hover feedback for Quick Actions */
+.topbar-nav-link {
+  padding: 6px 10px !important;
+  border-radius: 8px !important;
+  transition: background 0.18s ease, color 0.18s ease !important;
 }
-.topbar-action-btn:hover, .topbar-action-btn:focus, .nav-item.show .topbar-action-btn {
-  background: rgba(255, 255, 255, 0.9) !important;
-  color: #0f172a !important;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
-  transform: translateY(-1px);
-}
-.topbar-action-btn:after {
-  margin-left: 6px !important;
-  vertical-align: middle !important;
-  color: #475569 !important;
+.topbar-nav-link:hover,
+.nav-item.show .topbar-nav-link {
+  background: rgba(255, 255, 255, 0.25) !important;
 }
 
-/* Circle Icon Buttons (QR, Notifications) */
-.topbar-circle-btn {
-  width: 36px;
-  height: 36px;
+/* Subtle, native hover feedback for icon buttons (QR) */
+.topbar-nav-icon-link {
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
+  justify-content: center;
+  transition: background 0.18s ease, transform 0.15s ease !important;
+}
+.topbar-nav-icon-link:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+  transform: translateY(-1px);
+}
+
+/* Bell Circle with smooth hover */
+.nav-bell-circle {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #3f3f40;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  color: #1e293b;
-  font-size: 18px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
-  position: relative;
-  text-decoration: none !important;
-}
-.topbar-circle-btn:hover {
-  background: rgba(255, 255, 255, 0.9);
-  color: #0284c7;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
-  transform: translateY(-1px);
-}
-
-/* Bell Button specifically */
-.topbar-circle-btn.bell-btn {
-  background: #3f3f40;
-  border: 1px solid rgba(255, 255, 255, 0.3);
   color: #ffffff;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: background 0.18s ease, transform 0.15s ease, box-shadow 0.18s ease;
 }
-.topbar-circle-btn.bell-btn:hover {
-  background: #232324;
-  color: #ffffff;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+.nav-bell-circle:hover {
+  background: #27272a;
   transform: translateY(-1px);
-}
-.topbar-circle-btn.bell-btn i {
-  font-size: 18px;
-  color: #ffffff !important;
-  line-height: 1;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.28);
 }
 
-/* Notification Dot */
-.topbar-badge-dot {
-  position: absolute;
-  top: 1px;
-  right: 1px;
-  width: 9px;
-  height: 9px;
-  background-color: #ef4444;
-  border-radius: 50%;
-  border: 2px solid #ffffff;
-  box-shadow: 0 0 4px rgba(239, 68, 68, 0.6);
-  animation: pulse-dot 2s infinite;
+/* Subtle, native hover feedback for Profile */
+.topbar-profile-trigger {
+  border-radius: 20px !important;
+  transition: background 0.18s ease !important;
 }
-
-@keyframes pulse-dot {
-  0% { transform: scale(0.95); opacity: 0.9; }
-  50% { transform: scale(1.15); opacity: 1; }
-  100% { transform: scale(0.95); opacity: 0.9; }
-}
-
-/* Profile Pill Container */
-.topbar-profile-pill {
-  padding: 3px 12px 3px 4px !important;
-  border-radius: 24px !important;
-  background: rgba(255, 255, 255, 0.5) !important;
-  border: 1px solid rgba(255, 255, 255, 0.7) !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease !important;
-  text-decoration: none !important;
-}
-.topbar-profile-pill:hover, .topbar-profile-pill:focus, .nav-item.show .topbar-profile-pill {
-  background: rgba(255, 255, 255, 0.9) !important;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
-  transform: translateY(-1px);
+.topbar-profile-trigger:hover,
+.nav-item.show .topbar-profile-trigger {
+  background: rgba(255, 255, 255, 0.22) !important;
 }
 
 /* User Avatar */
 .nav-profile-img {
-  width: 32px !important;
-  height: 32px !important;
+  width: 34px !important;
+  height: 34px !important;
   border-radius: 50% !important;
   object-fit: cover !important;
   border: 2px solid #ffffff !important;
@@ -345,7 +282,7 @@
 
 /* Profile Name */
 .nav-profile .profile-name {
-  font-size: 13px !important;
+  font-size: 13.5px !important;
   font-weight: 700 !important;
   color: #0f172a !important;
   line-height: 1.2 !important;
@@ -354,29 +291,38 @@
 
 /* Topbar Role Badge - Clean, compact, native pill */
 .topbar-role-badge {
-  font-size: 10px !important;
+  font-size: 9.5px !important;
   font-weight: 700 !important;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
   padding: 2.5px 8px !important;
-  border-radius: 12px !important;
+  border-radius: 10px !important;
   text-transform: uppercase !important;
   line-height: 1.2 !important;
   display: inline-block !important;
   vertical-align: middle;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-/* Modern Dropdowns */
+/* Caret styling */
+.nav-profile .dropdown-toggle:after,
+#quickActionsDropdown:after {
+  margin-left: 6px !important;
+  vertical-align: 1px !important;
+  color: #1e293b !important;
+}
+
+/* Dropdown Menu Clean Elevation */
 .navbar-dropdown {
   border: 1px solid rgba(0, 0, 0, 0.08) !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
-  border-radius: 12px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+  border-radius: 10px !important;
   padding: 6px !important;
   margin-top: 8px !important;
   background: #ffffff !important;
 }
 .navbar-dropdown .dropdown-item {
-  border-radius: 8px !important;
-  padding: 8px 12px !important;
+  border-radius: 6px !important;
+  padding: 8px 14px !important;
   font-size: 13px !important;
   font-weight: 500 !important;
   color: #334155 !important;
@@ -385,34 +331,10 @@
 .navbar-dropdown .dropdown-item:hover {
   background: #f1f5f9 !important;
   color: #0284c7 !important;
-  transform: translateX(2px);
 }
 .navbar-dropdown .dropdown-item.text-danger:hover {
   background: #fef2f2 !important;
   color: #dc2626 !important;
-}
-
-/* Icon Badges for Action Items */
-.action-icon-pill {
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 15px;
-  flex-shrink: 0;
-}
-.bg-soft-primary { background: #e0f2fe; }
-.bg-soft-success { background: #dcfce7; }
-.bg-soft-danger { background: #fee2e2; }
-.bg-soft-warning { background: #fef3c7; }
-
-/* Caret styling */
-.nav-profile .dropdown-toggle:after {
-  margin-left: 6px !important;
-  vertical-align: middle !important;
-  color: #334155 !important;
 }
 
 /* Mobile Responsiveness */
