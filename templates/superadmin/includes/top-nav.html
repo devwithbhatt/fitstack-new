@@ -1,75 +1,146 @@
 {% load static %}
-<nav class="navbar col-lg-12 col-12 p-lg-0 fixed-top d-flex flex-row">
-  <div class="navbar-menu-wrapper d-flex align-items-stretch justify-content-between">
-    <a class="navbar-brand brand-logo-mini align-self-center d-lg-none" href="{% url 'superadmin:gym_list' %}"><img src="{% static 'images/SquareFitlogo.jpg' %}" alt="logo" style="height: 40px; filter: invert(1);"/></a>
-    <button class="navbar-toggler navbar-toggler align-self-center mr-2" type="button" data-toggle="minimize">
-      <i class="mdi mdi-menu"></i>
-    </button>
-    <ul class="navbar-nav">
-      <li class="nav-item nav-search border-0 ml-1 ml-md-3 ml-lg-5 d-none d-md-flex">
-        <form class="nav-link form-inline mt-2 mt-md-0">
-          <div class="input-group">
-            <input type="text" class="form-control" placeholder="Search" />
-            <div class="input-group-append">
-              <span class="input-group-text">
-                <i class="mdi mdi-magnify"></i>
-              </span>
-            </div>
-          </div>
-        </form>
-      </li>
-    </ul>
-    <ul class="navbar-nav navbar-nav-right ml-lg-auto">
-      <!-- Notification Bell Drawer Trigger -->
-      <li class="nav-item position-relative mr-3 d-flex align-items-center">
-        <a class="nav-link cursor-pointer d-flex align-items-center justify-content-center p-0" href="javascript:void(0);" onclick="openNotificationDrawer()" title="Notifications" style="text-decoration: none; position: relative;">
-          <div class="nav-bell-circle" style="width: 34px; height: 34px; border-radius: 50%; background: #3f3f40; display: flex; align-items: center; justify-content: center; color: #ffffff; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: background 0.15s ease;">
-            <i class="mdi mdi-bell" style="font-size: 18px; color: #ffffff; line-height: 1;"></i>
-          </div>
-          {% if unread_notifications_count > 0 %}
-            <span class="count-symbol" id="superadminNotifCountDot" style="background-color: #dc2626; width: 10px; height: 10px; position: absolute; top: -1px; right: -1px; border-radius: 50%; border: 2px solid #ffffff;"></span>
-          {% endif %}
-        </a>
-      </li>
-      <li class="nav-item nav-profile dropdown border-0">
-        <a class="nav-link dropdown-toggle d-flex align-items-center text-dark text-decoration-none px-2 py-1" id="profileDropdown" href="#" data-toggle="dropdown" style="background: rgba(255,255,255,0.85); border-radius: 30px; border: 1px solid #e2e8f0; box-shadow: 0 2px 6px rgba(0,0,0,0.06);">
-          <div class="position-relative mr-2">
-            <img class="rounded-circle" alt="Superadmin" src="{% static 'images/face16.png' %}" style="width: 32px; height: 32px; object-fit: cover; border: 1.5px solid #fff;" />
-            <span style="position: absolute; bottom: 0; right: 0; width: 8.5px; height: 8.5px; border-radius: 50%; background: #10b981; border: 1.5px solid #fff;"></span>
-          </div>
-          <div class="d-none d-sm-flex flex-column text-left mr-1">
-            <span class="font-weight-bold" style="font-size: 13px; color: #0f172a; line-height: 1.15;">{{ user.username|default:"Superadmin" }}</span>
-            <span class="badge badge-pill mt-0.5 px-2 py-0.5" style="background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; font-size: 9.5px; font-weight: 700; text-transform: uppercase;">
-              <i class="mdi mdi-shield-crown mr-1"></i>Super Admin
+<nav class="navbar col-lg-12 col-12 p-lg-0 fixed-top d-flex flex-row superadmin-navbar">
+  <div class="navbar-menu-wrapper d-flex align-items-center justify-content-between">
+    
+    <!-- Left Section: Mobile Logo, Desktop Sidebar Minimizer, Search Box -->
+    <div class="d-flex align-items-center">
+      <!-- Mini Brand Logo (Visible on Mobile/Tablet < 992px) -->
+      <a class="navbar-brand brand-logo-mini align-self-center d-lg-none mr-2 mr-sm-3" href="{% url 'superadmin:dashboard' %}">
+        <img src="{% static 'images/fitstack.png' %}" alt="FitStack Logo" style="height: 32px; max-width: 105px; object-fit: contain;"/>
+      </a>
+
+      <!-- Universal Sidebar Toggle Button (Desktop Minimize & Mobile Offcanvas) -->
+      <button class="navbar-toggler align-self-center superadmin-toggler-btn mr-2" type="button" id="superadminSidebarToggle" title="Toggle Sidebar">
+        <i class="mdi mdi-menu"></i>
+      </button>
+
+      <!-- Search Box (Hidden on mobile < 768px) -->
+      <div class="superadmin-search-box d-none d-md-flex ml-1 ml-lg-2">
+        <div class="input-group">
+          <div class="input-group-prepend">
+            <span class="input-group-text">
+              <i class="mdi mdi-magnify"></i>
             </span>
           </div>
-          <i class="mdi mdi-chevron-down text-muted ml-1"></i>
+          <input type="text" class="form-control" placeholder="Search platform..." aria-label="Search">
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Section: Bell Notification, Profile Dropdown -->
+    <div class="d-flex align-items-center superadmin-nav-right">
+      
+      <!-- Notification Bell Trigger -->
+      <div class="position-relative mr-2 mr-sm-3 d-flex align-items-center">
+        <a class="nav-bell-link cursor-pointer d-flex align-items-center justify-content-center" href="javascript:void(0);" onclick="openNotificationDrawer()" title="Notifications" style="text-decoration: none; position: relative;">
+          <div class="superadmin-nav-icon-circle">
+            <i class="mdi mdi-bell"></i>
+          </div>
+          {% if unread_notifications_count > 0 %}
+            <span class="superadmin-notif-dot" id="superadminNotifCountDot"></span>
+          {% endif %}
         </a>
-        <div class="dropdown-menu dropdown-menu-right shadow-lg border-0 py-0" style="min-width: 250px; border-radius: 12px; overflow: hidden;" aria-labelledby="profileDropdown">
+      </div>
+
+      <!-- User Profile Dropdown -->
+      <div class="dropdown superadmin-profile-item">
+        <a class="nav-link dropdown-toggle d-flex align-items-center superadmin-profile-pill" 
+           id="superadminProfileDropdown" 
+           href="#" 
+           role="button" 
+           data-toggle="dropdown" 
+           data-bs-toggle="dropdown" 
+           data-display="static" 
+           data-bs-display="static" 
+           aria-haspopup="true" 
+           aria-expanded="false">
+          <div class="position-relative avatar-wrapper mr-sm-2">
+            <img class="rounded-circle" alt="Superadmin" src="{% static 'images/face16.png' %}" />
+            <span class="online-status-dot"></span>
+          </div>
+          <div class="d-none d-sm-flex flex-column text-left mr-1 user-info-wrapper">
+            <span class="superadmin-name font-weight-bold">{{ user.username|default:"Superadmin" }}</span>
+            <span class="superadmin-role-badge">
+              <i class="mdi mdi-shield-crown mr-1"></i>SUPER ADMIN
+            </span>
+          </div>
+          <i class="mdi mdi-chevron-down chevron-icon text-muted ml-1"></i>
+        </a>
+
+        <!-- Dropdown Menu Aligned strictly to the Right within Viewport -->
+        <div class="dropdown-menu dropdown-menu-right dropdown-menu-end shadow-lg superadmin-profile-dropdown" aria-labelledby="superadminProfileDropdown">
           <div class="p-3 bg-light border-bottom">
-            <h6 class="font-weight-bold mb-0 text-dark">{{ user.get_full_name|default:user.username }}</h6>
-            <small class="text-muted">{{ user.email|default:"superadmin@system.local" }}</small>
+            <h6 class="font-weight-bold mb-0 text-dark text-truncate">{{ user.get_full_name|default:user.username }}</h6>
+            <small class="text-muted text-truncate d-block">{{ user.email|default:"superadmin@system.local" }}</small>
             <div class="mt-1">
-              <span class="badge badge-pill px-2 py-0.5" style="background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; font-size: 9.5px; font-weight: 700;">
+              <span class="superadmin-role-badge">
                 <i class="mdi mdi-shield-crown mr-1"></i>SUPER ADMIN
               </span>
             </div>
           </div>
-          <a class="dropdown-item py-2 px-3 text-danger font-weight-bold" href="{% url "logout" %}">
+          
+          <div class="py-1">
+            <a class="dropdown-item py-2 px-3" href="{% url 'superadmin:dashboard' %}">
+              <i class="mdi mdi-view-dashboard-outline text-primary mr-2"></i> Dashboard
+            </a>
+            <a class="dropdown-item py-2 px-3" href="{% url 'superadmin:gym_list' %}">
+              <i class="mdi mdi-domain text-primary mr-2"></i> Manage Gyms
+            </a>
+            <a class="dropdown-item py-2 px-3" href="{% url 'superadmin:notification_list' %}">
+              <i class="mdi mdi-bullhorn-outline text-primary mr-2"></i> Notifications
+            </a>
+          </div>
+
+          <div class="dropdown-divider my-0"></div>
+
+          <a class="dropdown-item py-2 px-3 text-danger font-weight-bold" href="{% url 'logout' %}">
             <i class="mdi mdi-logout mr-2 text-danger"></i> Sign Out
           </a>
         </div>
-      </li>
-    </ul>
-    <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button" data-toggle="offcanvas">
-      <span class="mdi mdi-menu"></span>
-    </button>
+      </div>
+
+    </div>
   </div>
 </nav>
+
 <style>
-.navbar .navbar-menu-wrapper .navbar-nav .nav-item.dropdown .dropdown-toggle i:before,
-.navbar .navbar-menu-wrapper .navbar-nav .nav-item .dropdown-toggle i:before,
-.navbar .navbar-menu-wrapper .navbar-nav .dropdown-toggle i:before {
+/* Superadmin Topbar Container */
+.superadmin-navbar {
+  height: 65px;
+  background: #191c24 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
+  z-index: 1030;
+}
+
+.superadmin-navbar .navbar-menu-wrapper {
+  background: #191c24 !important;
+  height: 65px;
+  padding: 0 18px !important;
+  width: 100% !important;
+}
+
+@media (min-width: 992px) {
+  .superadmin-navbar .navbar-menu-wrapper {
+    width: calc(100% - 260px) !important;
+  }
+  .sidebar-icon-only .superadmin-navbar .navbar-menu-wrapper {
+    width: calc(100% - 70px) !important;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .superadmin-navbar .navbar-menu-wrapper {
+    width: 100% !important;
+    padding: 0 12px !important;
+  }
+}
+
+/* Neutralize style.css legacy pseudo-elements and dark circles */
+.superadmin-navbar .navbar-toggler i:before,
+.superadmin-navbar .navbar-toggler i::before,
+.superadmin-navbar .dropdown-toggle i:before,
+.superadmin-navbar .dropdown-toggle i::before {
   width: auto !important;
   height: auto !important;
   background: transparent !important;
@@ -77,5 +148,269 @@
   border-radius: 0 !important;
   box-shadow: none !important;
 }
+
+/* Sidebar Toggler Button */
+.superadmin-toggler-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50% !important;
+  background: #2a2b38 !important;
+  border: 1px solid #36384a !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  color: #e2e8f0 !important;
+  padding: 0 !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.superadmin-toggler-btn:hover {
+  background: #383a4c !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+}
+
+.superadmin-toggler-btn i {
+  font-size: 20px;
+  color: #ffffff;
+  line-height: 1;
+}
+
+/* Search Box */
+.superadmin-search-box {
+  width: 250px;
+}
+
+.superadmin-search-box .input-group {
+  background: #2a2b38;
+  border: 1px solid #36384a;
+  border-radius: 20px;
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.superadmin-search-box .input-group:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.superadmin-search-box .input-group-text {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  padding-left: 12px;
+  padding-right: 6px;
+}
+
+.superadmin-search-box .input-group-text i {
+  font-size: 16px;
+}
+
+.superadmin-search-box .form-control {
+  background: transparent !important;
+  border: none !important;
+  color: #f8fafc !important;
+  font-size: 13px;
+  height: 34px;
+  padding-left: 4px;
+}
+
+.superadmin-search-box .form-control::placeholder {
+  color: #64748b;
+  font-size: 12.5px;
+}
+
+/* Bell Notification */
+.superadmin-nav-icon-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #2a2b38;
+  border: 1px solid #36384a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.superadmin-nav-icon-circle:hover {
+  background: #383a4c;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.superadmin-nav-icon-circle i {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.superadmin-notif-dot {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 10px;
+  height: 10px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  border: 2px solid #191c24;
+}
+
+/* User Profile Pill */
+.superadmin-profile-item {
+  position: relative !important;
+}
+
+.superadmin-profile-pill {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-radius: 30px !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+  padding: 4px 10px 4px 5px !important;
+  cursor: pointer;
+  text-decoration: none !important;
+  transition: all 0.18s ease !important;
+}
+
+.superadmin-profile-pill:hover,
+.superadmin-profile-item.show .superadmin-profile-pill {
+  background: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  transform: translateY(-1px);
+}
+
+.superadmin-profile-pill::after {
+  display: none !important; /* Hide default bootstrap caret */
+}
+
+.avatar-wrapper img {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+  border: 1.5px solid #fff;
+}
+
+.online-status-dot {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 8.5px;
+  height: 8.5px;
+  border-radius: 50%;
+  background: #10b981;
+  border: 1.5px solid #fff;
+}
+
+.superadmin-name {
+  font-size: 13px;
+  color: #0f172a;
+  line-height: 1.15;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.superadmin-role-badge {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-radius: 10px;
+  padding: 1.5px 6px;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.2;
+}
+
+.chevron-icon {
+  font-size: 16px;
+  transition: transform 0.2s ease;
+}
+
+.superadmin-profile-item.show .chevron-icon {
+  transform: rotate(180deg);
+}
+
+/* Dropdown Menu - CRITICAL RIGHT ALIGNMENT & RESPONSIVENESS */
+.superadmin-profile-dropdown {
+  position: absolute !important;
+  top: 100% !important;
+  right: 0 !important;
+  left: auto !important;
+  transform: none !important;
+  min-width: 250px !important;
+  max-width: min(280px, calc(100vw - 20px)) !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25) !important;
+  margin-top: 8px !important;
+  background: #ffffff !important;
+  z-index: 1060 !important;
+}
+
+/* Ensure style.css legacy media query right: -85px NEVER pushes dropdown off screen */
+@media (max-width: 991.98px) {
+  .navbar .navbar-menu-wrapper .navbar-nav .nav-item.dropdown .superadmin-profile-dropdown,
+  .superadmin-profile-dropdown {
+    right: 0 !important;
+    left: auto !important;
+  }
+}
+
+.superadmin-profile-dropdown .dropdown-item {
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+  padding: 9px 16px;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+}
+
+.superadmin-profile-dropdown .dropdown-item:hover {
+  background: #f8fafc;
+  color: #2563eb;
+}
+
+.superadmin-profile-dropdown .dropdown-item.text-danger:hover {
+  background: #fef2f2;
+  color: #dc2626 !important;
+}
+
+/* Mobile Responsiveness Fine-Tuning */
+@media (max-width: 575.98px) {
+  .superadmin-profile-pill {
+    padding: 3px 6px 3px 3px !important;
+  }
+  .avatar-wrapper {
+    margin-right: 0 !important;
+  }
+  .chevron-icon {
+    margin-left: 2px !important;
+  }
+}
 </style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const toggleBtn = document.getElementById("superadminSidebarToggle");
+  if (toggleBtn) {
+    toggleBtn.addEventListener("click", function(e) {
+      e.preventDefault();
+      if (window.innerWidth < 992) {
+        const sidebar = document.querySelector(".sidebar-offcanvas");
+        if (sidebar) sidebar.classList.toggle("active");
+      } else {
+        document.body.classList.toggle("sidebar-icon-only");
+      }
+    });
+  }
+});
+</script>
+
 {% include 'includes/notification_drawer.html' %}

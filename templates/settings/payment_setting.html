@@ -4,7 +4,6 @@
 {% block title %}Payment Settings - FitStack{% endblock title %}
 
 {% block content %}
-<link rel="stylesheet" href="{% static 'css/customstyle.css' %}">
 
 <!-- Compact Breadcrumb Navigation -->
 <nav aria-label="breadcrumb" class="custom-breadcrumb mb-3">
@@ -249,7 +248,8 @@
                                 <div class="text-muted">
                                     <i class="mdi mdi-information-outline mdi-36px d-block mb-2 text-primary"></i>
                                     <p class="mb-2">No payment or bank account settings configured yet.</p>
-                                    <button type="button" class="btn btn-primary btn-sm font-weight-bold" 
+                                    <button type="button" class="btn btn-primary btn-sm btn-action-text font-weight-bold" 
+                                            style="width: auto !important; height: auto !important; min-height: 36px !important; padding: 0.4rem 1.1rem !important; display: inline-flex !important; align-items: center !important;"
                                             data-bs-toggle="modal" data-bs-target="#updatePaymentSettingsModal"
                                             data-toggle="modal" data-target="#updatePaymentSettingsModal">
                                         <i class="mdi mdi-plus mr-1"></i> Add Payment Settings
