@@ -35,22 +35,34 @@ def business_report(request):
     from_date_str = request.GET.get('from_date')
     to_date_str = request.GET.get('to_date')
 
-    try:
-        start_date = datetime.strptime(from_date_str, '%Y-%m-%d').date() if from_date_str else today.replace(day=1)
-        end_date = datetime.strptime(to_date_str, '%Y-%m-%d').date() if to_date_str else today
-    except (ValueError, TypeError):
-        start_date = today.replace(day=1)
-        end_date = today
+    start_date = None
+    end_date = None
+    if from_date_str:
+        try:
+            start_date = datetime.strptime(from_date_str, '%Y-%m-%d').date()
+        except (ValueError, TypeError):
+            start_date = None
+    if to_date_str:
+        try:
+            end_date = datetime.strptime(to_date_str, '%Y-%m-%d').date()
+        except (ValueError, TypeError):
+            end_date = None
 
-    is_filtered = bool(from_date_str and to_date_str)
+    is_filtered = bool(start_date or end_date)
 
     # Base Querysets
     payments_base = Payment.objects.filter(member__gym=gym)
     expenses_base = Expense.objects.filter(gym=gym)
     
-    if is_filtered:
+    if start_date and end_date:
         payments_base = payments_base.filter(payment_date__date__range=[start_date, end_date])
         expenses_base = expenses_base.filter(date__range=[start_date, end_date])
+    elif start_date:
+        payments_base = payments_base.filter(payment_date__date__gte=start_date)
+        expenses_base = expenses_base.filter(date__gte=start_date)
+    elif end_date:
+        payments_base = payments_base.filter(payment_date__date__lte=end_date)
+        expenses_base = expenses_base.filter(date__lte=end_date)
 
     # Export logic
     export_type = request.GET.get('export')
@@ -155,9 +167,15 @@ def business_report(request):
     mh_queryset = MembershipHistory.objects.filter(member__gym=gym, status='active')
     pt_queryset = PersonalTrainer.objects.filter(member__gym=gym, status='active')
 
-    if is_filtered:
+    if start_date and end_date:
         mh_queryset = mh_queryset.filter(membership_start_date__range=[start_date, end_date])
-        pt_queryset = pt_queryset.filter(created_at__date__range=[start_date, end_date]) # Assuming created_at exists for PT
+        pt_queryset = pt_queryset.filter(created_at__date__range=[start_date, end_date])
+    elif start_date:
+        mh_queryset = mh_queryset.filter(membership_start_date__gte=start_date)
+        pt_queryset = pt_queryset.filter(created_at__date__gte=start_date)
+    elif end_date:
+        mh_queryset = mh_queryset.filter(membership_start_date__lte=end_date)
+        pt_queryset = pt_queryset.filter(created_at__date__lte=end_date)
 
     membership_dues = mh_queryset.aggregate(total_due=Sum(F('total_amount') - F('paid_amount')))['total_due'] or 0
     pt_dues = pt_queryset.aggregate(total_due=Sum(F('total_amount') - F('paid_amount')))['total_due'] or 0
@@ -165,8 +183,12 @@ def business_report(request):
 
     payments_queryset = Payment.objects.filter(member__gym=gym).select_related('member', 'membership_history', 'personal_trainer').order_by('-payment_date')
     
-    if from_date_str and to_date_str:
+    if start_date and end_date:
         payments_queryset = payments_queryset.filter(payment_date__date__range=[start_date, end_date])
+    elif start_date:
+        payments_queryset = payments_queryset.filter(payment_date__date__gte=start_date)
+    elif end_date:
+        payments_queryset = payments_queryset.filter(payment_date__date__lte=end_date)
 
     if query:
         payments_queryset = payments_queryset.annotate(
@@ -213,8 +235,12 @@ def business_report(request):
     latest_transactions = page_obj
     
     latest_expenses = Expense.objects.filter(gym=gym).order_by('-date')
-    if from_date_str and to_date_str:
+    if start_date and end_date:
         latest_expenses = latest_expenses.filter(date__range=[start_date, end_date])
+    elif start_date:
+        latest_expenses = latest_expenses.filter(date__gte=start_date)
+    elif end_date:
+        latest_expenses = latest_expenses.filter(date__lte=end_date)
     latest_expenses = latest_expenses[:10]
 
     labels = []

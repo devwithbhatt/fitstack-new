@@ -2,7 +2,6 @@
 {% load static %}
 
 {% block content %}
-<link rel="stylesheet" href="{% static 'css/customstyle.css' %}">
 
 <!-- Compact Breadcrumb Navigation -->
 <nav aria-label="breadcrumb" class="custom-breadcrumb mb-3">
@@ -24,18 +23,20 @@
         <div class="card-header bg-primary text-white d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center py-3">
             <div class="d-flex align-items-center mb-2 mb-md-0">
                 <h4 class="mb-0 mr-2 me-2">Business Report</h4>
-                <span class="badge bg-light text-primary px-2 py-1 ml-2">
+                <span class="badge bg-light text-primary px-2 py-1 ml-2" id="reportFilterBadge">
                     {% if is_filtered %}Filtered{% else %}All Time{% endif %}
                 </span>
             </div>
             <div class="d-flex flex-wrap gap-2">
                 <a href="?export=transactions&q={{ query|default:'' }}&from_date={{ request.GET.from_date|default:'' }}&to_date={{ request.GET.to_date|default:'' }}" 
+                   id="exportTransactionsTopBtn"
                    class="btn btn-sm mr-2 me-2 d-flex align-items-center font-weight-bold" 
                    style="background-color: #1D6F42; border-color: #1D6F42; color: white;" 
                    title="Export Transactions to Excel">
                     <i class="mdi mdi-file-excel mr-1 me-1"></i> Export Transactions
                 </a>
                 <a href="?export=expenses" 
+                   id="exportExpensesTopBtn"
                    class="btn btn-sm d-flex align-items-center font-weight-bold" 
                    style="background-color: #1D6F42; border-color: #1D6F42; color: white;" 
                    title="Export Expenses to Excel">
@@ -45,34 +46,76 @@
         </div>
 
         <div class="card-body">
-            <!-- Search & Filters (Exact matching style from Member List & Expenses) -->
-            <form method="get" class="row g-3 align-items-end mb-4 p-3 border rounded bg-light">
-                <div class="col-lg-4 col-md-6 col-12 mb-2 mb-lg-0">
-                    <label for="q" class="form-label font-weight-semibold">Search Transactions</label>
-                    <input type="text" class="form-control" name="q" id="q" placeholder="Search by name, ID, phone..." value="{{ query|default:'' }}">
-                </div>
-                <div class="col-lg-3 col-md-3 col-6 mb-2 mb-lg-0">
-                    <label for="from_date" class="form-label font-weight-semibold">From Date</label>
-                    <input type="date" name="from_date" id="from_date" value="{{ request.GET.from_date }}" class="form-control">
-                </div>
-                <div class="col-lg-3 col-md-3 col-6 mb-2 mb-lg-0">
-                    <label for="to_date" class="form-label font-weight-semibold">To Date</label>
-                    <input type="date" name="to_date" id="to_date" value="{{ request.GET.to_date }}" class="form-control">
-                </div>
-                <div class="col-lg-2 col-md-12 col-12 d-flex justify-content-start">
-                    <div class="btn-group w-100" role="group">
-                        <button type="submit" class="btn btn-primary" title="Apply Filter">
-                            <i class="mdi mdi-filter-variant"></i> Filter
-                        </button>
-                        <a href="{% url 'business_report' %}" class="btn btn-secondary" title="Clear Filters">
-                            <i class="mdi mdi-reload"></i>
-                        </a>
-                    </div>
-                </div>
-            </form>
-
-            <!-- KPI Metric Cards -->
+            <!-- Unified Real-Time Filter Toolbar -->
             <div class="row mb-4">
+                <div class="col-12">
+                    <form method="get" id="businessReportFilterForm" action="{% url 'business_report' %}">
+                        <div class="filter-card-box">
+                            <div class="row g-2 align-items-end">
+
+                                <!-- 1. Search Query Input with Live Clear -->
+                                <div class="col-xl-5 col-lg-5 col-md-6 col-12">
+                                    <label for="q" class="filter-label">Search Transactions</label>
+                                    <div class="filter-search-wrapper" style="position: relative; display: flex; align-items: center; width: 100%;">
+                                        <i class="mdi mdi-magnify filter-search-icon" style="position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: #9ca3af; pointer-events: none; font-size: 17px; line-height: 1; z-index: 4; margin: 0;"></i>
+                                        <input
+                                            type="text"
+                                            name="q"
+                                            id="q"
+                                            class="form-control filter-control filter-search-input"
+                                            placeholder="Search by name, ID, phone..."
+                                            value="{{ query|default:'' }}"
+                                            autocomplete="off"
+                                            style="padding-left: 35px; padding-right: 32px;"
+                                        />
+                                        <button type="button" class="filter-clear-btn" id="clearSearchBtn" title="Clear search text" style="position: absolute; right: 9px; top: 50%; transform: translateY(-50%); background: transparent; border: none; outline: none; box-shadow: none; color: #9ca3af; font-size: 17px; cursor: pointer; padding: 0; line-height: 1; z-index: 5; {% if not query %}display: none;{% endif %}">
+                                            <i class="mdi mdi-close-circle"></i>
+                                        </button>
+                                        <div class="filter-spinner" id="searchSpinner"></div>
+                                    </div>
+                                </div>
+
+                                <!-- 2. From Date -->
+                                <div class="col-xl-3 col-lg-3 col-md-3 col-6">
+                                    <label for="from_date" class="filter-label">From Date</label>
+                                    <input
+                                        type="date"
+                                        name="from_date"
+                                        id="from_date"
+                                        class="form-control filter-control"
+                                        value="{{ request.GET.from_date|default:'' }}"
+                                    />
+                                </div>
+
+                                <!-- 3. To Date -->
+                                <div class="col-xl-3 col-lg-3 col-md-3 col-6">
+                                    <label for="to_date" class="filter-label">To Date</label>
+                                    <input
+                                        type="date"
+                                        name="to_date"
+                                        id="to_date"
+                                        class="form-control filter-control"
+                                        value="{{ request.GET.to_date|default:'' }}"
+                                    />
+                                </div>
+
+                                <!-- 4. Reset Button -->
+                                <div class="col-xl-1 col-lg-1 col-md-12 col-12">
+                                    <button type="button" class="btn btn-secondary w-100 filter-control filter-reset-btn d-flex align-items-center justify-content-center" id="resetReportFilterBtn" title="Reset all filters">
+                                        <i class="mdi mdi-reload font-weight-bold"></i>
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Dynamic Report Content (Asynchronously Swapped) -->
+            <div id="businessReportContentContainer">
+                <!-- KPI Metric Cards -->
+                <div class="row mb-4">
                 <!-- Total Income -->
                 <div class="col-xl-3 col-md-6 mb-3 mb-xl-0">
                     <div class="kpi-card kpi-primary">
@@ -191,7 +234,7 @@
             </div>
 
             <!-- Recent Transactions Table (Standard Table Style) -->
-            <div class="card shadow-sm border mb-4">
+            <div class="card shadow-sm border mb-4" id="transactionsTableCard">
                 <div class="card-header bg-light py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
                     <div class="d-flex align-items-center mb-2 mb-md-0">
                         <h6 class="m-0 font-weight-bold text-primary mr-2">
@@ -199,6 +242,7 @@
                         </h6>
                     </div>
                     <a href="?export=transactions&q={{ query|default:'' }}&from_date={{ request.GET.from_date|default:'' }}&to_date={{ request.GET.to_date|default:'' }}" 
+                       id="exportTransactionsTableBtn"
                        class="btn btn-sm d-flex align-items-center font-weight-bold" 
                        style="background-color: #1D6F42; border-color: #1D6F42; color: white;" 
                        title="Export to Excel">
@@ -278,11 +322,13 @@
                                 {% endfor %}
                             </tbody>
                         </table>
-                        {% if latest_transactions.has_other_pages %}
-                            <div class="px-3 py-2 border-top">
-                                {% include 'includes/pagination.html' with page_obj=latest_transactions query=query %}
-                            </div>
-                        {% endif %}
+                        <div id="transactionsPaginationContainer">
+                            {% if latest_transactions.has_other_pages %}
+                                <div class="px-3 py-2 border-top">
+                                    {% include 'includes/pagination.html' with page_obj=latest_transactions query=query %}
+                                </div>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -346,7 +392,19 @@
                     </div>
                 </div>
             </div>
-        </div>
+
+            <!-- Embedded Chart JSON Data for AJAX Sync -->
+            <script id="businessChartData" type="application/json">
+            {
+                "lineLabels": {{ line_chart_labels|safe }},
+                "lineIncome": {{ line_chart_income_data|safe }},
+                "lineExpense": {{ line_chart_expense_data|safe }},
+                "pieLabels": {{ pie_chart_labels|safe }},
+                "pieData": {{ pie_chart_data|safe }}
+            }
+            </script>
+        </div><!-- /#businessReportContentContainer -->
+
     </div>
 </div>
 
@@ -354,75 +412,284 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // 1. Line Chart: Income vs. Expense
-    const incomeExpenseCtx = document.getElementById('incomeExpenseChart');
-    if (incomeExpenseCtx) {
-        new Chart(incomeExpenseCtx.getContext('2d'), {
-            type: 'line',
-            data: {
-                labels: {{ line_chart_labels|safe }},
-                datasets: [
-                    {
-                        label: 'Income',
-                        data: {{ line_chart_income_data|safe }},
-                        borderColor: '#2563eb',
-                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.3
-                    },
-                    {
-                        label: 'Expense',
-                        data: {{ line_chart_expense_data|safe }},
-                        borderColor: '#dc2626',
-                        backgroundColor: 'rgba(220, 38, 38, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.3
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return '₹' + value;
+    const filterForm = document.getElementById("businessReportFilterForm");
+    const searchInput = document.getElementById("q");
+    const clearSearchBtn = document.getElementById("clearSearchBtn");
+    const searchSpinner = document.getElementById("searchSpinner");
+    const fromDateInput = document.getElementById("from_date");
+    const toDateInput = document.getElementById("to_date");
+    const resetBtn = document.getElementById("resetReportFilterBtn");
+    const contentContainer = document.getElementById("businessReportContentContainer");
+
+    let debounceTimer = null;
+    let abortController = null;
+    let incomeExpenseChartInstance = null;
+    let expenseBreakdownChartInstance = null;
+
+    function renderChartsFromDom() {
+        const dataScript = document.getElementById("businessChartData");
+        if (!dataScript) return;
+        let chartData;
+        try {
+            chartData = JSON.parse(dataScript.textContent);
+        } catch (e) {
+            console.error("Error parsing chart data", e);
+            return;
+        }
+
+        // 1. Line Chart: Income vs. Expense
+        const incomeExpenseCtx = document.getElementById('incomeExpenseChart');
+        if (incomeExpenseCtx) {
+            if (incomeExpenseChartInstance) {
+                incomeExpenseChartInstance.destroy();
+                incomeExpenseChartInstance = null;
+            }
+            incomeExpenseChartInstance = new Chart(incomeExpenseCtx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: chartData.lineLabels || [],
+                    datasets: [
+                        {
+                            label: 'Income',
+                            data: chartData.lineIncome || [],
+                            borderColor: '#2563eb',
+                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Expense',
+                            data: chartData.lineExpense || [],
+                            borderColor: '#dc2626',
+                            backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '₹' + value;
+                                }
                             }
                         }
                     }
                 }
+            });
+        }
+
+        // 2. Pie / Doughnut Chart: Expense Breakdown
+        const expenseBreakdownCtx = document.getElementById('expenseBreakdownChart');
+        if (expenseBreakdownCtx) {
+            if (expenseBreakdownChartInstance) {
+                expenseBreakdownChartInstance.destroy();
+                expenseBreakdownChartInstance = null;
+            }
+            const rawLabels = chartData.pieLabels || [];
+            const rawData = chartData.pieData || [];
+            const hasData = rawData && rawData.length > 0 && rawData.some(v => v > 0);
+
+            expenseBreakdownChartInstance = new Chart(expenseBreakdownCtx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: hasData ? rawLabels : ['No Expenses'],
+                    datasets: [{
+                        data: hasData ? rawData : [1],
+                        backgroundColor: hasData ? 
+                            ['#2563eb', '#10b981', '#f59e0b', '#dc2626', '#8b5cf6', '#06b6d4', '#6c757d'] : 
+                            ['#e9ecef']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+    }
+
+    function toggleClearBtn() {
+        if (!clearSearchBtn || !searchInput) return;
+        clearSearchBtn.style.display = searchInput.value.trim().length > 0 ? "block" : "none";
+    }
+
+    function bindPaginationLinks() {
+        const pagContainer = document.getElementById("transactionsPaginationContainer");
+        if (!pagContainer) return;
+        pagContainer.querySelectorAll("a.page-link").forEach(link => {
+            link.onclick = function(e) {
+                e.preventDefault();
+                const href = this.getAttribute("href");
+                if (href && href !== "#") {
+                    const targetUrl = new URL(href, window.location.origin).toString();
+                    runFilterRequest(targetUrl);
+                    const txTable = document.getElementById("transactionsTableCard");
+                    if (txTable) {
+                        window.scrollTo({ top: txTable.offsetTop - 80, behavior: "smooth" });
+                    }
+                }
+            };
+        });
+    }
+
+    function buildFilterUrl() {
+        const baseUrl = filterForm ? filterForm.getAttribute("action") : window.location.pathname;
+        const params = new URLSearchParams();
+
+        if (searchInput && searchInput.value.trim()) {
+            params.set("q", searchInput.value.trim());
+        }
+        if (fromDateInput && fromDateInput.value) {
+            params.set("from_date", fromDateInput.value);
+        }
+        if (toDateInput && toDateInput.value) {
+            params.set("to_date", toDateInput.value);
+        }
+
+        const qs = params.toString();
+        return qs ? `${baseUrl}?${qs}` : baseUrl;
+    }
+
+    function runFilterRequest(url) {
+        if (abortController) abortController.abort();
+        abortController = new AbortController();
+
+        if (searchSpinner) searchSpinner.style.display = "block";
+        if (clearSearchBtn) clearSearchBtn.style.display = "none";
+        if (contentContainer) contentContainer.classList.add("is-filtering");
+
+        fetch(url, {
+            signal: abortController.signal,
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        })
+        .then(res => {
+            if (!res.ok) throw new Error("Network error");
+            return res.text();
+        })
+        .then(html => {
+            const doc = new DOMParser().parseFromString(html, "text/html");
+            const newContent = doc.getElementById("businessReportContentContainer");
+            if (newContent && contentContainer) {
+                contentContainer.innerHTML = newContent.innerHTML;
+            }
+
+            // Sync Header Badge
+            const newBadge = doc.getElementById("reportFilterBadge");
+            const curBadge = document.getElementById("reportFilterBadge");
+            if (newBadge && curBadge) {
+                curBadge.innerHTML = newBadge.innerHTML;
+            }
+
+            // Sync Export Links
+            const newTxTop = doc.getElementById("exportTransactionsTopBtn");
+            const curTxTop = document.getElementById("exportTransactionsTopBtn");
+            if (newTxTop && curTxTop) {
+                curTxTop.href = newTxTop.href;
+            }
+
+            window.history.replaceState(null, "", url);
+            renderChartsFromDom();
+            bindPaginationLinks();
+        })
+        .catch(err => {
+            if (err.name !== "AbortError") {
+                if (filterForm) filterForm.submit();
+            }
+        })
+        .finally(() => {
+            if (searchSpinner) searchSpinner.style.display = "none";
+            toggleClearBtn();
+            if (contentContainer) contentContainer.classList.remove("is-filtering");
+        });
+    }
+
+    function triggerAutoFilter(delay = 350) {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        toggleClearBtn();
+
+        debounceTimer = setTimeout(() => {
+            const targetUrl = buildFilterUrl();
+            runFilterRequest(targetUrl);
+        }, delay);
+    }
+
+    // Search Input Events
+    if (searchInput) {
+        searchInput.addEventListener("input", function() {
+            triggerAutoFilter(350);
+        });
+        searchInput.addEventListener("keydown", function(e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                triggerAutoFilter(0);
             }
         });
     }
 
-    // 2. Pie / Doughnut Chart: Expense Breakdown
-    const expenseBreakdownCtx = document.getElementById('expenseBreakdownChart');
-    if (expenseBreakdownCtx) {
-        const rawLabels = {{ pie_chart_labels|safe }};
-        const rawData = {{ pie_chart_data|safe }};
-        const hasData = rawData && rawData.length > 0 && rawData.some(v => v > 0);
-
-        new Chart(expenseBreakdownCtx.getContext('2d'), {
-            type: 'doughnut',
-            data: {
-                labels: hasData ? rawLabels : ['No Expenses'],
-                datasets: [{
-                    data: hasData ? rawData : [1],
-                    backgroundColor: hasData ? 
-                        ['#2563eb', '#10b981', '#f59e0b', '#dc2626', '#8b5cf6', '#06b6d4', '#6c757d'] : 
-                        ['#e9ecef']
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener("click", function() {
+            if (searchInput) {
+                searchInput.value = "";
+                searchInput.focus();
             }
+            triggerAutoFilter(0);
         });
     }
+
+    // Date Pickers Events
+    if (fromDateInput) {
+        fromDateInput.addEventListener("change", function() {
+            triggerAutoFilter(200);
+        });
+    }
+
+    if (toDateInput) {
+        toDateInput.addEventListener("change", function() {
+            triggerAutoFilter(200);
+        });
+    }
+
+    // Reset Button
+    if (resetBtn) {
+        resetBtn.addEventListener("click", function() {
+            if (searchInput) searchInput.value = "";
+            if (fromDateInput) fromDateInput.value = "";
+            if (toDateInput) toDateInput.value = "";
+            toggleClearBtn();
+            const baseUrl = filterForm ? filterForm.getAttribute("action") : window.location.pathname;
+            runFilterRequest(baseUrl);
+        });
+    }
+
+    if (filterForm) {
+        filterForm.addEventListener("submit", function(e) {
+            e.preventDefault();
+            triggerAutoFilter(0);
+        });
+    }
+
+    // History popstate
+    window.addEventListener("popstate", function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (searchInput) searchInput.value = urlParams.get("q") || "";
+        if (fromDateInput) fromDateInput.value = urlParams.get("from_date") || "";
+        if (toDateInput) toDateInput.value = urlParams.get("to_date") || "";
+        toggleClearBtn();
+        runFilterRequest(window.location.href);
+    });
+
+    // Initial load
+    toggleClearBtn();
+    renderChartsFromDom();
+    bindPaginationLinks();
 });
 </script>
 {% endblock %}

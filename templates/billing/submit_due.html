@@ -28,44 +28,87 @@
         </div>
         <div class="card-body">
             {% csrf_token %}
-            <!-- Search form -->
-            <form method="get" action="{% url 'billing:submit_due' %}" class="mb-4">
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="q">Search</label>
-                            {% comment %} <input type="text" name="q" id="q" class="form-control" placeholder="Name, Number, ID" value="{{ request.GET.q }}"> {% endcomment %}
-                        {% include 'includes/search_form.html' with placeholder="Search by name, phone or membership ID..." %}
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-group">
-                            <label for="from_date">From</label>
-                            <input type="date" name="from_date" id="from_date" class="form-control" value="{{ request.GET.from_date }}">
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-group">
-                            <label for="to_date">To</label>
-                            <input type="date" name="to_date" id="to_date" class="form-control" value="{{ request.GET.to_date }}">
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-group">
-                            <label for="follow_up_date">Follow Up Date</label>
-                            <input type="date" name="follow_up_date" id="follow_up_date" class="form-control" value="{{ request.GET.follow_up_date }}">
-                        </div>
-                    </div>
-                    <div class="col-md-2 align-self-end">
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-primary"><i class="mdi mdi-filter-variant"></i> </button>
-                            <a href="{% url 'billing:submit_due' %}" class="btn btn-secondary"><i class="mdi mdi-reload"></i> </a>
-                        </div>
-                    </div>
-                </div>
-            </form>
+            <!-- =========================================================================
+                 SMART AUTO-FILTER TOOLBAR
+                 ========================================================================= -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <form method="get" action="{% url 'billing:submit_due' %}" id="duePaymentFilterForm">
+                        <div class="filter-card-box">
+                            <div class="row g-2 g-md-3 align-items-end">
+                                
+                                <!-- 1. Live Search Input -->
+                                <div class="col-xl-4 col-lg-4 col-md-6 col-12">
+                                    <label for="due_search" class="filter-label">Search Member</label>
+                                    <div class="filter-search-wrapper" style="position: relative; display: flex; align-items: center; width: 100%;">
+                                        <i class="mdi mdi-magnify filter-search-icon" style="position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: #9ca3af; pointer-events: none; font-size: 17px; line-height: 1; z-index: 4; margin: 0;"></i>
+                                        <input
+                                            type="text"
+                                            name="q"
+                                            id="due_search"
+                                            class="form-control filter-control filter-search-input"
+                                            placeholder="Name, phone, member ID..."
+                                            value="{{ query|default:'' }}"
+                                            autocomplete="off"
+                                            style="padding-left: 35px; padding-right: 32px;"
+                                        />
+                                        <button type="button" class="filter-clear-btn" id="clearDueSearchBtn" title="Clear search text" style="position: absolute; right: 9px; top: 50%; transform: translateY(-50%); background: transparent; border: none; outline: none; box-shadow: none; color: #9ca3af; font-size: 17px; cursor: pointer; padding: 0; line-height: 1; z-index: 5; {% if not query %}display: none;{% endif %}">
+                                            <i class="mdi mdi-close-circle"></i>
+                                        </button>
+                                        <div class="filter-spinner" id="dueSearchSpinner"></div>
+                                    </div>
+                                </div>
 
-            <div class="table-responsive">
+                                <!-- 2. From Date -->
+                                <div class="col-xl-2 col-lg-2 col-md-4 col-6">
+                                    <label for="from_date" class="filter-label">From</label>
+                                    <input
+                                        type="date"
+                                        name="from_date"
+                                        id="from_date"
+                                        class="form-control filter-control"
+                                        value="{{ from_date|default:'' }}"
+                                    />
+                                </div>
+
+                                <!-- 3. To Date -->
+                                <div class="col-xl-2 col-lg-2 col-md-4 col-6">
+                                    <label for="to_date" class="filter-label">To</label>
+                                    <input
+                                        type="date"
+                                        name="to_date"
+                                        id="to_date"
+                                        class="form-control filter-control"
+                                        value="{{ to_date|default:'' }}"
+                                    />
+                                </div>
+
+                                <!-- 4. Follow Up Date -->
+                                <div class="col-xl-3 col-lg-3 col-md-4 col-6">
+                                    <label for="follow_up_date" class="filter-label">Follow Up Date</label>
+                                    <input
+                                        type="date"
+                                        name="follow_up_date"
+                                        id="follow_up_date"
+                                        class="form-control filter-control"
+                                        value="{{ follow_up_date|default:'' }}"
+                                    />
+                                </div>
+
+                                <!-- 5. Reset / Reload Button -->
+                                <div class="col-xl-1 col-lg-1 col-md-4 col-12">
+                                    <button type="button" class="btn btn-secondary w-100 filter-control filter-reset-btn" id="resetDueFilterBtn" title="Reset all filters">
+                                        <i class="mdi mdi-reload font-weight-bold"></i>
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="table-responsive" id="duePaymentTableContainer">
                <table class="table table-hover table-sm table-stack-on-mobile">
                     <thead>
                         <tr>
@@ -108,25 +151,28 @@
                                 {% endif %}
                                 {% if member.pt_due > 0 %}
                                     <span class="badge badge-pill badge-light text-success border border-success shadow-sm mb-1">
-                                        <i class="mdi mdi-account-star mr-1"></i> PT
+                                        <i class="mdi mdi-dumbbell mr-1"></i> PT
                                     </span>
                                 {% endif %}
                             </td>
                             <td data-label="Follow Up Date">
-                                {% if member.latest_follow_up_date %}
-                                    {{ member.latest_follow_up_date|date:"d-m-Y" }}
-                                {% else %}
-                                    No Follow Up
-                                {% endif %}
+                                {% with membership_follow_up=member.membershiphistory_set.first.follow_up_date pt_follow_up=member.personaltrainer_set.first.follow_up_date %}
+                                    {% if membership_follow_up %}
+                                        {{ membership_follow_up|date:"d-m-Y" }}
+                                    {% elif pt_follow_up %}
+                                        {{ pt_follow_up|date:"d-m-Y" }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                {% endwith %}
                             </td>
-                            <td data-label="Actions" class="text-center text-nowrap" style="white-space: nowrap;">
-                                <a href="#" class="btn btn-info btn-sm" data-toggle="modal" data-target="#followUpModal-{{ member.id }}" title="Update Follow Up Date">
-                                    <i class="mdi mdi-calendar-edit"></i> 
-                                </a>
-                                {% with total_due=member.membership_due|add:member.pt_due %}
-                                <a href="https://wa.me/91{{ member.mobile_number }}?text=Hello%20*{{ member.name|urlencode }}*,%20this%20is%20a%20reminder%20from%20*{{ member.gym.name|urlencode }}*%20regarding%20your%20pending%20due%20of%20*₹{{ total_due|urlencode }}*.%20Please%20clear%20it%20at%20your%20earliest%20convenience.%20-%20*{{ member.gym.name|urlencode }}*" target="_blank" class="btn btn-success btn-sm" title="WhatsApp">
-                                    <i class="mdi mdi-whatsapp"></i>
-                                </a>
+                            <td data-label="Action" class="text-center">
+                                {% with membership_history=member.membershiphistory_set.first pt_history=member.personaltrainer_set.first %}
+                                    {% if membership_history or pt_history %}
+                                        <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#followUpModal-{{ member.id }}" title="Update Follow-up">
+                                            <i class="mdi mdi-calendar-clock"></i>
+                                        </button>
+                                    {% endif %}
                                 {% endwith %}
                                 <a href="tel:{{ member.mobile_number }}" class="btn btn-secondary btn-sm" title="Call">
                                     <i class="mdi mdi-phone"></i>
@@ -138,9 +184,10 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="7" class="text-center py-4 text-muted">
-                                <i class="mdi mdi-check-circle-outline mdi-36px mb-2 d-block"></i>
-                                No pending dues found.
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="mdi mdi-check-circle-outline text-muted mb-2" style="font-size: 40px; display: block;"></i>
+                                <h6 class="font-weight-bold text-dark mb-1">No pending dues found</h6>
+                                <p class="small text-muted mb-0">All accounts are settled or no members match your search criteria.</p>
                             </td>
                         </tr>
                         {% endfor %} 
@@ -149,9 +196,11 @@
             </div>
 
             <!-- Pagination -->
+            <div id="duePaymentPaginationContainer">
             {% if members.has_other_pages %}
                 {% include 'includes/pagination.html' with page_obj=members query=query %}
             {% endif %}
+            </div>
         </div>
     </div>
 </div>
@@ -199,6 +248,146 @@ document.addEventListener('DOMContentLoaded', function() {
             dateInput.setAttribute('min', today);
         }
     });
+
+    const filterForm = document.getElementById("duePaymentFilterForm");
+    const searchInput = document.getElementById("due_search");
+    const clearSearchBtn = document.getElementById("clearDueSearchBtn");
+    const searchSpinner = document.getElementById("dueSearchSpinner");
+    const fromDateInput = document.getElementById("from_date");
+    const toDateInput = document.getElementById("to_date");
+    const followUpInput = document.getElementById("follow_up_date");
+    const resetBtn = document.getElementById("resetDueFilterBtn");
+    const tableContainer = document.getElementById("duePaymentTableContainer");
+    const paginationContainer = document.getElementById("duePaymentPaginationContainer");
+
+    let debounceTimer = null;
+    let currentAbortController = null;
+
+    function toggleClearBtn() {
+        if (clearSearchBtn) {
+            clearSearchBtn.style.display = (searchInput && searchInput.value.trim().length > 0) ? "block" : "none";
+        }
+    }
+
+    function buildFilterUrl() {
+        const baseUrl = filterForm.getAttribute("action") || window.location.pathname;
+        const params = new URLSearchParams();
+
+        const qVal = (searchInput?.value || "").trim();
+        const fromVal = fromDateInput?.value || "";
+        const toVal = toDateInput?.value || "";
+        const followVal = followUpInput?.value || "";
+
+        if (qVal) params.set("q", qVal);
+        if (fromVal) params.set("from_date", fromVal);
+        if (toVal) params.set("to_date", toVal);
+        if (followVal) params.set("follow_up_date", followVal);
+
+        const queryString = params.toString();
+        return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+    }
+
+    function runFilterRequest(url) {
+        if (currentAbortController) currentAbortController.abort();
+        currentAbortController = new AbortController();
+
+        if (searchSpinner) searchSpinner.style.display = "block";
+        if (clearSearchBtn) clearSearchBtn.style.display = "none";
+        if (tableContainer) tableContainer.classList.add("is-filtering");
+
+        fetch(url, {
+            signal: currentAbortController.signal,
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        })
+        .then(res => {
+            if (!res.ok) throw new Error("Network error");
+            return res.text();
+        })
+        .then(html => {
+            const doc = new DOMParser().parseFromString(html, "text/html");
+            const newTable = doc.querySelector("#duePaymentTableContainer");
+            if (newTable && tableContainer) {
+                tableContainer.innerHTML = newTable.innerHTML;
+            }
+            const newPagination = doc.querySelector("#duePaymentPaginationContainer");
+            if (newPagination && paginationContainer) {
+                paginationContainer.innerHTML = newPagination.innerHTML;
+            }
+            window.history.replaceState(null, "", url);
+        })
+        .catch(err => {
+            if (err.name !== "AbortError") {
+                filterForm.submit();
+            }
+        })
+        .finally(() => {
+            if (searchSpinner) searchSpinner.style.display = "none";
+            toggleClearBtn();
+            if (tableContainer) tableContainer.classList.remove("is-filtering");
+        });
+    }
+
+    function triggerAutoFilter(delay = 350) {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        toggleClearBtn();
+
+        debounceTimer = setTimeout(() => {
+            const targetUrl = buildFilterUrl();
+            runFilterRequest(targetUrl);
+        }, delay);
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener("input", function() {
+            triggerAutoFilter(350);
+        });
+        searchInput.addEventListener("keydown", function(e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                triggerAutoFilter(0);
+            }
+        });
+    }
+
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener("click", function() {
+            if (searchInput) {
+                searchInput.value = "";
+                searchInput.focus();
+            }
+            triggerAutoFilter(0);
+        });
+    }
+
+    if (fromDateInput) {
+        fromDateInput.addEventListener("change", function() {
+            triggerAutoFilter(0);
+        });
+    }
+
+    if (toDateInput) {
+        toDateInput.addEventListener("change", function() {
+            triggerAutoFilter(0);
+        });
+    }
+
+    if (followUpInput) {
+        followUpInput.addEventListener("change", function() {
+            triggerAutoFilter(0);
+        });
+    }
+
+    if (resetBtn) {
+        resetBtn.addEventListener("click", function() {
+            if (searchInput) searchInput.value = "";
+            if (fromDateInput) fromDateInput.value = "";
+            if (toDateInput) toDateInput.value = "";
+            if (followUpInput) followUpInput.value = "";
+            toggleClearBtn();
+            const baseUrl = filterForm.getAttribute("action") || window.location.pathname;
+            runFilterRequest(baseUrl);
+        });
+    }
 });
 </script>
 {% endblock %}

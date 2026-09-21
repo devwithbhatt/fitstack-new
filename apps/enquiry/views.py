@@ -88,6 +88,7 @@ def enquiry_list(request):
     
     # Search functionality
     query = request.GET.get('q')
+    status_filter = request.GET.get('status')
     date_from = request.GET.get('date_from')
     date_to = request.GET.get('date_to')
 
@@ -97,6 +98,9 @@ def enquiry_list(request):
             Q(mobile_number__icontains=query) |
             Q(email__icontains=query)
         ).distinct()
+
+    if status_filter:
+        enquiry_list = enquiry_list.filter(status=status_filter)
 
     if date_from:
         enquiry_list = enquiry_list.filter(next_follow_up_date__gte=date_from)
@@ -155,7 +159,10 @@ def enquiry_list(request):
     page_number = request.GET.get('page')
     enquiries = paginator.get_page(page_number)
 
-    return render(request, 'enquiry/enquiry_list.html', {'enquiries': enquiries})
+    return render(request, 'enquiry/enquiry_list.html', {
+        'enquiries': enquiries,
+        'status_choices': Enquiry.STATUS_CHOICES,
+    })
 @login_required
 @custom_permission_required('change_enquiry')
 def edit_enquiry(request, enquiry_id):

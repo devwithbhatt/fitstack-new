@@ -59,51 +59,80 @@
             </div>
         </div>
         <div class="card-body">
-            <div class="row mb-4">
+            <!-- Unified Real-Time Filter Toolbar -->
+            <div class="row mb-3">
                 <div class="col-12">
-                    <form method="get">
-                        <div class="p-3 bg-light rounded border">
-                            <div class="row g-3 align-items-end">
-                                <div class="col-md-4">
-                                    <label for="search" class="form-label">Search</label>
-                                    <input type="text" name="q" id="search" class="form-control" placeholder="Search by name or reason..." value="{{ search_query }}">
+                    <form method="get" id="leaveFilterForm" action="{% url 'attendance:leave_management' %}">
+                        <div class="filter-card-box">
+                            <div class="row g-2 align-items-end">
+
+                                <!-- 1. Search Query Input with Live Clear -->
+                                <div class="col-xl-5 col-lg-5 col-md-5 col-12">
+                                    <label for="leave_search" class="filter-label">Search</label>
+                                    <div class="filter-search-wrapper" style="position: relative; display: flex; align-items: center; width: 100%;">
+                                        <i class="mdi mdi-magnify filter-search-icon" style="position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: #9ca3af; pointer-events: none; font-size: 17px; line-height: 1; z-index: 4; margin: 0;"></i>
+                                        <input
+                                            type="text"
+                                            name="q"
+                                            id="leave_search"
+                                            class="form-control filter-control filter-search-input"
+                                            placeholder="Search by name or reason..."
+                                            value="{{ search_query|default:'' }}"
+                                            autocomplete="off"
+                                            style="padding-left: 35px; padding-right: 32px;"
+                                        />
+                                        <button type="button" class="filter-clear-btn" id="clearLeaveSearchBtn" title="Clear search text" style="position: absolute; right: 9px; top: 50%; transform: translateY(-50%); background: transparent; border: none; outline: none; box-shadow: none; color: #9ca3af; font-size: 17px; cursor: pointer; padding: 0; line-height: 1; z-index: 5; {% if not search_query %}display: none;{% endif %}">
+                                            <i class="mdi mdi-close-circle"></i>
+                                        </button>
+                                        <div class="filter-spinner" id="leaveSearchSpinner"></div>
+                                    </div>
                                 </div>
-                                <div class="col-md-3">
-                                    <label for="status_filter" class="form-label">Status</label>
-                                    <select name="status" id="status_filter" class="form-control">
-                                        <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
+
+                                <!-- 2. Status Select Dropdown -->
+                                <div class="col-xl-3 col-lg-3 col-md-3 col-6">
+                                    <label for="status_filter" class="filter-label">Status</label>
+                                    <select
+                                        name="status"
+                                        id="status_filter"
+                                        class="form-control filter-control"
+                                    >
+                                        <option value="all" {% if status_filter == 'all' or not status_filter %}selected{% endif %}>All Status</option>
                                         <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
                                         <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
                                         <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3">
-                                    <label for="type_filter" class="form-label">Leave Type</label>
-                                    <select name="type" id="type_filter" class="form-control">
-                                        <option value="all" {% if type_filter == 'all' %}selected{% endif %}>All Types</option>
+
+                                <!-- 3. Leave Type Select Dropdown -->
+                                <div class="col-xl-3 col-lg-3 col-md-3 col-6">
+                                    <label for="type_filter" class="filter-label">Leave Type</label>
+                                    <select
+                                        name="type"
+                                        id="type_filter"
+                                        class="form-control filter-control"
+                                    >
+                                        <option value="all" {% if type_filter == 'all' or not type_filter %}selected{% endif %}>All Types</option>
                                         <option value="sick" {% if type_filter == 'sick' %}selected{% endif %}>Sick Leave</option>
                                         <option value="casual" {% if type_filter == 'casual' %}selected{% endif %}>Casual Leave</option>
                                         <option value="medical" {% if type_filter == 'medical' %}selected{% endif %}>Medical Leave</option>
                                         <option value="other" {% if type_filter == 'other' %}selected{% endif %}>Other</option>
                                     </select>
                                 </div>
-                                <div class="col-md-2">
-                                    <div class="btn-group w-100">
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="mdi mdi-filter-variant"></i>
-                                        </button>
-                                        <a href="{% url 'attendance:leave_management' %}" class="btn btn-secondary">
-                                            <i class="mdi mdi-reload"></i>
-                                        </a>
-                                    </div>
+
+                                <!-- 4. Reset Button -->
+                                <div class="col-xl-1 col-lg-1 col-md-1 col-12">
+                                    <button type="button" class="btn btn-secondary w-100 filter-control filter-reset-btn" id="resetLeaveFilterBtn" title="Reset all filters">
+                                        <i class="mdi mdi-reload font-weight-bold"></i>
+                                    </button>
                                 </div>
+
                             </div>
                         </div>
                     </form>
                 </div>
             </div>
 
-            <div class="table-responsive">
+            <div class="table-responsive" id="leaveTableContainer">
                 <table class="table table-hover">
                     <thead>
                         <tr>
@@ -183,9 +212,11 @@
                 </table>
             </div>
 
-            {% if page_obj.has_other_pages %}
-                {% include 'includes/pagination.html' with page_obj=page_obj %}
-            {% endif %}
+            <div id="leavePaginationContainer">
+                {% if page_obj.has_other_pages %}
+                    {% include 'includes/pagination.html' with page_obj=page_obj %}
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>
@@ -194,49 +225,207 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // Initialize tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
+    const filterForm = document.getElementById("leaveFilterForm");
+    const searchInput = document.getElementById("leave_search");
+    const clearSearchBtn = document.getElementById("clearLeaveSearchBtn");
+    const searchSpinner = document.getElementById("leaveSearchSpinner");
+    const statusSelect = document.getElementById("status_filter");
+    const typeSelect = document.getElementById("type_filter");
+    const resetBtn = document.getElementById("resetLeaveFilterBtn");
+    const tableContainer = document.getElementById("leaveTableContainer");
+    const paginationContainer = document.getElementById("leavePaginationContainer");
 
-    // SweetAlert for action buttons
-    document.querySelectorAll('.action-btn').forEach(button => {
-        button.addEventListener('click', function (e) {
-            e.preventDefault();
-            const url = this.href;
-            const action = this.dataset.action;
+    let debounceTimer = null;
+    let abortController = null;
 
-            let config = {
-                title: 'Are you sure?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
+    function bindActionButtons() {
+        // Tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // SweetAlert for action buttons
+        document.querySelectorAll('.action-btn').forEach(button => {
+            button.onclick = function (e) {
+                e.preventDefault();
+                const url = this.href;
+                const action = this.dataset.action;
+
+                let config = {
+                    title: 'Are you sure?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                };
+
+                if (action === 'approve') {
+                    config.text = "You are about to approve this leave request.";
+                    config.confirmButtonText = 'Yes, approve it!';
+                    config.icon = 'success';
+                } else if (action === 'reject') {
+                    config.text = "You are about to reject this leave request.";
+                    config.confirmButtonText = 'Yes, reject it!';
+                    config.icon = 'warning';
+                } else if (action === 'delete') {
+                    config.title = 'Are you absolutely sure?';
+                    config.text = "This action cannot be undone. This will permanently delete the leave record.";
+                    config.confirmButtonText = 'Yes, delete it!';
+                    config.icon = 'error';
+                }
+
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire(config).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = url;
+                        }
+                    });
+                } else {
+                    if (confirm(config.text || config.title)) {
+                        window.location.href = url;
+                    }
+                }
             };
+        });
+    }
 
-            if (action === 'approve') {
-                config.text = "You are about to approve this leave request.";
-                config.confirmButtonText = 'Yes, approve it!';
-                config.icon = 'success';
-            } else if (action === 'reject') {
-                config.text = "You are about to reject this leave request.";
-                config.confirmButtonText = 'Yes, reject it!';
-                config.icon = 'warning';
-            } else if (action === 'delete') {
-                config.title = 'Are you absolutely sure?';
-                config.text = "This action cannot be undone. This will permanently delete the leave record.";
-                config.confirmButtonText = 'Yes, delete it!';
-                config.icon = 'error';
+    // Initial binding
+    bindActionButtons();
+
+    function toggleClearBtn() {
+        if (!clearSearchBtn || !searchInput) return;
+        clearSearchBtn.style.display = searchInput.value.trim().length > 0 ? "block" : "none";
+    }
+
+    function buildFilterUrl() {
+        const baseUrl = filterForm ? filterForm.getAttribute("action") : window.location.pathname;
+        const params = new URLSearchParams();
+
+        if (searchInput && searchInput.value.trim()) {
+            params.set("q", searchInput.value.trim());
+        }
+        if (statusSelect && statusSelect.value && statusSelect.value !== "all") {
+            params.set("status", statusSelect.value);
+        }
+        if (typeSelect && typeSelect.value && typeSelect.value !== "all") {
+            params.set("type", typeSelect.value);
+        }
+
+        const qs = params.toString();
+        return qs ? `${baseUrl}?${qs}` : baseUrl;
+    }
+
+    function runFilterRequest(url) {
+        if (abortController) abortController.abort();
+        abortController = new AbortController();
+
+        if (searchSpinner) searchSpinner.style.display = "block";
+        if (clearSearchBtn) clearSearchBtn.style.display = "none";
+        if (tableContainer) tableContainer.classList.add("is-filtering");
+
+        fetch(url, {
+            signal: abortController.signal,
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        })
+        .then(res => {
+            if (!res.ok) throw new Error("Network error");
+            return res.text();
+        })
+        .then(html => {
+            const doc = new DOMParser().parseFromString(html, "text/html");
+            const newTable = doc.querySelector("#leaveTableContainer");
+            if (newTable && tableContainer) {
+                tableContainer.innerHTML = newTable.innerHTML;
+            }
+            const newPagination = doc.querySelector("#leavePaginationContainer");
+            if (newPagination && paginationContainer) {
+                paginationContainer.innerHTML = newPagination.innerHTML;
             }
 
-            Swal.fire(config).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = url;
-                }
-            });
+            // Update badge count in card header if present
+            const badgeCount = doc.querySelector(".card-header .badge");
+            const currentBadge = document.querySelector(".card-header .badge");
+            if (badgeCount && currentBadge) {
+                currentBadge.textContent = badgeCount.textContent;
+            }
+
+            window.history.replaceState(null, "", url);
+            bindActionButtons();
+        })
+        .catch(err => {
+            if (err.name !== "AbortError") {
+                if (filterForm) filterForm.submit();
+            }
+        })
+        .finally(() => {
+            if (searchSpinner) searchSpinner.style.display = "none";
+            toggleClearBtn();
+            if (tableContainer) tableContainer.classList.remove("is-filtering");
         });
-    });
+    }
+
+    function triggerAutoFilter(delay = 350) {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        toggleClearBtn();
+
+        debounceTimer = setTimeout(() => {
+            const targetUrl = buildFilterUrl();
+            runFilterRequest(targetUrl);
+        }, delay);
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener("input", function() {
+            triggerAutoFilter(350);
+        });
+        searchInput.addEventListener("keydown", function(e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                triggerAutoFilter(0);
+            }
+        });
+    }
+
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener("click", function() {
+            if (searchInput) {
+                searchInput.value = "";
+                searchInput.focus();
+            }
+            triggerAutoFilter(0);
+        });
+    }
+
+    if (statusSelect) {
+        statusSelect.addEventListener("change", function() {
+            triggerAutoFilter(0);
+        });
+    }
+
+    if (typeSelect) {
+        typeSelect.addEventListener("change", function() {
+            triggerAutoFilter(0);
+        });
+    }
+
+    if (resetBtn) {
+        resetBtn.addEventListener("click", function() {
+            if (searchInput) searchInput.value = "";
+            if (statusSelect) statusSelect.value = "all";
+            if (typeSelect) typeSelect.value = "all";
+            toggleClearBtn();
+            const baseUrl = filterForm ? filterForm.getAttribute("action") : window.location.pathname;
+            runFilterRequest(baseUrl);
+        });
+    }
+
+    if (filterForm) {
+        filterForm.addEventListener("submit", function(e) {
+            e.preventDefault();
+            triggerAutoFilter(0);
+        });
+    }
 });
 </script>
 {% endblock extra_js %}

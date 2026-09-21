@@ -24,8 +24,6 @@
         }
     }
 </style>
-<link rel="stylesheet" href="{% static 'css/customstyle.css' %}">
-
 <!-- Breadcrumb -->
 <nav aria-label="breadcrumb" class="custom-breadcrumb mb-3">
     <ol class="breadcrumb">
@@ -41,37 +39,44 @@
         <button onclick="window.print();" class="btn btn-light btn-sm"><i class="mdi mdi-printer"></i> Print</button>
     </div>
     <div class="card-body">
-        <!-- Filter Form -->
-        <form method="get" class="row g-3 align-items-end mb-4">
-            <div class="col-md-2">
-                <label for="user_type" class="form-label">Report For</label>
-                <select name="user_type" id="user_type" class="form-select">
-                    <option value="member" {% if request.GET.user_type == 'member' or not request.GET.user_type %}selected{% endif %}>Members</option>
-                    <option value="trainer" {% if request.GET.user_type == 'trainer' %}selected{% endif %}>Trainers</option>
-                </select>
+        <!-- Unified Real-Time Filter Toolbar -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <form method="get" id="attendanceReportForm" action="{% url 'attendance:attendance_report' %}">
+                    <div class="filter-card-box">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-xl-2 col-lg-2 col-md-3 col-6">
+                                <label for="user_type" class="filter-label">Report For</label>
+                                <select name="user_type" id="user_type" class="form-control filter-control">
+                                    <option value="member" {% if request.GET.user_type == 'member' or not request.GET.user_type %}selected{% endif %}>Members</option>
+                                    <option value="trainer" {% if request.GET.user_type == 'trainer' %}selected{% endif %}>Trainers</option>
+                                </select>
+                            </div>
+                            <div class="col-xl-3 col-lg-3 col-md-3 col-6" id="user-select-container">
+                                <label for="user_id" class="filter-label">Select User</label>
+                                <select name="user_id" id="user_id" class="form-control filter-control select2-basic" style="font-size: 0.8rem;">
+                                    <option value="">All</option>
+                                </select>
+                            </div>
+                            <div class="col-xl-2 col-lg-2 col-md-3 col-6">
+                                <label for="start_date" class="filter-label">From Date</label>
+                                <input type="date" name="start_date" id="start_date" class="form-control filter-control" value="{{ start_date|date:'Y-m-d' }}">
+                            </div>
+                            <div class="col-xl-2 col-lg-2 col-md-3 col-6">
+                                <label for="end_date" class="filter-label">To Date</label>
+                                <input type="date" name="end_date" id="end_date" class="form-control filter-control" value="{{ end_date|date:'Y-m-d' }}">
+                            </div>
+                            <div class="col-xl-3 col-lg-3 col-md-12 col-12 d-flex align-items-end">
+                                <div class="btn-group w-100" role="group">
+                                    <button type="submit" class="btn btn-primary filter-control" style="font-weight: 600; font-size: 0.85rem;"><i class="mdi mdi-filter-variant me-1"></i> Generate</button>
+                                    <button type="button" id="today-btn" class="btn btn-info text-white filter-control" style="font-weight: 600; font-size: 0.85rem;"><i class="mdi mdi-calendar-today me-1"></i> Today</button>
+                                    <a href="{% url 'attendance:attendance_report' %}" class="btn btn-secondary filter-control" style="font-weight: 600; font-size: 0.85rem;" title="Reset Filters"><i class="mdi mdi-reload font-weight-bold"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
             </div>
-            <div class="col-md-3" id="user-select-container">
-                <label for="user_id" class="form-label">Select User</label>
-                <select name="user_id" id="user_id" class="form-select select2-basic" style="font-size: 0.7rem;">
-                    <option value="">All</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label for="start_date" class="form-label">From</label>
-                <input type="date" name="start_date" id="start_date" class="form-control" value="{{ start_date|date:'Y-m-d' }}">
-            </div>
-            <div class="col-md-2">
-                <label for="end_date" class="form-label">To</label>
-                <input type="date" name="end_date" id="end_date" class="form-control" value="{{ end_date|date:'Y-m-d' }}">
-            </div>
-            <div class="col-md-3 d-flex align-items-end">
-                <div class="btn-group w-100" role="group">
-                    <button type="submit" class="btn btn-primary"><i class="mdi mdi-filter-variant"></i> Generate</button>
-                    <button type="button" id="today-btn" class="btn btn-secondary"><i class="mdi mdi-calendar-today"></i> Today</button>
-                    <a href="{% url 'attendance:attendance_report' %}" class="btn btn-outline-secondary"><i class="mdi mdi-reload"></i> Clear</a>
-                </div>
-            </div>
-        </form>
         </div>  
 
         <!-- Loading Spinner -->
@@ -214,8 +219,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const todayBtn = document.getElementById('today-btn');
 
     form.addEventListener('submit', function() {
-        reportResults.style.display = 'none';
-        loadingSpinner.style.display = 'block';
+        if (reportResults) reportResults.style.display = 'none';
+        if (loadingSpinner) loadingSpinner.style.display = 'block';
     });
 
     todayBtn.addEventListener('click', function() {
@@ -223,6 +228,27 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('start_date').value = today;
         document.getElementById('end_date').value = today;
         form.submit();
+    });
+
+    let isInitialized = false;
+    setTimeout(() => {
+        isInitialized = true;
+    }, 300);
+
+    $('#user_id').on('select2:select', function() {
+        if (isInitialized) {
+            form.submit();
+        }
+    });
+
+    $('#start_date, #end_date').on('change', function() {
+        if (isInitialized) {
+            const start = document.getElementById('start_date').value;
+            const end = document.getElementById('end_date').value;
+            if (start && end) {
+                form.submit();
+            }
+        }
     });
 });
 </script>
