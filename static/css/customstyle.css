@@ -300,9 +300,9 @@
 }
 
 /* Action Buttons Stabilization */
-.table td .btn-sm:not(.btn-action-text):not(.btn-text),
-td[data-label="Actions"] .btn:not(.btn-action-text):not(.btn-text),
-.btn-group-sm .btn:not(.btn-action-text):not(.btn-text) {
+.table td:not([colspan]) .btn-sm:not(.btn-action-text):not(.btn-text):not(.btn-wide),
+td[data-label="Actions"] .btn:not(.btn-action-text):not(.btn-text):not(.btn-wide),
+.btn-group-sm .btn:not(.btn-action-text):not(.btn-text):not(.btn-wide) {
   width: 34px !important;
   height: 34px !important;
   padding: 0 !important;
@@ -317,14 +317,18 @@ td[data-label="Actions"] .btn:not(.btn-action-text):not(.btn-text),
   vertical-align: middle !important;
 }
 
+.table td[colspan] .btn,
 .table td .btn-action-text,
 .table td .btn-text,
+.table td .btn-wide,
 td[data-label="Actions"] .btn.btn-action-text,
-td[data-label="Actions"] .btn.btn-text {
+td[data-label="Actions"] .btn.btn-text,
+td[data-label="Actions"] .btn.btn-wide {
   width: auto !important;
   min-width: 34px;
-  height: 34px !important;
-  padding: 0 10px !important;
+  height: auto !important;
+  min-height: 34px !important;
+  padding: 0.375rem 0.85rem !important;
   margin: 0 2px !important;
   display: inline-flex !important;
   align-items: center !important;
