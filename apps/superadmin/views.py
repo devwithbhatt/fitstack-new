@@ -14,7 +14,8 @@ from .notifications import (
 from apps.members.models import Member, MembershipHistory
 from apps.billing.models import Payment
 from django.db import models
-from django.db.models import Q, Sum, F, Count
+from django.db.models import Q, Sum, F, Count, Value
+from django.db.models.functions import Concat
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from .decorators import superadmin_required
@@ -692,7 +693,10 @@ def website_contact_submissions(request):
     submissions_list = WebsiteContactSubmission.objects.all()
     
     if query:
-        submissions_list = submissions_list.filter(
+        submissions_list = submissions_list.annotate(
+            full_name=Concat('first_name', Value(' '), 'last_name')
+        ).filter(
+            Q(full_name__icontains=query) |
             Q(first_name__icontains=query) |
             Q(last_name__icontains=query) |
             Q(email__icontains=query) |
