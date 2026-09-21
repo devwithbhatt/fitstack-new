@@ -150,9 +150,15 @@
             <a class="dropdown-item" href="{% url 'view_subadmins' %}">
               <i class="mdi mdi-account-multiple text-primary mr-2"></i> View Subadmins
             </a>
+            <a class="dropdown-item" href="{% url 'help' %}">
+              <i class="mdi mdi-help-circle-outline text-primary mr-2"></i> Help Center
+            </a>
           {% elif is_subadmin %}
             <a class="dropdown-item" href="{% url 'dashboard' %}">
               <i class="mdi mdi-view-dashboard text-primary mr-2"></i> Dashboard
+            </a>
+            <a class="dropdown-item" href="{% url 'help' %}">
+              <i class="mdi mdi-help-circle-outline text-primary mr-2"></i> Help Center
             </a>
           {% elif is_superadmin %}
             <a class="dropdown-item" href="{% url 'superadmin:dashboard' %}">
