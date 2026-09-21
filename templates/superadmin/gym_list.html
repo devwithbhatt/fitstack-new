@@ -97,9 +97,23 @@
                                 <tr>
                                     <td data-label="SR. No.">{{ forloop.counter }}</td>
                                     <td data-label="Logo">
-                                        <img src="{% if gym.logo %}{{ gym.logo.url }}{% else %}{% static 'images/gym.png' %}{% endif %}"
-                                            class="rounded-circle border" style="width: 40px; height: 40px; object-fit: cover;"
-                                            alt="{{ gym.name }}">
+                                        {% if gym.logo %}
+                                            <img src="{{ gym.logo.url }}"
+                                                class="rounded-circle border shadow-xs" style="width: 40px; height: 40px; object-fit: cover;"
+                                                alt="{{ gym.name }}"
+                                                onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-flex';">
+                                            <div class="rounded-circle text-white font-weight-bold align-items-center justify-content-center shadow-xs"
+                                                 style="display: none; width: 40px; height: 40px; font-size: 14px; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);"
+                                                 title="{{ gym.name }}">
+                                                {{ gym.name|slice:":2"|upper|default:"GY" }}
+                                            </div>
+                                        {% else %}
+                                            <div class="rounded-circle text-white font-weight-bold d-inline-flex align-items-center justify-content-center shadow-xs"
+                                                 style="width: 40px; height: 40px; font-size: 14px; background: linear-gradient(135deg, #2563eb 0%, #38bdf8 100%);"
+                                                 title="{{ gym.name }}">
+                                                {{ gym.name|slice:":2"|upper|default:"GY" }}
+                                            </div>
+                                        {% endif %}
                                     </td>
                                     <td data-label="Name">
                                         <strong><a href="{% url 'superadmin:gym_profile' gym.id %}" class="table-primary-text text-decoration-none">{{ gym.name }}</a></strong>

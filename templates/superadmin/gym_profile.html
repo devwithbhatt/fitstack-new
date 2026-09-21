@@ -97,9 +97,17 @@
                     <div class="col-lg-4">
                         <div class="border-bottom text-center pb-4">
                             {% if gym.logo %}
-                                <img src="{{ gym.logo.url }}" alt="profile" class="img-lg rounded-circle mb-3 shadow-sm" style="width: 110px; height: 110px; object-fit: cover;"/>
+                                <img src="{{ gym.logo.url }}" alt="{{ gym.name }}" class="img-lg rounded-circle mb-3 shadow-sm" style="width: 110px; height: 110px; object-fit: cover;"
+                                     onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-flex';"/>
+                                <div class="rounded-circle text-white font-weight-bold align-items-center justify-content-center mb-3 shadow-sm mx-auto"
+                                     style="display: none; width: 110px; height: 110px; font-size: 38px; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);">
+                                    {{ gym.name|slice:":2"|upper|default:"GY" }}
+                                </div>
                             {% else %}
-                                <img src="{% static 'images/gym.png' %}" alt="profile" class="img-lg rounded-circle mb-3 shadow-sm" style="width: 110px; height: 110px; object-fit: cover;"/>
+                                <div class="rounded-circle text-white font-weight-bold d-inline-flex align-items-center justify-content-center mb-3 shadow-sm mx-auto"
+                                     style="width: 110px; height: 110px; font-size: 38px; background: linear-gradient(135deg, #2563eb 0%, #38bdf8 100%);">
+                                    {{ gym.name|slice:":2"|upper|default:"GY" }}
+                                </div>
                             {% endif %}
                             <h4 class="font-weight-bold">{{ gym.name }}</h4>
                             <p class="text-muted mb-2">#{{ gym.gym_id }}</p>

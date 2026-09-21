@@ -479,6 +479,8 @@
     </div>
 </div>
 
-<!-- Modal Camera Support (Already in base.html) -->
-<script src="{% static 'js/permissions.js' %}?v={% now 'U' %}"></script>
 {% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/permissions.js' %}?v={% now 'U' %}"></script>
+{% endblock extra_js %}

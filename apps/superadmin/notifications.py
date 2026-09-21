@@ -55,9 +55,11 @@ def get_user_applicable_notifications_qs(user):
         Q(expires_at__isnull=True) | Q(expires_at__gt=now)
     )
 
-    # Superadmin sees all notifications authored or targeted to system
+    # Superadmin should only receive system-wide announcements or notifications specifically addressed to them
     if user.is_superuser:
-        return base_qs
+        return base_qs.filter(
+            Q(target_type='all') | Q(target_type='specific_user', target_user=user)
+        ).distinct()
 
     ctx = get_user_context(user)
     role = ctx['role']
