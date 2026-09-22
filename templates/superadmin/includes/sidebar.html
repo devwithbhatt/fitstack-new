@@ -84,6 +84,13 @@
     
 
      
+    <li class="nav-item {% if 'notification' in request.resolver_match.url_name %}active{% endif %}">
+      <a class="nav-link" href="{% url 'superadmin:notification_list' %}">
+        <i class="mdi mdi-bullhorn-outline menu-icon"></i>
+        <span class="menu-title">Notifications & Popups</span>
+      </a>
+    </li>
+
     <li class="nav-item {% if request.resolver_match.url_name == 'website_contact_submissions' %}active{% endif %}">
       <a class="nav-link" href="{% url 'superadmin:website_contact_submissions' %}">
         <i class="mdi mdi-email-open-outline menu-icon"></i>

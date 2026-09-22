@@ -43,8 +43,11 @@ urlpatterns = [
     path('events/', include('apps.events.urls')),
     path('inventory/', include('apps.inventory.urls')),
     path('whatsapp/', include('apps.whatsapp.urls')),
+    path('notifications/', include(('apps.superadmin.notification_urls', 'notifications'), namespace='notifications')),
     path('portal/member/', include(('apps.member_portal.urls', 'member_portal'), namespace='member_portal')),
     path('portal/trainer/', include(('apps.trainer_portal.urls', 'trainer_portal'), namespace='trainer_portal')),
+    path('member-portal/', include(('apps.member_portal.urls', 'member_portal_alias'))),
+    path('trainer-portal/', include(('apps.trainer_portal.urls', 'trainer_portal_alias'))),
     path('help/', help_view, name='help'),
     path('debug/', debug, name='debug'),
 ]

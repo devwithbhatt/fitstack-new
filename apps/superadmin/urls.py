@@ -6,11 +6,13 @@ app_name = 'superadmin'
 urlpatterns = [
     path('add_gym/', views.add_gym, name='add_gym'),
     path('', views.dashboard, name='dashboard'),
+    path('dashboard/', views.dashboard, name='dashboard_alias'),
     path('gym_list', views.gym_list, name='gym_list'),
     path('update/<int:gym_id>/', views.update_gym, name='update_gym'),
     path('delete/<int:gym_id>/', views.delete_gym, name='delete_gym'),
     path('create_admin/<int:gym_id>/', views.create_gym_admin, name='create_gym_admin'),
     path('gym_profile/<int:gym_id>/', views.gym_profile, name='gym_profile'),
+    path('gym_settings/<int:gym_id>/', views.update_gym_settings, name='update_gym_settings'),
     path('toggle_freeze/<int:gym_id>/', views.toggle_gym_freeze, name='toggle_gym_freeze'),
     path('toggle_whatsapp/<int:gym_id>/', views.toggle_whatsapp, name='toggle_whatsapp'),
     path('reset_admin_password/<int:admin_id>/', views.reset_admin_password, name='reset_admin_password'),
@@ -31,4 +33,10 @@ urlpatterns = [
     path('billing_history/trash/', views.billing_trash, name='billing_trash'),
     path('billing_history/restore/<int:item_id>/<str:item_type>/', views.restore_billing, name='restore_billing'),
     path('billing_history/permanent_delete/<int:item_id>/<str:item_type>/', views.permanent_delete_billing, name='permanent_delete_billing'),
+    # Superadmin Notifications & Popup Management
+    path('notifications/', views.notification_list, name='notification_list'),
+    path('notifications/create/', views.create_notification, name='create_notification'),
+    path('notifications/<int:notification_id>/toggle/', views.toggle_notification_status, name='toggle_notification_status'),
+    path('notifications/<int:notification_id>/delete/', views.delete_notification, name='delete_notification'),
+    path('notifications/estimate-audience/', views.estimate_audience_api, name='estimate_audience_api'),
 ]

@@ -44,6 +44,21 @@ def member_dashboard(request):
     days_left = (end_date - today).days if end_date and end_date >= today else 0
     is_active = member.current_status == 'Active'
 
+    # Auto-dispatch real-time in-app notification if plan is expiring or expired (with 24h deduplication)
+    if latest_membership:
+        if end_date and end_date < today:
+            try:
+                from apps.superadmin.notifications import notify_membership_expired
+                notify_membership_expired(member=member, history=latest_membership)
+            except Exception:
+                pass
+        elif 0 <= days_left <= 4:
+            try:
+                from apps.superadmin.notifications import notify_membership_expiring
+                notify_membership_expiring(member=member, history=latest_membership, days_left=days_left)
+            except Exception:
+                pass
+
     # 2. Attendance & Workout Session Tracking
     active_attendance = MemberAttendance.objects.filter(
         member=member,

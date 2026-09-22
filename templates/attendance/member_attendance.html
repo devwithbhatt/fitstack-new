@@ -4,7 +4,6 @@
 {% block title %}Gym Attendance - Check In/Out{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="{% static 'css/customstyle.css' %}">
 
 <!-- Compact Breadcrumb Navigation -->
 <nav aria-label="breadcrumb" class="custom-breadcrumb mb-3">
@@ -85,28 +84,55 @@
 
         </div>
         <div class="card-body">
-            <!-- Quick Search + Manual ID Entry -->
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    {% include 'includes/search_form.html' with placeholder="Search by name, phone or membership ID..." %}
-                </div>
-                <div class="col-md-6">
-                    <form method="post" class="d-inline">
-                        {% csrf_token %}
-                        <div class="input-group">
-                            <input type="text" name="quick_checkin_id" class="form-control" placeholder="Scan/Enter Membership ID" autofocus>
-                            <button type="submit" name="action" value="checkin" class="btn btn-success">
-                                <i class="mdi mdi-login"></i> Check In
-                            </button>
-                            <button type="submit" name="action" value="checkout" class="btn btn-warning">
-                                <i class="mdi mdi-logout"></i> Check Out
-                            </button>
+            <!-- Unified Real-Time Search & Quick ID Action Toolbar -->
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="filter-card-box">
+                        <div class="row g-2 align-items-end">
+                            <!-- 1. Real-Time Auto-Search -->
+                            <div class="col-xl-6 col-lg-6 col-md-12">
+                                <label for="attendance_search" class="filter-label">Search Members</label>
+                                <div class="filter-search-wrapper" style="position: relative; display: flex; align-items: center; width: 100%;">
+                                    <i class="mdi mdi-magnify filter-search-icon" style="position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: #9ca3af; pointer-events: none; font-size: 17px; line-height: 1; z-index: 4; margin: 0;"></i>
+                                    <input 
+                                        type="text" 
+                                        id="attendance_search"
+                                        class="form-control filter-control filter-search-input" 
+                                        name="q" 
+                                        placeholder="Search by name, phone or membership ID..." 
+                                        value="{{ request.GET.q|default:'' }}"
+                                        autocomplete="off"
+                                        style="padding-left: 35px; padding-right: 32px;"
+                                    >
+                                    <button type="button" class="filter-clear-btn" id="clearAttendanceSearchBtn" title="Clear search text" style="position: absolute; right: 9px; top: 50%; transform: translateY(-50%); background: transparent; border: none; outline: none; box-shadow: none; color: #9ca3af; font-size: 17px; cursor: pointer; padding: 0; line-height: 1; z-index: 5; {% if not request.GET.q %}display: none;{% endif %}">
+                                        <i class="mdi mdi-close-circle"></i>
+                                    </button>
+                                    <div class="filter-spinner" id="attendanceSearchSpinner"></div>
+                                </div>
+                            </div>
+
+                            <!-- 2. Quick Scan & Manual ID Check-In/Out -->
+                            <div class="col-xl-6 col-lg-6 col-md-12">
+                                <label for="quick_checkin_id" class="filter-label">Quick ID Scan / Check-In</label>
+                                <form method="post" class="d-inline w-100">
+                                    {% csrf_token %}
+                                    <div class="input-group">
+                                        <input type="text" id="quick_checkin_id" name="quick_checkin_id" class="form-control filter-control" placeholder="Scan or enter Membership ID..." autofocus style="border-top-right-radius: 0 !important; border-bottom-right-radius: 0 !important;">
+                                        <button type="submit" name="action" value="checkin" class="btn btn-success" style="border-radius: 0 !important; font-weight: 600; font-size: 0.85rem; padding: 0 14px;">
+                                            <i class="mdi mdi-login me-1"></i> Check In
+                                        </button>
+                                        <button type="submit" name="action" value="checkout" class="btn btn-warning" style="border-top-left-radius: 0 !important; border-bottom-left-radius: 0 !important; border-top-right-radius: 4px !important; border-bottom-right-radius: 4px !important; font-weight: 600; font-size: 0.85rem; padding: 0 14px;">
+                                            <i class="mdi mdi-logout me-1"></i> Check Out
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
-                    </form>
+                    </div>
                 </div>
             </div>
 
-           <div class="table-responsive">
+           <div class="table-responsive" id="memberAttendanceTableContainer">
                 <table class="table table-hover table-sm table-stack-on-mobile">
                     <thead>
                         <tr>
@@ -278,25 +304,22 @@
             </div>
 
             <!-- Pagination -->
-            {% if page_obj.has_other_pages %}
-                <div class="mt-4">
-                    {% include 'includes/pagination.html' with page_obj=page_obj %}
-                </div>
-            {% endif %}
+            <div id="memberAttendancePaginationContainer">
+                {% if page_obj.has_other_pages %}
+                    <div class="mt-4">
+                        {% include 'includes/pagination.html' with page_obj=page_obj %}
+                    </div>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>
 
-
-
-
-
 {% block extra_js %}
-{% endblock extra_js %}
-
-<!-- Live Duration Update Script -->
+<!-- Live Duration & Real-Time Auto-Search Script -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Live duration calculation
     function updateLiveDurations() {
         document.querySelectorAll('.text-live').forEach(el => {
             const start = parseInt(el.dataset.start) * 1000;
@@ -312,6 +335,103 @@ document.addEventListener('DOMContentLoaded', function() {
 
     setInterval(updateLiveDurations, 1000);
     updateLiveDurations();
+
+    // Auto-Search Engine
+    const searchInput = document.getElementById("attendance_search");
+    const clearSearchBtn = document.getElementById("clearAttendanceSearchBtn");
+    const searchSpinner = document.getElementById("attendanceSearchSpinner");
+    const tableContainer = document.getElementById("memberAttendanceTableContainer");
+    const paginationContainer = document.getElementById("memberAttendancePaginationContainer");
+
+    let debounceTimer = null;
+    let abortController = null;
+
+    function toggleClearBtn() {
+        if (!clearSearchBtn || !searchInput) return;
+        clearSearchBtn.style.display = searchInput.value.trim().length > 0 ? "block" : "none";
+    }
+
+    function runSearchRequest(val) {
+        if (abortController) abortController.abort();
+        abortController = new AbortController();
+
+        const url = new URL(window.location.href);
+        if (val) {
+            url.searchParams.set("q", val);
+        } else {
+            url.searchParams.delete("q");
+        }
+        url.searchParams.delete("page");
+
+        if (searchSpinner) searchSpinner.style.display = "block";
+        if (clearSearchBtn) clearSearchBtn.style.display = "none";
+        if (tableContainer) tableContainer.classList.add("is-filtering");
+
+        fetch(url.toString(), {
+            signal: abortController.signal,
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        })
+        .then(res => {
+            if (!res.ok) throw new Error("Search network error");
+            return res.text();
+        })
+        .then(html => {
+            const doc = new DOMParser().parseFromString(html, "text/html");
+            const newTable = doc.querySelector("#memberAttendanceTableContainer");
+            if (newTable && tableContainer) {
+                tableContainer.innerHTML = newTable.innerHTML;
+            }
+            const newPagination = doc.querySelector("#memberAttendancePaginationContainer");
+            if (newPagination && paginationContainer) {
+                paginationContainer.innerHTML = newPagination.innerHTML;
+            }
+            window.history.replaceState(null, "", url.toString());
+            updateLiveDurations();
+        })
+        .catch(err => {
+            if (err.name !== "AbortError") {
+                window.location.href = url.toString();
+            }
+        })
+        .finally(() => {
+            if (searchSpinner) searchSpinner.style.display = "none";
+            toggleClearBtn();
+            if (tableContainer) tableContainer.classList.remove("is-filtering");
+        });
+    }
+
+    function triggerAutoSearch(delay = 350) {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        toggleClearBtn();
+
+        debounceTimer = setTimeout(() => {
+            const val = searchInput ? searchInput.value.trim() : "";
+            runSearchRequest(val);
+        }, delay);
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener("input", function() {
+            triggerAutoSearch(350);
+        });
+        searchInput.addEventListener("keydown", function(e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                triggerAutoSearch(0);
+            }
+        });
+    }
+
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener("click", function() {
+            if (searchInput) {
+                searchInput.value = "";
+                searchInput.focus();
+            }
+            triggerAutoSearch(0);
+        });
+    }
 });
 </script>
+{% endblock extra_js %}
 {% endblock %}

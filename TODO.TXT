@@ -1,1 +1,1127 @@
-.\.venv\Scripts\Activate.ps1
+python manage.py collectstatic
+
+sudo systemctl restart gunicorn
+
+# or
+sudo systemctl restart nginx
+
+source venv/bin/activate
+
+python3 manage.py makemigrations
+python3 manage.py migrate
+sudo systemctl restart gymproject
+
+ls -l /etc/nginx/sites-available/
+
+sudo nano /etc/nginx/sites-available/gymproject
+
+
+
+sudo systemctl restart gymproject
+
+
+
+
+sp
+Aman 
+Admi      
+
+
+
+
+<!-- Enhanced Gym Dashboard HTML Template - Industry Ready, Modern, Premium UI -->
+{% extends 'base.html' %} {% load static humanize %} 
+
+<style>
+  @media (max-width: 768px) {
+    .page-body-wrapper {
+        padding: 0 !important;
+    }
+    .main-panel {
+        padding: 0 !important;
+    }
+    .col-lg-12 {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+    .content-wrapper {
+      padding: 0 !important;
+    }
+    .card {
+      border-radius: 0;
+      box-shadow: none !important;
+      border-bottom: 1px solid #eee;
+      margin-bottom: 0 !important;
+    }
+    .row .col-xl-3:first-child .card,
+    .row .col-xl-8:first-child .card,
+    .row .col-xl-6:first-child .card {
+      border-top: 1px solid #eee;
+    }
+    .page-header {
+      padding: 15px;
+    }
+    .quick-action-card {
+        padding-top: 15px;
+        padding-bottom: 15px;
+    }
+    .quick-action-card .icon-wrapper {
+        width: 50px;
+        height: 50px;
+    }
+    .quick-action-card .icon-wrapper i {
+        font-size: 1.6rem;
+    }
+    .quick-action-card span {
+        font-size: 14px;
+    }
+
+    /* Responsive Tables */
+    .table-responsive .table thead {
+        display: none;
+    }
+    .table-responsive .table tbody tr {
+        display: block;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        padding: 15px;
+    }
+    .table-responsive .table tbody td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border: none;
+    }
+    .table-responsive .table tbody td:before {
+        content: attr(data-label);
+        font-weight: bold;
+        margin-right: 10px;
+    }
+
+    /* Top Metrics Grid */
+    .top-metrics .col-md-6 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+  }
+</style>
+
+{% block content %}
+<div class="col-lg-12 px-0">
+  <div class="content-wrapper py-4">
+    <!-- HEADER -->
+    <div
+      class="page-header d-flex justify-content-between align-items-center mb-4"
+    >
+      <div>
+        <h3 class="mb-0 font-weight-bold">Dashboard Overview</h3>
+        <small class="text-muted">Your complete gym management analytics</small>
+      </div>
+    </div>
+
+    <!-- TOP METRICS -->
+    <div class="row">
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card shadow-sm bg-primary-soft">
+          <div class="card-body">
+            <p class="mb-1">Total Members</p>
+            <h3>{{ total_members|intcomma }}</h3>
+            <small>Updated today</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card shadow-sm bg-success-soft">
+          <div class="card-body">
+            <p class="mb-1">Active Members</p>
+            <h3>{{ active_members|intcomma }}</h3>
+            <small>Active today</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card shadow-sm bg-danger-soft">
+          <div class="card-body">
+            <p class="mb-1">Expired & No Active Plan </p>
+            <h3>{{ inactive_members|intcomma }}</h3>
+            <small>Expired Members</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card shadow-sm bg-warning-soft">
+          <div class="card-body">
+            <p class="mb-1">New (30 Days)</p>
+            <h3>{{ new_members_last_30_days|intcomma }}</h3>
+            <small>New registrations</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUICK ACTION CARDS -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h4 class="card-title">Quick Actions</h4>
+        <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-8 g-3">
+          <div class="col mb-2">
+            <a href="{% url 'add_new_member' %}" class="quick-action-card">
+              <div class="icon-wrapper bg-primary-soft">
+                <i class="fas fa-user-plus text-primary"></i>
+              </div>
+              <span>Add Member</span>
+            </a>
+          </div>
+          <div class="col mb-2">
+            <a href="{% url 'add_new_enquiry' %}" class="quick-action-card">
+              <div class="icon-wrapper bg-info-soft">
+                <i class="fas fa-comment-alt text-info"></i>
+              </div>
+              <span>New Enquiry</span>
+            </a>
+          </div>
+          <div class="col mb-2">
+            <a href="{% url 'billing:submit_due' %}" class="quick-action-card">
+              <div class="icon-wrapper bg-success-soft">
+                <i class="fas fa-money-bill-wave text-success"></i>
+              </div>
+              <span>Make Payment</span>
+            </a>
+          </div>
+          <div class="col mb-2">
+            <a href="{% url 'expense_add' %}" class="quick-action-card">
+              <div class="icon-wrapper bg-danger-soft">
+                <i class="fas fa-file-invoice-dollar text-danger"></i>
+              </div>
+              <span>Add Expense</span>
+            </a>
+          </div>
+
+          <div class="col mb-2">
+            <a href="{% url 'member_list' %}" class="quick-action-card">
+              <div class="icon-wrapper bg-warning-soft">
+                <i class="fas fa-users text-warning"></i>
+              </div>
+              <span>All Members</span>
+            </a>
+          </div>
+          <div class="col mb-2">
+            <a href="{% url 'member_attendance' %}" class="quick-action-card">
+              <div class="icon-wrapper bg-purple-soft">
+                <i class="fas fa-clipboard-check text-purple"></i>
+              </div>
+              <span>Attendance</span>
+            </a>
+          </div>
+          <div class="col mb-2">
+            <a href="{% url 'trainer_list' %}" class="quick-action-card">
+              <div class="icon-wrapper bg-teal-soft">
+                <i class="fas fa-user-tie text-teal"></i>
+              </div>
+              <span>Trainers</span>
+            </a>
+          </div>
+          <div class="col mb-2">
+            <a href="{% url 'workout_plans' %}" class="quick-action-card">
+              <div class="icon-wrapper bg-orange-soft">
+                <i class="fas fa-dumbbell text-orange"></i>
+              </div>
+              <span>Workout Plans</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEMBER GROWTH CHART -->
+    <div class="card shadow-sm mb-4">
+      <div
+        class="card-header bg-primary text-white d-flex justify-content-between align-items-center"
+      >
+        <h5 class="mb-0 font-weight-bold">Member Growth</h5>
+        <small>Last 6 Months</small>
+      </div>
+      <div class="card-body">
+        <canvas id="member-growth-chart" style="height: 300px"></canvas>
+      </div>
+    </div>
+
+    <!-- ATTENDANCE + CLASSES -->
+    <div class="row">
+      <div class="col-xl-8 mb-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-white border-0">
+            <h5 class="mb-0">Today's Attendance</h5>
+          </div>
+          <div class="card-body pt-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="thead-light">
+                  <tr>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Check-in Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for attendance in todays_attendance %}
+                  <tr>
+                    <td data-label="Name">
+                      <div class="d-flex align-items-center">
+                        <div>
+                          {% if attendance.member %}
+                          <h6 class="mb-0">
+                            {{ attendance.member.first_name }} {{attendance.member.last_name }}
+                          </h6>
+                          {% elif attendance.trainer %}
+                          <h6 class="mb-0">{{ attendance.trainer.name }}</h6>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </td>
+                    <td data-label="Role">
+                      {% if attendance.member %}
+                      <span class="badge bg-light-info text-info">Member</span>
+                      {% elif attendance.trainer %}
+                      <span class="badge bg-light-warning text-warning"
+                        >Trainer</span
+                      >
+                      {% endif %}
+                    </td>
+                    <td data-label="Check-in Time">{{ attendance.check_in_time|time:'g:i A' }}</td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="4" class="text-center text-muted py-4">
+                      <i class="mdi mdi-account-off-outline mdi-24px"></i>
+                      <p class="mb-0 mt-2">No attendance recorded today</p>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          {% if todays_attendance %}
+          <div class="card-footer bg-white border-0 text-center">
+            <a
+              href="{% url 'attendance_report' %}"
+              class="btn btn-outline-primary"
+              >View All Attendance</a
+            >
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="col-xl-4 mb-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-body d-flex flex-column">
+            <h5 class="mb-3">Today's Attendance Overview</h5>
+            <div class="chart-container my-auto">
+              <canvas id="attendance-chart"></canvas>
+            </div>
+            <div class="mt-3 text-center">
+              <div class="row">
+                <div class="col-6">
+                  <div class="bg-success text-white p-2 rounded">
+                    <h5 class="mb-0">{{ present_count }}</h5>
+                    <small>Present</small>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="bg-warning text-white p-2 rounded">
+                    <h5 class="mb-0">{{ absent_count }}</h5>
+                    <small>Absent</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEMBERSHIP EXPIRIES SECTION -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-white">
+        <h5 class="mb-0 font-weight-bold">Membership Expiries</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <!-- Expired Members Table -->
+          <div class="col-md-6">
+            <div class="card border-danger mb-4">
+              <div class="card-header bg-danger text-white">
+                <h6 class="mb-0 font-weight-bold">
+                  Expired ({{ expired_members|length }})
+                </h6>
+              </div>
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-sm table-hover mb-0">
+                    <thead class="thead-light">
+                      <tr>
+                        <th>#</th>
+                        <th>Member</th>
+                        <th>Plan</th>
+                        <th>Due</th>
+                        <th>Expiry Date</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for member in expired_members %}
+                      <tr>
+                        <td data-label="#">{{ forloop.counter }}</td>
+                        <td data-label="Member">
+                          <div>
+                          <strong ><a href="{% url 'member_profile' member.id %}"  class="text-decoration-none">{{ member.first_name }} {{ member.last_name}}</a></strong><br />
+                            <small class="text-muted" >{{ member.member_id|default:'No ID' }}</small>
+                          </div>
+                        </td>
+                        <td data-label="Plan">
+                          {% if member.latest_membership and member.latest_membership.plan %}
+                          <span class="badge badge-secondary">{{ member.latest_membership.plan.title }}</span>
+                          {% else %}
+                          <span class="badge badge-light">No Plan</span>
+                          {% endif %}
+                        </td>
+                        <td data-label="Due">
+                          {% if member.latest_membership %}
+                          <span class="text-danger font-weight-bold">₹{{ member.latest_membership.due_amount|intcomma }}</span>
+                          {% else %}
+                          <span class="text-muted">₹0</span>
+                          {% endif %}
+                        </td>
+                        <td data-label="Expiry Date">
+                          {% if member.latest_membership %}
+                          <span class="text-danger">{{ member.latest_membership.get_end_date|date:'d M Y' }}</span>
+                          {% else %}
+                          <span class="text-muted">No membership</span>
+                          {% endif %}
+                        </td>
+                        <td data-label="Action" class="text-center">
+                          <a
+                            href="tel:{{ member.mobile_number }}"
+                            class="btn btn-sm btn-outline-success mr-1"
+                            data-toggle="tooltip"
+                            title="Call {{ member.name }}"
+                            ><i class="fas fa-phone"></i
+                          ></a>
+                          <a
+                            href="https://wa.me/91{{ member.mobile_number }}?text=Hello%20*{{ member.name|urlencode }}*,%20your%20membership%20for%20plan%20*{{ member.latest_membership.plan.title|urlencode }}*%20at%20*{{ member.gym.name|urlencode }}*%20has%20expired.%20Pending%20Due:%20*₹{{ member.latest_membership.due_amount|urlencode }}*.%20Please%20renew%20soon!%20-%20*{{ member.gym.name|urlencode }}*"
+                            target="_blank"
+                            class="btn btn-sm btn-outline-info"
+                            data-toggle="tooltip"
+                            title="WhatsApp {{ member.name }}"
+                            ><i class="fab fa-whatsapp"></i
+                          ></a>
+                        </td>
+                      </tr>
+                      {% empty %}
+                      <tr>
+                        <td colspan="6" class="text-center text-muted py-3">
+                          <i
+                            class="fas fa-check-circle text-success fa-lg mb-2"
+                          ></i>
+                          <p class="mb-0">No expired memberships</p>
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              {% if expired_members %}
+              <div class="card-footer bg-light">
+                <a
+                  href="{% url 'member_list' %}?status_filter=expired"
+                  class="btn btn-sm btn-outline-danger"
+                  >View All</a
+                >
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Upcoming Expiries Table -->
+          <div class="col-md-6">
+            <div class="card border-warning">
+              <div class="card-header bg-warning text-white">
+                <h6 class="mb-0 font-weight-bold">
+                  Upcoming ({{ upcoming_expiries|length }})
+                </h6>
+              </div>
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-sm table-hover mb-0">
+                    <thead class="thead-light">
+                      <tr>
+                        <th>#</th>
+                        <th>Member</th>
+                        <th>Plan</th>
+                        <th>Due</th>
+                        <th>Expiry Date</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for member in upcoming_expiries %}
+                      <tr>
+                        <td data-label="#">{{ forloop.counter }}</td>
+                        <td data-label="Member">
+                          <div>
+                            <strong ><a href="{% url 'member_profile' member.id %}"  class="text-decoration-none">{{ member.first_name }} {{ member.last_name}}</a></strong><br />
+                            <small class="text-muted" >{{ member.member_id|default:'No ID' }}</small>
+                          </div>
+                        </td>
+                        <td data-label="Plan">
+                          {% if member.latest_membership and member.latest_membership.plan %}
+                          <span class="badge badge-info">{{ member.latest_membership.plan.title }}</span>
+                          {% else %}
+                          <span class="badge badge-light">No Plan</span>
+                          {% endif %}
+                        </td>
+                        <td data-label="Due">
+                          {% if member.latest_membership %}
+                          <span class="text-danger font-weight-bold">₹{{ member.latest_membership.due_amount|intcomma }}</span>
+                          {% else %}
+                          <span class="text-muted">₹0</span>
+                          {% endif %}
+                        </td>
+                        <td data-label="Expiry Date">
+                          {% if member.latest_membership %}
+                          <span class="text-warning">{{ member.latest_membership.get_end_date|date:'d M Y' }}</span>
+                          {% else %}
+                          <span class="text-muted">No membership</span>
+                          {% endif %}
+                        </td>
+                        <td data-label="Action" class="text-center">
+                          <a
+                            href="tel:{{ member.mobile_number }}"
+                            class="btn btn-sm btn-outline-success mr-1"
+                            data-toggle="tooltip"
+                            title="Call {{ member.name }}"
+                            ><i class="fas fa-phone"></i
+                          ></a>
+                          <a
+                            href="https://wa.me/91{{ member.mobile_number }}?text=Hello%20*{{ member.name|urlencode }}*,%20your%20membership%20for%20plan%20*{{ member.latest_membership.plan.title|urlencode }}*%20at%20*{{ member.gym.name|urlencode }}*%20is%20expiring%20on%20*{{ member.latest_membership.get_end_date|date:'d M Y'|urlencode }}*.%20Pending%20Due:%20*₹{{ member.latest_membership.due_amount|urlencode }}*.%20Please%20renew%20soon!%20-%20*{{ member.gym.name|urlencode }}*"
+                            target="_blank"
+                            class="btn btn-sm btn-outline-info"
+                            data-toggle="tooltip"
+                            title="WhatsApp {{ member.name }}"
+                            ><i class="fab fa-whatsapp"></i
+                          ></a>
+                        </td>
+                      </tr>
+                      {% empty %}
+                      <tr>
+                        <td colspan="6" class="text-center text-muted py-3">
+                          <i
+                            class="fas fa-check-circle text-success fa-lg mb-2"
+                          ></i>
+                          <p class="mb-0">No upcoming expiries</p>
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              {% if upcoming_expiries %}
+              <div class="card-footer bg-light">
+                <a
+                  href="{% url 'member_list' %}?status_filter=expiring_soon"
+                  class="btn btn-sm btn-outline-warning"
+                  >View All</a
+                >
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECENT PAYMENTS & ENQUIRIES -->
+    <div class="row">
+      <!-- Recent Payments -->
+      <div class="col-xl-6 mb-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-body p-0">
+            <div
+              class="d-flex justify-content-between align-items-center p-3 mb-0 border-bottom"
+            >
+              <h5 class="mb-0">Recent Payments</h5>
+              <span class="badge badge-success"
+                >₹{{ total_recent_payments|intcomma }}</span
+              >
+            </div>
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="thead-light">
+                  <tr>
+                    <th>Member</th>
+                    <th>Amount</th>
+                    <th>Mode</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for payment in recent_payments %}
+                  <tr>
+                    <td data-label="Member">
+                      {{ payment.member.first_name }} {{ payment.member.last_name }}
+                    </td>
+                    <td data-label="Amount">
+                      <strong>₹ {{ payment.amount|intcomma }}</strong>
+                    </td>
+                    <td data-label="Mode">
+                      <span class="badge badge-secondary">{{ payment.payment_mode }}</span
+                      >
+                    </td>
+                    <td data-label="Date">{{ payment.payment_date|date:'d M Y' }}</td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="5" class="text-center text-muted">
+                      No recent payments
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% if recent_payments %}
+            <div class="card-footer bg-light text-center">
+              <a
+                href="{% url 'business_report' %}"
+                class="btn btn-sm btn-outline-primary">View all transactions<i
+                  class="fas fa-arrow-circle-right ml-1"
+                ></i
+              ></a>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Dues -->
+      <div class="col-xl-6 mb-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-light py-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">
+                <i class="fas fa-file-invoice-dollar mr-2"></i>Dues
+              </h5>
+              <span class="badge badge-danger badge-pill"
+                >{{ total_dues }}</span
+              >
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="thead-light">
+                  <tr>
+                    <th scope="col">Member</th>
+                    <th scope="col">Follow Up Date</th>
+                    <th scope="col" class="text-right pr-4">Due Amount</th>
+                    <th scope="col" class="text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for due in recent_dues|slice:':10' %}
+                  <tr>
+                    <td>
+                      <a
+                        href="{% url 'member_profile' due.member.id %}"
+                        class="text-decoration-none text-dark" ><strong>{{ due.member.name }}</strong></a>
+                      <br />
+                      <small class="text-muted"
+                        >{{ due.member.mobile_number }}</small
+                      >
+                    </td>
+                    <td>
+                      {% if due.follow_up_date %}
+                      <span class="badge bg-light-danger text-danger">{{ due.follow_up_date|date:'d M, Y' }}</span
+                      >
+                      {% else %}
+                      <span class="badge bg-light-secondary text-secondary" >Not Set</span
+                      >
+                      {% endif %}
+                    </td>
+                    <td class="text-right pr-4">
+                      <span class="text-danger font-weight-bold">₹{{ due.due_amount|intcomma }}</span
+                      >
+                    </td>
+                    <td class="text-center">
+                      <a
+                        href="tel:{{ due.member.mobile_number }}"
+                        class="btn btn-sm btn-outline-success mr-1"
+                        data-toggle="tooltip"
+                        title="Call {{ due.member.name }}"
+                        ><i class="fas fa-phone"></i
+                      ></a>
+                      <a
+                        href="https://wa.me/91{{ due.member.mobile_number }}?text=Hello%20*{{ due.member.name|urlencode }}*,%20this%20is%20a%20reminder%20from%20*{{ due.member.gym.name|urlencode }}*%20regarding%20your%20pending%20due%20of%20*₹{{ due.due_amount|urlencode }}*%20for%20*{{ due.plan.title|default:'Personal Training'|urlencode }}*.%20Please%20clear%20it%20at%20your%20earliest%20convenience.%20-%20*{{ due.member.gym.name|urlencode }}*"
+                        target="_blank"
+                        class="btn btn-sm btn-outline-info"
+                        data-toggle="tooltip"
+                        title="WhatsApp {{ due.member.name }}"
+                        ><i class="fab fa-whatsapp"></i
+                      ></a>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="4" class="text-center text-muted py-4">
+                      <i
+                        class="fas fa-check-circle text-success fa-2x mb-2"
+                      ></i>
+                      <p class="mb-0">No pending dues</p>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          {% if total_dues > 10 %}
+          <div class="card-footer bg-white text-center">
+            <a
+              href="{% url 'billing:submit_due' %}"
+              class="btn btn-outline-primary btn-sm">View All Dues ({{ total_dues }})</a
+            >
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Enquiries & Follow-ups -->
+      <div class="col-lg-6 col-md-12 mb-4">
+        <div class="card shadow-sm h-100">
+          <div
+            class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+              <i class="fas fa-headset mr-2"></i>Enquiries & Follow-ups
+            </h5>
+            <span class="badge badge-light badge-pill"
+              >{{ total_enquiries }}</span
+            >
+          </div>
+          <div class="card-body p-0">
+            <ul class="list-group list-group-flush">
+              {% for enquiry in recent_enquiries %}
+              <li class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                  <h6 class="mb-1">{{ enquiry.name }}</h6>
+                  <small class="text-muted"
+                    ><i class="fas fa-calendar-check mr-1 text-warning"></i>{{ enquiry.next_follow_up_date|date:'d M, Y' }}</small>
+                </div>
+                <p class="mb-1 text-muted small">
+                  {{ enquiry.source|default:'Walk-in'|title }}
+                </p>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                  <div>
+                    {% if enquiry.status == 'new' %}
+                    <span class="badge badge-success">New</span>
+                    {% elif enquiry.status == 'follow_up' %}
+                    <span class="badge badge-warning">Follow-up</span>
+                    {% elif enquiry.status == 'converted' %}
+                    <span class="badge badge-info">Converted</span>
+                    {% else %}
+                    <span class="badge badge-secondary"
+                      >{{ enquiry.status|title }}</span
+                    >
+                    {% endif %}
+                  </div>
+                  <div class="d-flex align-items-center">
+                    {% comment %}
+                    <small class="text-muted mr-3"
+                      ><i class="fas fa-calendar-alt mr-1"></i> {{
+                      enquiry.enquiry_date|date:'d M, Y' }}</small
+                    >
+                    {% endcomment %}
+                    <div>
+                      <a
+                        href="tel:{{ enquiry.mobile_number }}"
+                        class="btn btn-sm btn-outline-success mr-1"
+                        data-toggle="tooltip"
+                        title="Call {{ enquiry.name }}"
+                        ><i class="fas fa-phone"></i
+                      ></a>
+                      <a
+                        href="https://wa.me/91{{ enquiry.mobile_number }}?text=Hello%20*{{ enquiry.name|urlencode }}*,%20thanks%20for%20inquiring%20at%20*{{ enquiry.gym.name|urlencode }}*.%20How%20can%20we%20help%20you%20today?%20-%20*{{ enquiry.gym.name|urlencode }}*"
+                        target="_blank"
+                        class="btn btn-sm btn-outline-info"
+                        data-toggle="tooltip"
+                        title="WhatsApp {{ enquiry.name }}"
+                        ><i class="fab fa-whatsapp"></i
+                      ></a>
+                    </div>
+                  </div>
+                </div>
+              </li>
+              {% empty %}
+              <li class="list-group-item">
+                <div class="text-center text-muted py-4">
+                  <i class="fas fa-envelope-open-text fa-3x mb-3"></i>
+                  <h6 class="mb-1">No Recent Enquiries</h6>
+                  <p class="small mb-0">New enquiries will appear here.</p>
+                </div>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% if recent_enquiries %}
+          <div class="card-footer bg-light text-center">
+            <a
+              href="{% url 'enquiry_list' %}"
+              class="btn btn-sm btn-outline-primary"
+            >
+              Manage All Enquiries
+              <i class="fas fa-arrow-circle-right ml-1"></i>
+            </a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Today's and Upcoming Birthdays Section -->
+      <div class="col-lg-6 col-md-12 mb-4">
+        <div class="card shadow-sm h-100">
+          <div
+            class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+              <i class="fas fa-birthday-cake mr-2"></i>Today's & Upcoming
+              Birthdays
+            </h5>
+            <span class="badge badge-light badge-pill" >{{ today_birthdays|length }} Today, {{ upcoming_birthdays|length}} Upcoming</span>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="thead-light">
+                  <tr>
+                    <th>Member</th>
+                    <th>Birthday</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for member in today_birthdays %}
+                  <tr>
+                    <td>
+                      <strong>{{ member.name }}</strong>
+                      <br />
+                      <small class="text-muted">{{ member.email|default:'' }}</small>
+                    </td>
+                    <td>
+                      <span class="badge bg-light-success text-success">Today!</span>
+                      <br />
+                      <small>{{ member.date_of_birth|date:'d M' }}</small>
+                    </td>
+                    <td>
+                      <a
+                        href="tel:{{ member.mobile_number }}"
+                        class="btn btn-sm btn-outline-success"
+                        data-toggle="tooltip"
+                        title="Call {{ member.name }}"
+                        ><i class="fas fa-phone"></i
+                      ></a>
+
+                      <a
+                        href="https://wa.me/91{{ member.mobile_number }}?text=Happy%20Birthday%20*{{ member.name|urlencode }}*!%20Wishing%20you%20a%20fantastic%20day%20ahead%20and%20a%20great%20year%20of%20fitness.%20-%20*{{ member.gym.name|urlencode }}*"
+                        target="_blank"
+                        class="btn btn-sm btn-outline-info mr-1"
+                        data-toggle="tooltip"
+                        title="WhatsApp {{ member.name }}"
+                        ><i class="fab fa-whatsapp"></i
+                      ></a>
+                    </td>
+                  </tr>
+                  {% endfor %} {% for member in upcoming_birthdays %}
+                  <tr>
+                    <td>
+                      <strong>{{ member.name }}</strong>
+                      <br />
+                      <small class="text-muted" >{{ member.email|default:'' }}</small
+                      >
+                    </td>
+                    <td>
+                      <span class="badge bg-light-warning text-warning"
+                        >Upcoming</span
+                      >
+                      <br />
+                      <small>{{ member.date_of_birth|date:'d M' }}</small>
+                    </td>
+                    <td>
+                      <a
+                        href="https://wa.me/91{{ member.mobile_number }}?text=Happy%20Birthday%20*{{ member.name|urlencode }}*!%20Wishing%20you%20a%20fantastic%20day%20ahead%20and%20a%20great%20year%20of%20fitness.%20-%20*{{ member.gym.name|urlencode }}*"
+                        target="_blank"
+                        class="btn btn-sm btn-outline-success mr-1"
+                        data-toggle="tooltip"
+                        title="WhatsApp {{ member.name }}"
+                        ><i class="fab fa-whatsapp"></i
+                      ></a>
+                      <a
+                        href="tel:{{ member.mobile_number }}"
+                        class="btn btn-sm btn-outline-info"
+                        data-toggle="tooltip"
+                        title="Call {{ member.name }}"
+                        ><i class="fas fa-phone"></i
+                      ></a>
+                    </td>
+                  </tr>
+                  {% endfor %} {% if not today_birthdays and not upcoming_birthdays %}
+                  <tr>
+                    <td colspan="3" class="text-center text-muted py-4">
+                      <i class="fas fa-birthday-cake fa-3x mb-3"></i>
+                      <h6 class="mb-1">No Birthdays Today or Upcoming</h6>
+                      <p class="small mb-0">
+                        No birthdays to celebrate in the coming days.
+                      </p>
+                    </td>
+                  </tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUICK ACTIONS BAR -->
+    <div class="card shadow-sm mb-4">
+      <div
+        class="card-body d-flex flex-wrap align-items-center justify-content-between"
+      >
+        <div>
+          <small class="text-muted" ><i class="fas fa-sync-alt mr-1"></i>Last synced:{% now 'd M Y, H:i' %}</small >
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block javascript %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+  // Enhanced Member Growth Chart with Dynamic Data
+  const ctx = document.getElementById('member-growth-chart').getContext('2d');
+
+  // Creating a gradient for the fill
+  const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+  gradient.addColorStop(0, 'rgba(54, 162, 235, 0.25)');
+  gradient.addColorStop(1, 'rgba(54, 162, 235, 0)');
+
+  const memberGrowthChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+          labels: {{ month_labels|safe }},
+          datasets: [{
+              label: 'New Members',
+              data: {{ new_member_counts|safe }},
+              tension: 0.3,
+              fill: true,
+              backgroundColor: gradient,
+              borderColor: '#36A2EB',
+              pointBackgroundColor: '#fff',
+              pointBorderColor: '#36A2EB',
+              pointHoverRadius: 6,
+              pointHoverBackgroundColor: '#36A2EB',
+              pointRadius: 4,
+              borderWidth: 2,
+          },
+          {
+              label: 'Expired Members',
+              data: {{ expired_member_counts|safe }},
+              tension: 0.3,
+              fill: false,
+              borderColor: '#4BC0C0',
+              pointBackgroundColor: '#fff',
+              pointBorderColor: '#4BC0C0',
+              pointHoverRadius: 6,
+              pointHoverBackgroundColor: '#4BC0C0',
+              pointRadius: 4,
+              borderWidth: 2,
+          }]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+              legend: {
+                  position: 'top',
+                  labels: {
+                      font: {
+                          size: 14,
+                          family: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
+                      }
+                  }
+              },
+              tooltip: {
+                  enabled: true,
+                  mode: 'index',
+                  intersect: false,
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  titleFont: {
+                      size: 14,
+                      weight: 'bold',
+                  },
+                  bodyFont: {
+                      size: 13,
+                  },
+                  callbacks: {
+                      label: function(context) {
+                          let label = context.dataset.label || '';
+                          if (label) {
+                              label += ': ';
+                          }
+                          if (context.parsed.y !== null) {
+                              label += context.parsed.y + ' members';
+                          }
+                          return label;
+                      }
+                  }
+              }
+          },
+          scales: {
+              y: {
+                  beginAtZero: true,
+                  grid: {
+                      color: 'rgba(200, 200, 200, 0.2)',
+                  },
+                  ticks: {
+                      font: {
+                          size: 12,
+                      },
+                      callback: function(value) {
+                          return value;
+                      }
+                  },
+                  title: {
+                      display: true,
+                      text: 'Number of Members'
+                  }
+              },
+              x: {
+                  grid: {
+                      display: false,
+                  },
+                  ticks: {
+                      font: {
+                          size: 12,
+                      }
+                  }
+              }
+          },
+          interaction: {
+              mode: 'nearest',
+              axis: 'x',
+              intersect: false
+          }
+      }
+  });
+
+
+
+  // Send renewal reminders functionality
+  document.getElementById('sendRemindersBtn')?.addEventListener('click', function() {
+      const btn = this;
+      const originalText = btn.innerHTML;
+
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
+      btn.disabled = true;
+
+      // Simulate API call
+      setTimeout(function() {
+          btn.innerHTML = '<i class="fas fa-check mr-2"></i>Reminders Sent!';
+          btn.classList.remove('btn-outline-warning');
+          btn.classList.add('btn-success');
+
+          // Reset button after 3 seconds
+          setTimeout(function() {
+              btn.innerHTML = originalText;
+              btn.classList.remove('btn-success');
+              btn.classList.add('btn-outline-warning');
+              btn.disabled = false;
+          }, 3000);
+      }, 1500);
+  });
+
+  // Auto-refresh data every 5 minutes
+  setTimeout(function() {
+      location.reload();
+  }, 300000); // 5 minutes
+
+  // Add hover effects to table rows
+  document.addEventListener('DOMContentLoaded', function() {
+      const tableRows = document.querySelectorAll('table tbody tr');
+      tableRows.forEach(row => {
+          row.addEventListener('mouseenter', function() {
+              this.style.backgroundColor = 'rgba(0, 0, 0, 0.02)';
+          });
+          row.addEventListener('mouseleave', function() {
+              this.style.backgroundColor = '';
+          });
+      });
+  });
+</script>
+{% endblock %} {% block extra_js %}
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+      // Today's Attendance Chart
+      var attendanceCtx = document.getElementById('attendance-chart').getContext('2d');
+      var attendanceChart = new Chart(attendanceCtx, {
+          type: 'bar',
+          data: {
+              labels: ['Members', 'Trainers'],
+              datasets: [
+                  {
+                      label: 'Present',
+                      data: [{{ present_members_count }}, {{ present_trainers_count }}],
+                      backgroundColor: 'rgba(40, 167, 69, 0.8)',
+                      borderColor: 'rgba(40, 167, 69, 1)',
+                      borderWidth: 1
+                  },
+                  {
+                      label: 'Absent',
+                      data: [{{ absent_members_count }}, {{ absent_trainers_count }}],
+                      backgroundColor: 'rgba(255, 193, 7, 0.8)',
+                      borderColor: 'rgba(255, 193, 7, 1)',
+                      borderWidth: 1
+                  }
+              ]
+          },
+          options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                  legend: {
+                      position: 'top',
+                  },
+              },
+              scales: {
+                  y: {
+                      beginAtZero: true,
+                      ticks: {
+                          stepSize: 1
+                      }
+                  }
+              }
+          }
+      });
+  });
+</script>
+{% endblock %}

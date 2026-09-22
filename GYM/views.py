@@ -10,7 +10,17 @@ def help_view(request):
             return redirect('member_portal:dashboard')
         if request.session.get('role') == 'trainer' or hasattr(request.user, 'trainer_profile'):
             return redirect('trainer_portal:dashboard')
-    return render(request, 'help.html')
+    gym = getattr(request, 'gym', None)
+    
+    superadmin_phone = "+91 92059 83996"
+    superadmin_email = "bhattsquare1@gmail.com"
+    
+    context = {
+        'gym': gym,
+        'superadmin_phone': superadmin_phone,
+        'superadmin_email': superadmin_email,
+    }
+    return render(request, 'help.html', context)
 
 def debug(request):
     whatsapp_config = {

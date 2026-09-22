@@ -52,119 +52,174 @@ def superadmin_login(request):
             messages.error(request, 'Invalid username or password for superadmin.')
     return render(request, 'login/superadmin_login.html')
 
-def _resolve_identifier_to_username(identifier):
+def get_login_candidates(identifier):
     """
-    Resolve a login identifier (mobile number, email, or username) to a
-    Django ``auth.User`` username so that ``authenticate()`` can be called.
-
-    Lookup order:
-      1. Member by mobile_number  → member_id (Django username)
-      2. Member by email          → member_id (Django username)
-      3. Trainer by phone         → trainer_id (Django username)
-      4. Trainer by email         → trainer_id (Django username)
-      5. SubAdmin by phone_number → user.username
-      6. GymAdmin by email        → user.username
-      7. Direct User.username match (passthrough)
+    Finds matching user accounts for a given identifier (mobile number, email, or username).
+    Returns list of dicts: [{'user': user, 'username': user.username, 'name': '...', 'account_type': '...', 'extra': '...'}, ...]
     """
-    if not identifier:
-        return identifier
+    import re
+    from apps.members.models import Member
+    from apps.trainers.models import Trainer
+    from apps.login.models import SubAdmin
+    from apps.superadmin.models import GymAdmin
+    from django.contrib.auth.models import User
 
-    identifier = identifier.strip()
+    cleaned = (identifier or '').strip()
+    digits_only = re.sub(r'\D', '', cleaned)
+    candidates = []
+    seen_user_ids = set()
 
-    # --- Member lookup ---
-    try:
-        from apps.members.models import Member
-        # by mobile number
-        member = Member.objects.filter(mobile_number=identifier).select_related('user').first()
-        if member and member.user:
-            return member.user.username
-        # by email
-        member = Member.objects.filter(email__iexact=identifier).select_related('user').first()
-        if member and member.user:
-            return member.user.username
-    except Exception:
-        pass
+    def add_candidate(user, account_type, name, extra=''):
+        if user and user.id not in seen_user_ids and user.is_active:
+            seen_user_ids.add(user.id)
+            candidates.append({
+                'user': user,
+                'username': user.username,
+                'account_type': account_type,
+                'name': name or user.username,
+                'extra': extra
+            })
 
-    # --- Trainer lookup ---
-    try:
-        from apps.trainers.models import Trainer
-        # by phone
-        trainer = Trainer.objects.filter(phone=identifier).select_related('user').first()
-        if trainer and trainer.user:
-            return trainer.user.username
-        # by email
-        trainer = Trainer.objects.filter(email__iexact=identifier).select_related('user').first()
-        if trainer and trainer.user:
-            return trainer.user.username
-    except Exception:
-        pass
+    # 1. Search by mobile number (10 or more digits)
+    if len(digits_only) >= 10:
+        phone_10 = digits_only[-10:]
+        for m in Member.objects.filter(mobile_number=phone_10, is_deleted=False).select_related('user', 'gym'):
+            if m.user:
+                add_candidate(m.user, 'Member', m.name, f"Member ID: {m.member_id}")
+        for t in Trainer.objects.filter(phone=phone_10, is_active=True).select_related('user', 'gym'):
+            if t.user:
+                add_candidate(t.user, 'Trainer', t.name, f"Trainer ID: {t.trainer_id}")
+        for s in SubAdmin.objects.filter(phone_number=phone_10).select_related('user', 'gym'):
+            if s.user:
+                add_candidate(s.user, 'Staff', f"{s.user.first_name} {s.user.last_name}".strip() or s.user.username, f"Role: {s.role.title()}")
+        for ga in GymAdmin.objects.filter(Phone_number=phone_10).select_related('user', 'gym'):
+            if ga.user:
+                add_candidate(ga.user, 'Gym Admin', f"{ga.user.first_name} {ga.user.last_name}".strip() or ga.user.username, f"Gym: {ga.gym.name if ga.gym else ''}")
 
-    # --- SubAdmin lookup by phone ---
-    try:
-        sub_admin = SubAdmin.objects.filter(phone_number=identifier).select_related('user').first()
-        if sub_admin and sub_admin.user:
-            return sub_admin.user.username
-    except Exception:
-        pass
+    # 2. Search by email
+    if '@' in cleaned and not candidates:
+        for u in User.objects.filter(email__iexact=cleaned, is_active=True):
+            acc_type = 'User'
+            name = f"{u.first_name} {u.last_name}".strip() or u.username
+            if hasattr(u, 'member_profile'):
+                acc_type = 'Member'
+                name = u.member_profile.name
+            elif hasattr(u, 'trainer_profile'):
+                acc_type = 'Trainer'
+                name = u.trainer_profile.name
+            elif hasattr(u, 'subadmin'):
+                acc_type = 'Staff'
+            elif hasattr(u, 'gymadmin'):
+                acc_type = 'Gym Admin'
+            add_candidate(u, acc_type, name, u.email)
 
-    # --- GymAdmin lookup by email ---
-    try:
-        gym_admin = GymAdmin.objects.filter(user__email__iexact=identifier).select_related('user').first()
-        if gym_admin and gym_admin.user:
-            return gym_admin.user.username
-    except Exception:
-        pass
+    # 3. Direct username search
+    if not candidates:
+        u = User.objects.filter(username__iexact=cleaned, is_active=True).first()
+        if u:
+            acc_type = 'User'
+            name = f"{u.first_name} {u.last_name}".strip() or u.username
+            if hasattr(u, 'member_profile'):
+                acc_type = 'Member'
+                name = u.member_profile.name
+            elif hasattr(u, 'trainer_profile'):
+                acc_type = 'Trainer'
+                name = u.trainer_profile.name
+            elif hasattr(u, 'subadmin'):
+                acc_type = 'Staff'
+            elif hasattr(u, 'gymadmin'):
+                acc_type = 'Gym Admin'
+            add_candidate(u, acc_type, name, f"Username: {u.username}")
 
-    # --- Fallback: treat identifier as a plain username ---
-    return identifier
+    return candidates
 
 
 #gym login view
 @never_cache
 def user_login(request):
+    if request.user.is_authenticated:
+        role = request.session.get('role')
+        if role == 'member':
+            return redirect('member_portal:dashboard')
+        elif role == 'trainer':
+            return redirect('trainer_portal:dashboard')
+        elif role == 'superadmin':
+            return redirect('superadmin:dashboard')
+        else:
+            return redirect('dashboard')
+
     if request.method == 'POST':
-        # Template sends 'identifier' (mobile / email / username).
-        # Fall back to 'username' for backwards-compat.
-        identifier = request.POST.get('identifier') or request.POST.get('username', '')
-        password = request.POST.get('password')
+        identifier = (request.POST.get('identifier') or request.POST.get('username') or '').strip()
+        password = request.POST.get('password', '')
+        selected_username = (request.POST.get('selected_username') or '').strip()
 
-        # Resolve identifier → Django username
-        resolved_username = _resolve_identifier_to_username(identifier)
+        candidates = get_login_candidates(identifier)
 
-        user = authenticate(request, username=resolved_username, password=password)
+        # Ambiguity resolution: If multiple accounts match this phone/identifier
+        if len(candidates) > 1:
+            if not selected_username:
+                return render(request, 'login/login.html', {
+                    'has_multiple_accounts': True,
+                    'entered_identifier': identifier,
+                    'multiple_candidates': candidates,
+                })
+            else:
+                matched_candidate = next((c for c in candidates if c['username'].lower() == selected_username.lower()), None)
+                target_username = matched_candidate['username'] if matched_candidate else selected_username
+        elif len(candidates) == 1:
+            target_username = candidates[0]['username']
+        else:
+            target_username = identifier
+
+        user = authenticate(request, username=target_username, password=password)
         if user is not None:
             login(request, user)
+
             if user.is_superuser:
                 request.session['role'] = 'superadmin'
-                # Redirect to a superadmin-specific dashboard if you have one
                 return redirect('dashboard') 
             
-            try:
-                gym_admin = GymAdmin.objects.get(user=user)
+            if hasattr(user, 'gymadmin'):
+                gym_admin = user.gymadmin
                 request.session['gym_id'] = gym_admin.gym.id
                 request.session['gym_name'] = gym_admin.gym.name
                 request.session['gym_logo'] = gym_admin.gym.logo.url if gym_admin.gym.logo else None
                 request.session['gym_phone'] = gym_admin.gym.phone
                 request.session['role'] = 'gym_admin'
                 return redirect('dashboard')
-            except GymAdmin.DoesNotExist:
-                # Handle regular users or other roles if necessary
-                try:
-                    sub_admin = SubAdmin.objects.get(user=user)
-                    request.session['gym_id'] = sub_admin.gym.id
-                    request.session['gym_name'] = sub_admin.gym.name
-                    request.session['gym_logo'] = sub_admin.gym.logo.url if sub_admin.gym.logo else None
-                    request.session['gym_phone'] = sub_admin.gym.phone
-                    request.session['role'] = sub_admin.role
-                    request.session['subadmin_id'] = sub_admin.id
-                    return redirect('dashboard')
-                except SubAdmin.DoesNotExist:
-                    pass
 
-            messages.error(request, 'Invalid user role.')
+            if hasattr(user, 'subadmin'):
+                sub_admin = user.subadmin
+                request.session['gym_id'] = sub_admin.gym.id
+                request.session['gym_name'] = sub_admin.gym.name
+                request.session['gym_logo'] = sub_admin.gym.logo.url if sub_admin.gym.logo else None
+                request.session['gym_phone'] = sub_admin.gym.phone
+                request.session['role'] = sub_admin.role
+                request.session['subadmin_id'] = sub_admin.id
+                return redirect('dashboard')
+
+            if hasattr(user, 'trainer_profile'):
+                trainer = user.trainer_profile
+                request.session['gym_id'] = trainer.gym.id if trainer.gym else None
+                request.session['gym_name'] = trainer.gym.name if trainer.gym else 'FitStack Gym'
+                request.session['gym_logo'] = trainer.gym.logo.url if trainer.gym and trainer.gym.logo else None
+                request.session['role'] = 'trainer'
+                request.session['trainer_id'] = trainer.id
+                return redirect('trainer_portal:dashboard')
+
+            if hasattr(user, 'member_profile'):
+                member = user.member_profile
+                request.session['gym_id'] = member.gym.id if member.gym else None
+                request.session['gym_name'] = member.gym.name if member.gym else 'FitStack Gym'
+                request.session['gym_logo'] = member.gym.logo.url if member.gym and member.gym.logo else None
+                request.session['role'] = 'member'
+                request.session['member_id'] = member.id
+                return redirect('member_portal:dashboard')
+
+            messages.error(request, 'Invalid user role configuration.')
             return redirect('login')
         else:
-            messages.error(request, 'Invalid username or password.')
+            messages.error(request, 'Invalid login credentials. Please check your username/mobile and password.')
     return render(request, 'login/login.html')
 
 

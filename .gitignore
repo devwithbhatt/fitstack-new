@@ -47,8 +47,11 @@ Thumbs.db
 /staticfiles/
 /static_root/
 
+/media/
+
 # Ignore only root-level media (collected), not GYM/media/
 #/media/
+
 
 # ==========================
 # 🛠️ BUILD / DIST FILES

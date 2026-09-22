@@ -527,7 +527,10 @@ def leave_management(request):
             Q(trainer__name__icontains=search_query) |
             Q(reason__icontains=search_query)
         )
-        member_leaves = member_leaves.filter(
+        member_leaves = member_leaves.annotate(
+            member_full_name=Concat('member__first_name', Value(' '), 'member__last_name')
+        ).filter(
+            Q(member_full_name__icontains=search_query) |
             Q(member__first_name__icontains=search_query) |
             Q(member__last_name__icontains=search_query) |
             Q(reason__icontains=search_query)

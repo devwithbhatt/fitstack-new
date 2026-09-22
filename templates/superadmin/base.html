@@ -12,9 +12,14 @@
   <link rel="stylesheet" href="{% static 'vendors/font-awesome/css/font-awesome.min.css' %}" /> 
   <link rel="stylesheet" href="{% static 'vendors/bootstrap-datepicker/bootstrap-datepicker.min.css' %}" /> 
   <link rel="stylesheet" href="{% static 'css/style.css' %}" /> 
-  <link rel="stylesheet" href="{% static 'css/login.css' %}" /> 
-  <link rel="stylesheet" href="{% static 'css/customstyle.css' %}" /> 
+  <link rel="stylesheet" href="{% static 'css/customstyle.css' %}?v=3.1" /> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/dashboard_modern.css' %}?v=3.1">
   <link rel="shortcut icon" href="{% static 'images/favicon.png' %}" />
   
 </head>
@@ -25,7 +30,7 @@
     <div class="container-fluid page-body-wrapper">
       {% include 'superadmin/includes/top-nav.html' %}
       <div class="main-panel">
-        <div class="content-wrapper px-0 pb-0">
+        <div class="content-wrapper px-0 pb-0 pt-3">
 
           {% block content %}
 

@@ -32,6 +32,7 @@ PUBLIC_URL_NAMES = frozenset(
         'contact_submission',
         'public_diet_plan',
         'public_workout_plan',
+        'help',
     }
 )
 PUBLIC_ROUTE_NAMES = frozenset(
@@ -51,6 +52,7 @@ class TenantMiddleware:
             '/admin/',
             '/superadmin/',
             '/accounts/',
+            '/notifications/',
             '/whatsapp/webhook/',
             '/attendance/scan-attendance/',
             settings.STATIC_URL,

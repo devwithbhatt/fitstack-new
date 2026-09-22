@@ -6,7 +6,7 @@ from apps.login.decorators import custom_permission_required
 from django.views.decorators.cache import never_cache
 from django.db import models
 from django.db.models import Q, Sum, F, Value, DecimalField, Case, When
-from django.db.models.functions import Coalesce, Greatest
+from django.db.models.functions import Coalesce, Greatest, Concat
 from django.core.paginator import Paginator
 from django.contrib import messages
 from decimal import Decimal
@@ -16,6 +16,7 @@ from django.http import JsonResponse
 from django.utils import timezone
 import logging
 from apps.whatsapp.services import WhatsAppService
+from apps.superadmin.notifications import notify_payment_submitted
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +80,10 @@ def submit_due(request):
     follow_up_date_filter = request.GET.get('follow_up_date')
 
     if query:
-        members_with_due = members_with_due.filter(
+        members_with_due = members_with_due.annotate(
+            full_name=Concat('first_name', Value(' '), 'last_name')
+        ).filter(
+            Q(full_name__icontains=query) |
             Q(first_name__icontains=query) |
             Q(last_name__icontains=query) |
             Q(mobile_number__icontains=query) |
@@ -154,6 +158,12 @@ def pay_due_payment(request, member_id):
                 invoice.paid_amount += payment.amount
                 invoice.save()
                 payment.save()
+
+                # Dispatch in-app platform notification & receipt
+                try:
+                    notify_payment_submitted(payment=payment, member=member, invoice=invoice, invoice_type=invoice_type)
+                except Exception as notif_err:
+                    logger.error(f"Failed to dispatch payment notification: {notif_err}")
 
                 messages.success(request, 'Payment submitted successfully.')
 

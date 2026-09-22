@@ -26,6 +26,38 @@
     </div>
   </div>
 
+  {% if not is_active and latest_membership %}
+    <div class="alert alert-danger shadow-sm border-0 mb-4 p-3 d-flex align-items-center justify-content-between flex-wrap rounded-3" style="background-color: #fef2f2; border-left: 4px solid #dc2626 !important;">
+      <div class="d-flex align-items-center mb-2 mb-md-0">
+        <div style="width: 40px; height: 40px; border-radius: 50%; background: #fee2e2; display: flex; align-items: center; justify-content: center; color: #dc2626; margin-right: 14px; font-size: 20px; flex-shrink: 0;">
+          <i class="mdi mdi-alert-circle"></i>
+        </div>
+        <div>
+          <h6 class="font-weight-bold text-danger mb-0" style="font-size: 14.5px;">Membership Plan Expired</h6>
+          <p class="text-muted mb-0 small">Your plan <strong>{{ latest_membership.plan.title }}</strong> expired on {{ end_date|date:'d M Y'|default:'recently' }}. Please renew at the reception or contact gym administration to restore full floor access.</p>
+        </div>
+      </div>
+      <a href="{% url 'member_portal:billing' %}" class="btn btn-sm btn-danger px-3 font-weight-bold shadow-sm" style="border-radius: 6px;">
+        <i class="mdi mdi-refresh mr-1"></i> View Plan & Billing
+      </a>
+    </div>
+  {% elif days_left <= 4 and is_active %}
+    <div class="alert alert-warning shadow-sm border-0 mb-4 p-3 d-flex align-items-center justify-content-between flex-wrap rounded-3" style="background-color: #fffbeb; border-left: 4px solid #d97706 !important;">
+      <div class="d-flex align-items-center mb-2 mb-md-0">
+        <div style="width: 40px; height: 40px; border-radius: 50%; background: #fef3c7; display: flex; align-items: center; justify-content: center; color: #d97706; margin-right: 14px; font-size: 20px; flex-shrink: 0;">
+          <i class="mdi mdi-clock-alert-outline"></i>
+        </div>
+        <div>
+          <h6 class="font-weight-bold text-dark mb-0" style="font-size: 14.5px;">Membership Expiring Soon &bull; {{ days_left }} Day{{ days_left|pluralize }} Remaining</h6>
+          <p class="text-muted mb-0 small">Your <strong>{{ latest_membership.plan.title }}</strong> plan will conclude on {{ end_date|date:'d M Y' }}. Renew early to avoid interruption in your fitness streak!</p>
+        </div>
+      </div>
+      <a href="{% url 'member_portal:billing' %}" class="btn btn-sm btn-warning px-3 font-weight-bold shadow-sm" style="border-radius: 6px; background-color: #f59e0b; border-color: #f59e0b; color: #ffffff;">
+        <i class="mdi mdi-receipt-text-check mr-1"></i> Membership Details
+      </a>
+    </div>
+  {% endif %}
+
   <!-- MEMBER GYM ATTENDANCE & WORKOUT CHECK-IN DESK (NATIVE PORTAL GYM-CARD) -->
   <div class="gym-card mb-4">
     <div class="gym-card-header d-flex align-items-center justify-content-between flex-wrap">

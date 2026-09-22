@@ -86,12 +86,23 @@ def trainer_dashboard(request):
         check_in_time__date=today
     ).select_related('member')
 
+    # Compute expiring client packages (<= 5 days)
+    expiring_clients = []
+    for pt in pt_clients:
+        end_date = pt.get_end_date()
+        if end_date:
+            days_left = (end_date - today).days
+            if 0 <= days_left <= 5:
+                pt.days_left = days_left
+                expiring_clients.append(pt)
+
     context = {
         'trainer': trainer,
         'gym': gym,
         'pt_clients': pt_clients[:6],
         'clients': pt_clients[:6],
         'total_clients_count': total_clients_count,
+        'expiring_clients': expiring_clients,
         'today_attendance': latest_today_attendance,
         'active_attendance': active_attendance,
         'is_checked_in': active_attendance is not None,

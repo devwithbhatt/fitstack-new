@@ -13,6 +13,11 @@ from django.core.serializers import serialize
 from django.views.decorators.http import require_POST, require_GET
 from django.db import IntegrityError, transaction
 from apps.whatsapp.services import WhatsAppService
+from apps.superadmin.notifications import (
+    notify_membership_activated,
+    notify_pt_assigned,
+    notify_payment_submitted
+)
 
 from django.contrib.auth.decorators import login_required
 from apps.login.decorators import custom_permission_required
@@ -562,6 +567,14 @@ def assign_membership_plan(request, member_id, history_id=None):
             member.membership_plan = history.plan
             member.save()
             
+            # Dispatch automated in-app platform notifications & popups
+            try:
+                notify_membership_activated(member=member, history=history, is_upgrade=bool(history_id))
+                if history.paid_amount > 0 and 'payment' in locals() and payment:
+                    notify_payment_submitted(payment=payment, member=member, invoice=history, invoice_type='membership')
+            except Exception as notif_err:
+                pass
+
             success_msg = f'Membership plan "{history.plan.title}" upgraded for {member.name}.' if history_id else f'Membership plan "{history.plan.title}" assigned to {member.name}.'
             messages.success(request, success_msg)
             
@@ -628,8 +641,9 @@ def assign_pt_trainer(request, member_id):
             pt_assignment.transaction_id = request.POST.get('transaction_id')
             pt_assignment.save()
 
+            payment = None
             if pt_assignment.paid_amount > 0:
-                Payment.objects.create(
+                payment = Payment.objects.create(
                     gym=gym,
                     member=member,
                     amount=pt_assignment.paid_amount,
@@ -639,6 +653,15 @@ def assign_pt_trainer(request, member_id):
                     personal_trainer=pt_assignment,
                     payment_date=pt_assignment.payment_date
                 )
+
+            # Dispatch automated in-app platform notifications
+            try:
+                notify_pt_assigned(member=member, pt_assignment=pt_assignment)
+                if payment:
+                    notify_payment_submitted(payment=payment, member=member, invoice=pt_assignment, invoice_type='pt')
+            except Exception as notif_err:
+                pass
+
             messages.success(request, f'Personal Trainer "{pt_assignment.trainer.name}" assigned to {member.first_name} {member.last_name}.')
             return redirect('billing:pt_invoice', member_id=member.id, pt_invoice_id=pt_assignment.id)
     else:
