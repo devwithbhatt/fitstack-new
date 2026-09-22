@@ -122,5 +122,5 @@ class SessionExpiredMiddleware:
             match = resolve(path)
             return match.url_name in _PUBLIC_URL_NAMES
         except Resolver404:
-            # Unknown URL – let Django handle the 404 normally.
+            # Unknown URL – let Django handle the 404 n ormally.
             return True

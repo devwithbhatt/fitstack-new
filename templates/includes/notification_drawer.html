@@ -107,7 +107,7 @@
   background-color: rgba(15, 23, 42, 0.45);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
-  z-index: 99998;
+  z-index: 9990;
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.22s ease, visibility 0.22s ease;
@@ -126,7 +126,7 @@
   height: 100vh;
   height: 100dvh;
   background: #ffffff;
-  z-index: 99999;
+  z-index: 9991;
   box-shadow: -10px 0 35px rgba(15, 23, 42, 0.16);
   display: flex;
   flex-direction: column;
@@ -303,20 +303,31 @@
 </style>
 
 <script>
-function openNotificationDrawer() {
-  var drawer = document.getElementById('notificationDrawer');
+/* ── Notification Drawer ─────────────────────────────────────────────────── */
+
+/**
+ * Force-close the drawer and restore body scroll.
+ * Called on every page load / bfcache restore to prevent the drawer
+ * from appearing open when navigating between pages.
+ */
+function _forceCloseDrawer() {
+  var drawer   = document.getElementById('notificationDrawer');
   var backdrop = document.getElementById('notificationDrawerOverlay');
-  if (drawer) drawer.classList.add('active');
-  if (backdrop) backdrop.classList.add('active');
+  if (drawer)   { drawer.classList.remove('active');   drawer.setAttribute('aria-hidden', 'true'); }
+  if (backdrop) { backdrop.classList.remove('active'); }
+  document.body.style.overflow = '';
+}
+
+function openNotificationDrawer() {
+  var drawer   = document.getElementById('notificationDrawer');
+  var backdrop = document.getElementById('notificationDrawerOverlay');
+  if (drawer)   { drawer.classList.add('active');   drawer.setAttribute('aria-hidden', 'false'); }
+  if (backdrop) { backdrop.classList.add('active'); }
   document.body.style.overflow = 'hidden';
 }
 
 function closeNotificationDrawer() {
-  var drawer = document.getElementById('notificationDrawer');
-  var backdrop = document.getElementById('notificationDrawerOverlay');
-  if (drawer) drawer.classList.remove('active');
-  if (backdrop) backdrop.classList.remove('active');
-  document.body.style.overflow = '';
+  _forceCloseDrawer();
 }
 
 function markAllNotificationsReadFromDrawer() {
@@ -344,9 +355,35 @@ function markAllNotificationsReadFromDrawer() {
   });
 }
 
+/* Close on Escape key */
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') {
-    closeNotificationDrawer();
-  }
+  if (e.key === 'Escape') { closeNotificationDrawer(); }
+});
+
+/* ── Page-navigation safety net ────────────────────────────────────────── */
+
+/*
+ * 1. pagehide – fires when the user navigates AWAY from the page.
+ *    Reset body overflow so the next page doesn't inherit a locked scroll.
+ */
+window.addEventListener('pagehide', function() {
+  document.body.style.overflow = '';
+});
+
+/*
+ * 2. pageshow – fires both on first load AND when the browser restores
+ *    a page from the back/forward cache (bfcache). persisted=true means
+ *    the page came from cache, so we must re-close the drawer.
+ */
+window.addEventListener('pageshow', function(e) {
+  _forceCloseDrawer();
+});
+
+/*
+ * 3. DOMContentLoaded safety – closes the drawer before the user sees
+ *    anything, in case the browser painted it open for any reason.
+ */
+document.addEventListener('DOMContentLoaded', function() {
+  _forceCloseDrawer();
 });
 </script>
