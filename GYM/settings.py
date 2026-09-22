@@ -93,6 +93,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'GYM.session_middleware.SessionExpiredMiddleware',   # ← redirect on session expiry
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'GYM.tenant_middleware.TenantMiddleware',
@@ -196,6 +197,13 @@ LOGOUT_REDIRECT_URL = '/'
 LOG_DIR = os.path.join(BASE_DIR, 'logs')
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
+
+# ── Authentication Redirects ──────────────────────────────────────────────────
+# Django's default is /accounts/login/ which doesn't exist in this project.
+# Expired sessions will now redirect to the correct login page.
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
+LOGOUT_REDIRECT_URL = '/login/'
 
 LOGGING = {
     'version': 1,
