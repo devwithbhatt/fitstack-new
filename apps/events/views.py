@@ -5,10 +5,9 @@ from django.contrib.auth.decorators import login_required
 from apps.login.decorators import custom_permission_required
 from django.contrib import messages
 from apps.superadmin.models import GymAdmin
-
-
+ 
 def get_user_gym(request):
-    gym = getattr(request, 'gym', None)
+    gym = getattr(request, 'gym', None) 
     if not gym:
         if hasattr(request.user, 'gymadmin'):
             gym = request.user.gymadmin.gym

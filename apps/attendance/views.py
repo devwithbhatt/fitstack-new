@@ -348,34 +348,33 @@ def member_attendance(request):
 
 
         if quick_checkin_id and action:
-            try:
-                member = get_object_or_404(Member, member_id=quick_checkin_id, gym=gym)
-                if not member.is_active:
-                    messages.error(request, 'This member is not active and cannot be checked in.')
-                    return redirect('attendance:member_attendance')
-
-                if action == 'checkin':
-                    if MemberAttendance.objects.filter(member=member, check_in_time__date=today, check_out_time__isnull=True, gym=gym).exists():
-                        messages.warning(request, f'{member.name} is already checked in.')
-                    else:
-                        MemberAttendance.objects.create(member=member, check_in_time=timezone.now(), gym=gym)
-                        messages.success(request, f'{member.name} checked in successfully.')
-                elif action == 'checkout':
-                    attendance_record = MemberAttendance.objects.filter(member=member, check_in_time__date=today, check_out_time__isnull=True, gym=gym).first()
-                    if attendance_record:
-                        attendance_record.check_out_time = timezone.now()
-                        attendance_record.status = 'outside'
-                        attendance_record.save()
-                        messages.success(request, f'{member.name} checked out successfully.')
-                    else:
-                        messages.error(request, 'Member is not checked in.')
-            except Member.DoesNotExist:
-                messages.error(request, 'Invalid or inactive Membership ID.')
+            member = Member.objects.filter(member_id=quick_checkin_id, gym=gym).first()
+            if not member:
+                messages.error(request, f'No member found with ID "{quick_checkin_id}". Please check the Membership ID and try again.')
+            elif not member.is_active:
+                messages.error(request, 'This member is not active and cannot be checked in.')
+            elif action == 'checkin':
+                if MemberAttendance.objects.filter(member=member, check_in_time__date=today, check_out_time__isnull=True, gym=gym).exists():
+                    messages.warning(request, f'{member.name} is already checked in.')
+                else:
+                    MemberAttendance.objects.create(member=member, check_in_time=timezone.now(), gym=gym)
+                    messages.success(request, f'{member.name} checked in successfully.')
+            elif action == 'checkout':
+                attendance_record = MemberAttendance.objects.filter(member=member, check_in_time__date=today, check_out_time__isnull=True, gym=gym).first()
+                if attendance_record:
+                    attendance_record.check_out_time = timezone.now()
+                    attendance_record.status = 'outside'
+                    attendance_record.save()
+                    messages.success(request, f'{member.name} checked out successfully.')
+                else:
+                    messages.error(request, f'{member.name} is not currently checked in.')
             return redirect('attendance:member_attendance')
 
         if member_id and action:
-            member = get_object_or_404(Member, id=member_id, gym=gym)
-            if action == 'checkin':
+            member = Member.objects.filter(id=member_id, gym=gym).first()
+            if not member:
+                messages.error(request, 'Member not found. Please refresh and try again.')
+            elif action == 'checkin':
                 MemberAttendance.objects.create(member=member, check_in_time=timezone.now(), gym=gym)
                 messages.success(request, f'{member.name} checked in successfully.')
             elif action == 'checkout':
@@ -386,7 +385,7 @@ def member_attendance(request):
                     attendance_record.save()
                     messages.success(request, f'{member.name} checked out successfully.')
                 else:
-                    messages.error(request, 'Member is not checked in.')
+                    messages.error(request, f'{member.name} is not currently checked in.')
             return redirect('attendance:member_attendance')
 
     # Stats
