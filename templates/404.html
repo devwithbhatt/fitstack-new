@@ -1,209 +1,218 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>404 – Page Not Found | FitStack</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.materialdesignicons.com/6.5.95/css/materialdesignicons.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'vendors/mdi/css/materialdesignicons.min.css' %}">
+    <link rel="stylesheet" href="{% static 'vendors/css/vendor.bundle.base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/customstyle.css' %}?v=3.1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="shortcut icon" href="{% static 'images/favicon.png' %}">
+
     <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background: #0f1117;
+            font-family: 'Poppins', sans-serif;
+            background-image: url('{% static "images/login-bg.jpg" %}');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+            background-attachment: fixed;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
+            padding: 1.5rem;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* Animated background blobs */
-        .bg-blob {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.18;
-            animation: float 8s ease-in-out infinite;
-            pointer-events: none;
-        }
-        .blob-1 { width: 400px; height: 400px; background: #6366f1; top: -100px; left: -100px; animation-delay: 0s; }
-        .blob-2 { width: 350px; height: 350px; background: #06b6d4; bottom: -80px; right: -80px; animation-delay: 3s; }
-        .blob-3 { width: 250px; height: 250px; background: #8b5cf6; top: 50%; left: 50%; transform: translate(-50%,-50%); animation-delay: 1.5s; }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0) scale(1); }
-            50% { transform: translateY(-30px) scale(1.05); }
+        .error-wrapper {
+            width: 100%;
+            max-width: 480px;
+            animation: fadeSlideUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
 
+        /* Glassmorphism matching the login page */
         .error-card {
-            background: rgba(255,255,255,0.04);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 24px;
-            padding: 56px 48px;
+            background: rgba(255, 255, 255, 0.22);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            border-radius: 12px;
+            padding: 3.5rem 2.5rem;
             text-align: center;
-            max-width: 520px;
-            width: 90%;
-            position: relative;
-            z-index: 1;
-            box-shadow: 0 32px 80px rgba(0,0,0,0.5);
-            animation: slideUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+            color: #ffffff;
         }
 
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(40px); }
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(30px); }
             to   { opacity: 1; transform: translateY(0); }
         }
 
-        .error-icon-wrap {
-            width: 96px;
-            height: 96px;
-            background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2));
-            border: 1px solid rgba(99,102,241,0.3);
+        .error-icon-circle {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.4);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 24px;
+            margin: 0 auto 1.75rem;
             animation: pulse 2.5s ease-in-out infinite;
         }
 
         @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0.3); }
-            50% { box-shadow: 0 0 0 16px rgba(99,102,241,0); }
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.25); }
+            50%       { box-shadow: 0 0 0 14px rgba(255, 255, 255, 0); }
         }
 
-        .error-icon-wrap i {
-            font-size: 44px;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        .error-icon-circle i {
+            font-size: 2.5rem;
+            color: #ffffff;
         }
 
         .error-code {
-            font-size: 80px;
-            font-weight: 800;
+            font-size: 5rem;
+            font-weight: 700;
             line-height: 1;
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 8px;
-            letter-spacing: -4px;
+            letter-spacing: -2px;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
         }
 
         .error-title {
-            font-size: 22px;
-            font-weight: 700;
-            color: #f1f5f9;
-            margin-bottom: 12px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 0.75rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
 
         .error-desc {
-            font-size: 14px;
-            color: #94a3b8;
-            line-height: 1.7;
-            margin-bottom: 36px;
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.6;
+            margin-bottom: 2.5rem;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
         }
 
-        .btn-home {
+        .error-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* Matches login button */
+        .btn-error-primary {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            color: #fff;
-            font-size: 14px;
+            gap: 0.5rem;
+            background: #4599cd;
+            color: #ffffff !important;
+            font-size: 0.9rem;
             font-weight: 600;
-            padding: 12px 28px;
-            border-radius: 50px;
+            padding: 0.75rem 1.75rem;
+            border-radius: 8px;
             text-decoration: none;
-            border: none;
+            border: 1px solid #4599cd;
             cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 20px rgba(99,102,241,0.4);
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 14px rgba(69, 153, 205, 0.35);
         }
 
-        .btn-home:hover {
+        .btn-error-primary:hover {
+            background: #3685b5;
+            border-color: #3685b5;
             transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(99,102,241,0.5);
-            color: #fff;
+            box-shadow: 0 6px 18px rgba(69, 153, 205, 0.45);
         }
 
-        .btn-back {
+        /* Matches login back web button */
+        .btn-error-secondary {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            background: rgba(255,255,255,0.05);
-            color: #94a3b8;
-            font-size: 14px;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff !important;
+            font-size: 0.9rem;
             font-weight: 500;
-            padding: 12px 24px;
-            border-radius: 50px;
+            padding: 0.75rem 1.75rem;
+            border-radius: 8px;
             text-decoration: none;
-            border: 1px solid rgba(255,255,255,0.08);
+            border: 1px solid rgba(255, 255, 255, 0.5);
             cursor: pointer;
             transition: all 0.2s ease;
-            margin-left: 10px;
         }
 
-        .btn-back:hover {
-            background: rgba(255,255,255,0.1);
-            color: #e2e8f0;
+        .btn-error-secondary:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: #ffffff;
         }
 
-        .divider {
-            border: none;
-            border-top: 1px solid rgba(255,255,255,0.07);
-            margin: 32px 0 24px;
+        .error-brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 2.5rem;
         }
 
-        .help-text {
-            font-size: 12px;
-            color: #475569;
+        .error-brand img {
+            height: 36px;
+            width: auto;
         }
 
-        .help-text a {
-            color: #6366f1;
-            text-decoration: none;
+        .error-brand-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 0.02em;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
-
-        .help-text a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
 
-<!-- Background blobs -->
-<div class="bg-blob blob-1"></div>
-<div class="bg-blob blob-2"></div>
-<div class="bg-blob blob-3"></div>
+<div class="error-wrapper">
+    <div class="error-card">
 
-<div class="error-card">
-    <div class="error-icon-wrap">
-        <i class="mdi mdi-map-marker-off-outline"></i>
+        <div class="error-brand">
+            <!-- You can point this to your full logo if you have one, or keep the favicon + text -->
+            <img src="{% static 'images/favicon.png' %}" alt="FitStack">
+            <span class="error-brand-name">FitStack</span>
+        </div>
+
+        <div class="error-icon-circle">
+            <i class="mdi mdi-alert-circle-outline"></i>
+        </div>
+
+        <div class="error-code">404</div>
+        <div class="error-title">Page Not Found</div>
+        <p class="error-desc">
+            The page you are looking for doesn't exist, has been moved, or you don't have access.
+        </p>
+
+        <div class="error-actions">
+            <a href="{% url 'dashboard' %}" class="btn-error-primary">
+                <i class="mdi mdi-home"></i> Dashboard
+            </a>
+            <a href="javascript:history.back()" class="btn-error-secondary">
+                <i class="mdi mdi-arrow-left"></i> Go Back
+            </a>
+        </div>
+
     </div>
-
-    <div class="error-code">404</div>
-    <div class="error-title">Page Not Found</div>
-    <p class="error-desc">
-        The page or record you're looking for doesn't exist, may have been moved, or you don't have permission to access it.
-    </p>
-
-    <div>
-        <a href="{% url 'dashboard' %}" class="btn-home">
-            <i class="mdi mdi-home-outline"></i> Go to Dashboard
-        </a>
-        <a href="javascript:history.back()" class="btn-back">
-            <i class="mdi mdi-arrow-left"></i> Go Back
-        </a>
-    </div>
-
-    <hr class="divider">
-    <p class="help-text">
-        If you believe this is a mistake, please
-        <a href="{% url 'help' %}">contact support</a> or try again.
-    </p>
 </div>
 
 </body>
