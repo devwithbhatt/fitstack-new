@@ -93,8 +93,8 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'GYM.session_middleware.SessionExpiredMiddleware',   # ← redirect on session expiry
     'django.contrib.messages.middleware.MessageMiddleware',
+    'GYM.session_middleware.SessionExpiredMiddleware',   # ← redirect on session expiry
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'GYM.tenant_middleware.TenantMiddleware',
     'apps.login.middleware.PasswordResetMiddleware',

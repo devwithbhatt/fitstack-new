@@ -517,7 +517,7 @@
             e.preventDefault();
             const href = this.getAttribute("href");
             if (href && href !== "#") {
-              const fullUrl = new URL(href, window.location.origin);
+              const fullUrl = new URL(href, window.location.href);
               runFilterRequest(fullUrl.toString(), true);
               window.scrollTo({ top: tableContainer.offsetTop - 80, behavior: "smooth" });
             }

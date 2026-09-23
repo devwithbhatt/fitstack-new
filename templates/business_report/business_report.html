@@ -529,7 +529,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 e.preventDefault();
                 const href = this.getAttribute("href");
                 if (href && href !== "#") {
-                    const targetUrl = new URL(href, window.location.origin).toString();
+                    const targetUrl = new URL(href, window.location.href).toString();
                     runFilterRequest(targetUrl);
                     const txTable = document.getElementById("transactionsTableCard");
                     if (txTable) {
