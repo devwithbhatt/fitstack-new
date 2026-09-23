@@ -20,7 +20,14 @@ except ImportError:
     pass
 
 # Quick-start development settings - unsuitable for production
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-q_2uz@czn8zn!aks2)zxc3v4z28h4=3&ge1e6ex5afr&^e#-t3')
+_INSECURE_KEY = 'django-insecure-q_2uz@czn8zn!aks2)zxc3v4z28h4=3&ge1e6ex5afr&^e#-t3'
+SECRET_KEY = os.environ.get('SECRET_KEY', _INSECURE_KEY)
+if SECRET_KEY == _INSECURE_KEY:
+    import warnings
+    warnings.warn(
+        "\n⚠️  SECRET_KEY is using the insecure default. Set a strong SECRET_KEY in your .env file before deploying to production.",
+        stacklevel=2,
+    )
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 BASE_URL = os.environ.get('BASE_URL', 'https://fitstack.nextgenapplication.com')
 
@@ -214,15 +221,44 @@ LOGGING = {
     },
     'handlers': {
         'console': {'class': 'logging.StreamHandler', 'formatter': 'simple'},
-        'file': {
-            'class': 'logging.FileHandler', 
+        'whatsapp_file': {
+            'class': 'logging.FileHandler',
             'filename': os.path.join(LOG_DIR, 'whatsapp.log'),
             'formatter': 'verbose',
-            'encoding': 'utf-8'
+            'encoding': 'utf-8',
+            'level': 'DEBUG',
+        },
+        'apps_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOG_DIR, 'apps.log'),
+            'formatter': 'verbose',
+            'encoding': 'utf-8',
+            'maxBytes': 5 * 1024 * 1024,  # 5 MB
+            'backupCount': 3,
+            'level': 'WARNING',
+        },
+        'errors_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOG_DIR, 'errors.log'),
+            'formatter': 'verbose',
+            'encoding': 'utf-8',
+            'maxBytes': 5 * 1024 * 1024,  # 5 MB
+            'backupCount': 3,
+            'level': 'ERROR',
         },
     },
     'loggers': {
-        'apps.whatsapp': {'handlers': ['console', 'file'], 'level': 'DEBUG', 'propagate': True},
-        'django': {'handlers': ['console'], 'level': 'INFO'},
+        'apps': {
+            'handlers': ['console', 'apps_file', 'errors_file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'apps.whatsapp': {
+            'handlers': ['console', 'whatsapp_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django': {'handlers': ['console', 'errors_file'], 'level': 'WARNING'},
+        'django.request': {'handlers': ['console', 'errors_file'], 'level': 'ERROR', 'propagate': False},
     },
 }

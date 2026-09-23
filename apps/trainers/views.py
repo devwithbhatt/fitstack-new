@@ -86,7 +86,10 @@ def add_trainer(request):
 @custom_permission_required('change_trainer')
 def edit_trainer(request, trainer_id):
     gym = getattr(request, 'gym', None)
-    trainer = get_object_or_404(Trainer, id=trainer_id, gym=gym)
+    trainer = Trainer.objects.filter(id=trainer_id, gym=gym).first()
+    if not trainer:
+        messages.error(request, 'Trainer not found.')
+        return redirect('trainer_list')
     if request.method == 'POST':
         form = TrainerForm(request.POST, request.FILES, instance=trainer)
         if form.is_valid():
@@ -103,7 +106,9 @@ def edit_trainer(request, trainer_id):
 @custom_permission_required('delete_trainer')
 def delete_trainer(request, trainer_id):
     gym = getattr(request, 'gym', None)
-    trainer = get_object_or_404(Trainer, id=trainer_id, gym=gym)
+    trainer = Trainer.objects.filter(id=trainer_id, gym=gym).first()
+    if not trainer:
+        return JsonResponse({'status': 'error', 'message': 'Trainer not found.'}, status=404)
     try:
         trainer.delete()
         messages.success(request, 'Trainer has been deleted successfully.')
@@ -116,7 +121,10 @@ def delete_trainer(request, trainer_id):
 @login_required(login_url='login')
 def toggle_trainer_status(request, trainer_id):
     gym = getattr(request, 'gym', None)
-    trainer = get_object_or_404(Trainer, id=trainer_id, gym=gym)
+    trainer = Trainer.objects.filter(id=trainer_id, gym=gym).first()
+    if not trainer:
+        messages.error(request, 'Trainer not found.')
+        return redirect('trainer_list')
     trainer.is_active = not trainer.is_active
     trainer.save()
     messages.success(request, f"Trainer {trainer.name} has been marked as {'Active' if trainer.is_active else 'Inactive'}.")
@@ -129,7 +137,9 @@ def toggle_trainer_status(request, trainer_id):
 @require_POST
 def reset_trainer_password(request, trainer_id):
     gym = getattr(request, 'gym', None)
-    trainer = get_object_or_404(Trainer, id=trainer_id, gym=gym)
+    trainer = Trainer.objects.filter(id=trainer_id, gym=gym).first()
+    if not trainer:
+        return JsonResponse({'status': 'error', 'message': 'Trainer not found.'}, status=404)
     
     custom_pwd = request.POST.get('new_password', '').strip()
     if not custom_pwd:

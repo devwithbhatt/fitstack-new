@@ -25,6 +25,8 @@ from django.views.decorators.cache import never_cache
 from django.utils import timezone
 from datetime import timedelta, date
 from decimal import Decimal, ROUND_HALF_UP
+import logging
+logger = logging.getLogger(__name__)
 
 
 @require_POST
@@ -104,9 +106,8 @@ def add_new_member(request):
                     messages.error(request, 'An unexpected error occurred. Please try again.')
 
         else:
-            print("Member form errors:", member_form.errors)
-            print("Medical formset errors:", medical_formset.errors)
-            print("Emergency form errors:", emergency_form.errors)
+            logger.warning("Member form invalid. Errors: %s | Medical: %s | Emergency: %s",
+                           member_form.errors, medical_formset.errors, emergency_form.errors)
     else:
         member_form = MemberForm()
         medical_formset = MedicalHistoryFormSet(queryset=MedicalHistory.objects.none(), prefix='medical')
@@ -121,7 +122,10 @@ def add_new_member(request):
 @login_required(login_url='login')
 def member_profile(request, member_id):
     gym = getattr(request, 'gym', None)
-    member = get_object_or_404(Member, id=member_id, gym=gym, is_deleted=False)
+    member = Member.objects.filter(id=member_id, gym=gym, is_deleted=False).first()
+    if not member:
+        messages.error(request, 'Member not found or has been removed.')
+        return redirect('member_list')
     
     # Fetch both active and frozen memberships
     membership_histories = MembershipHistory.objects.filter(
@@ -175,7 +179,10 @@ def member_profile(request, member_id):
 @custom_permission_required('change_member')
 def edit_member(request, member_id):
     gym = getattr(request, 'gym', None)
-    member = get_object_or_404(Member, id=member_id, gym=gym)
+    member = Member.objects.filter(id=member_id, gym=gym).first()
+    if not member:
+        messages.error(request, 'Member not found.')
+        return redirect('member_list')
     try:
         emergency_contact = member.emergency_contact
     except EmergencyContact.DoesNotExist:
@@ -212,9 +219,8 @@ def edit_member(request, member_id):
             return redirect('member_list')
         else:
             # For debugging purposes
-            print("Member form errors:", form.errors)
-            print("Medical formset errors:", medical_formset.errors)
-            print("Emergency form errors:", emergency_form.errors)
+            logger.warning("Edit member form invalid. Errors: %s | Medical: %s | Emergency: %s",
+                           form.errors, medical_formset.errors, emergency_form.errors)
 
     else:
         form = MemberForm(instance=member)
@@ -460,7 +466,9 @@ def member_list(request):
 @custom_permission_required('change_member')
 def toggle_member_status(request, member_id):
     gym = getattr(request, 'gym', None)
-    member = get_object_or_404(Member, id=member_id, gym=gym)
+    member = Member.objects.filter(id=member_id, gym=gym).first()
+    if not member:
+        return JsonResponse({'status': 'error', 'message': 'Member not found.'}, status=404)
     if member.status == 'active':
         member.status = 'inactive'
     else:
@@ -474,7 +482,9 @@ def toggle_member_status(request, member_id):
 @custom_permission_required('delete_member')
 def delete_member(request, member_id):
     gym = getattr(request, 'gym', None)
-    member = get_object_or_404(Member, id=member_id, gym=gym)
+    member = Member.objects.filter(id=member_id, gym=gym).first()
+    if not member:
+        return JsonResponse({'status': 'error', 'message': 'Member not found.'}, status=404)
     try:
         with transaction.atomic():
             member.delete()
@@ -495,12 +505,18 @@ def delete_member(request, member_id):
 @custom_permission_required('change_member')
 def assign_membership_plan(request, member_id, history_id=None):
     gym = getattr(request, 'gym', None)
-    member = get_object_or_404(Member, id=member_id, gym=gym)
-    
+    member = Member.objects.filter(id=member_id, gym=gym).first()
+    if not member:
+        messages.error(request, 'Member not found.')
+        return redirect('member_list')
+
     # Fetch existing history if history_id is provided
     history_instance = None
     if history_id:
-        history_instance = get_object_or_404(MembershipHistory, id=history_id, member=member, gym=gym)
+        history_instance = MembershipHistory.objects.filter(id=history_id, member=member, gym=gym).first()
+        if not history_instance:
+            messages.error(request, 'Membership record not found.')
+            return redirect('member_profile', member_id=member.id)
    
     plans = MembershipPlan.objects.filter(gym=gym)
     plans_json = serialize('json', plans)
@@ -625,8 +641,11 @@ def assign_membership_plan(request, member_id, history_id=None):
 @login_required(login_url='login')
 @custom_permission_required('change_member')
 def assign_pt_trainer(request, member_id):
-    gym = getattr(request, 'gym', None) 
-    member = get_object_or_404(Member, id=member_id, gym=gym)
+    gym = getattr(request, 'gym', None)
+    member = Member.objects.filter(id=member_id, gym=gym).first()
+    if not member:
+        messages.error(request, 'Member not found.')
+        return redirect('member_list')
     
     # Filter trainers by the current gym
     trainers = Trainer.objects.filter(gym=gym)
@@ -672,7 +691,10 @@ def assign_pt_trainer(request, member_id):
 
 @login_required(login_url='login')
 def unfreeze_membership(request, membership_id):
-    membership = get_object_or_404(MembershipHistory, id=membership_id)
+    membership = MembershipHistory.objects.filter(id=membership_id).first()
+    if not membership:
+        messages.error(request, 'Membership record not found.')
+        return redirect('member_list')
     
     if request.method == 'POST':
         freeze = MembershipFreeze.objects.filter(membership=membership, unfreeze_date__isnull=True).first()
@@ -694,7 +716,10 @@ def unfreeze_membership(request, membership_id):
 
 @login_required(login_url='login')
 def freeze_membership(request, membership_id):
-    membership = get_object_or_404(MembershipHistory, id=membership_id)
+    membership = MembershipHistory.objects.filter(id=membership_id).first()
+    if not membership:
+        messages.error(request, 'Membership record not found.')
+        return redirect('member_list')
     
     if request.method == 'POST':
         reason = request.POST.get('reason', '')
@@ -723,7 +748,10 @@ def freeze_membership(request, membership_id):
 @custom_permission_required(['change_member', 'change_dietplan', 'add_dietplan'])
 def assign_diet_plan(request, member_id):
     gym = getattr(request, 'gym', None)
-    member = get_object_or_404(Member, id=member_id, gym=gym)
+    member = Member.objects.filter(id=member_id, gym=gym).first()
+    if not member:
+        messages.error(request, 'Member not found.')
+        return redirect('member_list')
     
     if request.method == 'POST':
         form = AssignDietPlanForm(request.POST, gym=gym)
@@ -764,7 +792,10 @@ def assign_diet_plan(request, member_id):
 @custom_permission_required(['change_member', 'change_workoutplan', 'add_workoutplan'])
 def assign_workout_plan(request, member_id):
     gym = getattr(request, 'gym', None)
-    member = get_object_or_404(Member, id=member_id, gym=gym)
+    member = Member.objects.filter(id=member_id, gym=gym).first()
+    if not member:
+        messages.error(request, 'Member not found.')
+        return redirect('member_list')
     
     if request.method == 'POST':
         form = AssignWorkoutPlanForm(request.POST, gym=gym)
@@ -803,7 +834,9 @@ def assign_workout_plan(request, member_id):
 @login_required
 @require_POST
 def delete_assigned_diet_plan(request, assigned_plan_id):
-    assigned_plan = get_object_or_404(AssignDietPlan, id=assigned_plan_id)
+    assigned_plan = AssignDietPlan.objects.filter(id=assigned_plan_id).first()
+    if not assigned_plan:
+        return JsonResponse({'status': 'error', 'message': 'Diet plan assignment not found.'}, status=404)
     try:
         assigned_plan.delete()
         return JsonResponse({'status': 'success', 'message': 'Assigned diet plan has been deleted.'})
@@ -813,7 +846,9 @@ def delete_assigned_diet_plan(request, assigned_plan_id):
 @login_required
 @require_POST
 def delete_assigned_workout_plan(request, assigned_plan_id):
-    assigned_plan = get_object_or_404(AssignWorkoutPlan, id=assigned_plan_id)
+    assigned_plan = AssignWorkoutPlan.objects.filter(id=assigned_plan_id).first()
+    if not assigned_plan:
+        return JsonResponse({'status': 'error', 'message': 'Workout plan assignment not found.'}, status=404)
     try:
         assigned_plan.delete()
         return JsonResponse({'status': 'success', 'message': 'Assigned workout plan has been deleted.'})
@@ -827,7 +862,9 @@ def delete_assigned_workout_plan(request, assigned_plan_id):
 @require_POST
 def reset_member_password(request, member_id):
     gym = getattr(request, 'gym', None)
-    member = get_object_or_404(Member, id=member_id, gym=gym, is_deleted=False)
+    member = Member.objects.filter(id=member_id, gym=gym, is_deleted=False).first()
+    if not member:
+        return JsonResponse({'status': 'error', 'message': 'Member not found.'}, status=404)
     
     custom_pwd = request.POST.get('new_password', '').strip()
     if not custom_pwd:

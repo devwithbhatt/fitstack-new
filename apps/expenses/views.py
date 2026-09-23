@@ -80,7 +80,10 @@ def expense_add(request):
 @custom_permission_required('change_expense')
 def expense_edit(request, pk):
     gym = getattr(request, 'gym', None)
-    expense = get_object_or_404(Expense, pk=pk, is_deleted=False, gym=gym)
+    expense = Expense.objects.filter(pk=pk, is_deleted=False, gym=gym).first()
+    if not expense:
+        messages.error(request, 'Expense not found.')
+        return redirect('expenses')
 
     if request.method == 'POST':
         form = ExpenseForm(request.POST, request.FILES, instance=expense)
@@ -100,7 +103,9 @@ def expense_edit(request, pk):
 def expense_delete(request, pk):
     gym = getattr(request, 'gym', None)
     try:
-        expense = get_object_or_404(Expense, pk=pk, gym=gym)
+        expense = Expense.objects.filter(pk=pk, gym=gym).first()
+        if not expense:
+            return JsonResponse({'status': 'error', 'message': 'Expense not found.'}, status=404)
         expense.is_deleted = True
         expense.save()
         messages.success(request, 'Expense moved to trash successfully.')
@@ -129,7 +134,10 @@ def expense_trash(request):
 @custom_permission_required('change_expense')
 def expense_restore(request, pk):
     gym = getattr(request, 'gym', None)
-    expense = get_object_or_404(Expense, pk=pk, gym=gym)
+    expense = Expense.objects.filter(pk=pk, gym=gym).first()
+    if not expense:
+        messages.error(request, 'Expense not found.')
+        return redirect('expense_trash')
     expense.is_deleted = False
     expense.save()
     messages.success(request, 'Expense restored successfully.')
@@ -140,7 +148,10 @@ def expense_restore(request, pk):
 @custom_permission_required('delete_expense')
 def expense_delete_permanent(request, pk):
     gym = getattr(request, 'gym', None)
-    expense = get_object_or_404(Expense, pk=pk, gym=gym)
+    expense = Expense.objects.filter(pk=pk, gym=gym).first()
+    if not expense:
+        messages.error(request, 'Expense not found.')
+        return redirect('expense_trash')
     expense.delete()
     messages.success(request, 'Expense permanently deleted.')
     return redirect('expense_trash')

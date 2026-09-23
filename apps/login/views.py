@@ -8,6 +8,8 @@ from django.contrib.auth.models import User, Permission
 from functools import wraps
 from django.contrib.contenttypes.models import ContentType
 from django.http import JsonResponse
+import logging
+logger = logging.getLogger(__name__)
 from .models import SubAdmin, ROLE_CHOICES
 from .models import SubAdminPermission
 
@@ -230,7 +232,7 @@ def user_logout(request):
         del request.session['role']
     logout(request)
     request.session.flush()  # Clear all session data
-    print("Session data after logout:", request.session.items())  # Debugging line
+    logger.debug("User logged out. Session flushed.")
     return redirect('index')
 
 

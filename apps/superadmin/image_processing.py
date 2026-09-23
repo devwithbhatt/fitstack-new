@@ -15,9 +15,7 @@ def process_image(image_field):
     - Resizes to max 800x800
     - Saves as optimized JPEG
     """
-    # This print statement will absolutely appear in your server's console logs if this code runs.
-    print("!!! RUNNING PROCESS_IMAGE FUNCTION !!!")
-    logger.warning("!!! LOGGER: RUNNING PROCESS_IMAGE FUNCTION !!!")
+    logger.info("process_image called for: %s", getattr(image_field, 'name', 'unknown'))
 
     if not image_field:
         logger.warning("Image field is empty, skipping processing.")
@@ -52,11 +50,7 @@ def process_image(image_field):
 
         # Properly update Django FileField
         image_field.save(file_name, ContentFile(buffer.read()), save=False)
-        logger.warning(f"Image processing successful. New file name: {file_name}")
-        print(f"!!! SUCCESS: Image processing successful for {file_name} !!!")
+        logger.info("Image processing successful. New file name: %s", file_name)
 
     except Exception as e:
-        # If anything goes wrong, log the full error in the most visible way possible.
-        print(f"!!!!!!!!!! CRITICAL IMAGE PROCESSING ERROR !!!!!!!!!!")
-        print(f"Error processing {image_field.name}. Error: {e}")
-        logger.critical(f"CRITICAL: Image processing failed for {image_field.name}. Error: {e}", exc_info=True)
+        logger.critical("Image processing failed for %s: %s", getattr(image_field, 'name', 'unknown'), e, exc_info=True)

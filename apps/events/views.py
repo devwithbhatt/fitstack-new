@@ -23,7 +23,12 @@ def get_user_gym(request):
 
 
 def event_registration(request, event_id):
-    event = get_object_or_404(Event, id=event_id)
+    event = Event.objects.filter(id=event_id).first()
+    if not event:
+        return render(request, 'events/event_registration_form.html', {
+            'error': 'This event does not exist or has been removed.',
+            'event': None,
+        })
     available_seats = event.max_participants - event.participants.count()
 
     if request.method == 'POST':
@@ -153,7 +158,10 @@ def create_event(request):
 @login_required
 @custom_permission_required('change_event')
 def edit_event(request, event_id):
-    event = get_object_or_404(Event, id=event_id)
+    event = Event.objects.filter(id=event_id).first()
+    if not event:
+        messages.error(request, 'Event not found.')
+        return redirect('events:event_list')
     if request.method == 'POST':
         event.event_name = request.POST.get('event_name')
         event.event_type = request.POST.get('event_type')
@@ -190,7 +198,10 @@ def edit_event(request, event_id):
 @login_required
 @custom_permission_required('delete_event')
 def cancel_event(request, event_id):
-    event = get_object_or_404(Event, id=event_id)
+    event = Event.objects.filter(id=event_id).first()
+    if not event:
+        messages.error(request, 'Event not found.')
+        return redirect('events:event_list')
     event.delete()
     messages.success(request, f"Event '{event.event_name}' has been canceled successfully.")
     return redirect('events:event_list')
@@ -198,7 +209,10 @@ def cancel_event(request, event_id):
 @login_required
 @custom_permission_required('change_event')
 def notify_members(request, event_id):
-    event = get_object_or_404(Event, id=event_id)
+    event = Event.objects.filter(id=event_id).first()
+    if not event:
+        messages.error(request, 'Event not found.')
+        return redirect('events:event_list')
     # Placeholder for sending notifications
     messages.success(request, f"Notifications for {event.event_name} will be sent to all registered members.")
     return redirect('events:event_list')
@@ -206,7 +220,10 @@ def notify_members(request, event_id):
 @login_required
 @custom_permission_required('change_event')
 def update_payment_status(request, registration_id):
-    registration = get_object_or_404(EventParticipant, id=registration_id)
+    registration = EventParticipant.objects.filter(id=registration_id).first()
+    if not registration:
+        messages.error(request, 'Registration record not found.')
+        return redirect('events:all_event_registrations')
     if request.method == 'POST':
         status = request.POST.get('status')
         if status in ['Successful', 'Failed']:

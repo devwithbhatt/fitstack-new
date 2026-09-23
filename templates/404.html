@@ -3,58 +3,208 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 - Page Not Found</title>
-
-    <!-- Bootstrap CSS -->
+    <title>404 – Page Not Found | FitStack</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
+    <link href="https://cdn.materialdesignicons.com/6.5.95/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            background-color: #191c24;
+            font-family: 'Inter', sans-serif;
+            background: #0f1117;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* Animated background blobs */
+        .bg-blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.18;
+            animation: float 8s ease-in-out infinite;
+            pointer-events: none;
+        }
+        .blob-1 { width: 400px; height: 400px; background: #6366f1; top: -100px; left: -100px; animation-delay: 0s; }
+        .blob-2 { width: 350px; height: 350px; background: #06b6d4; bottom: -80px; right: -80px; animation-delay: 3s; }
+        .blob-3 { width: 250px; height: 250px; background: #8b5cf6; top: 50%; left: 50%; transform: translate(-50%,-50%); animation-delay: 1.5s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-30px) scale(1.05); }
+        }
+
+        .error-card {
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 24px;
+            padding: 56px 48px;
+            text-align: center;
+            max-width: 520px;
+            width: 90%;
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+            animation: slideUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .error-icon-wrap {
+            width: 96px;
+            height: 96px;
+            background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2));
+            border: 1px solid rgba(99,102,241,0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            animation: pulse 2.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0.3); }
+            50% { box-shadow: 0 0 0 16px rgba(99,102,241,0); }
+        }
+
+        .error-icon-wrap i {
+            font-size: 44px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .error-code {
+            font-size: 80px;
+            font-weight: 800;
+            line-height: 1;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+            letter-spacing: -4px;
+        }
+
+        .error-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 12px;
+        }
+
+        .error-desc {
+            font-size: 14px;
+            color: #94a3b8;
+            line-height: 1.7;
+            margin-bottom: 36px;
+        }
+
+        .btn-home {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
             color: #fff;
-            
-        }
-        .container-fluid {
-            height: 100vh;
-        }
-        .card-box {
-            background-color: #2a2d3e;
-            border-radius: 10px;
-        }
-        .btn-primary {
-            background-color: #0d6efd;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 12px 28px;
+            border-radius: 50px;
+            text-decoration: none;
             border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 20px rgba(99,102,241,0.4);
         }
+
+        .btn-home:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(99,102,241,0.5);
+            color: #fff;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.05);
+            color: #94a3b8;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 12px 24px;
+            border-radius: 50px;
+            text-decoration: none;
+            border: 1px solid rgba(255,255,255,0.08);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-left: 10px;
+        }
+
+        .btn-back:hover {
+            background: rgba(255,255,255,0.1);
+            color: #e2e8f0;
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px solid rgba(255,255,255,0.07);
+            margin: 32px 0 24px;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: #475569;
+        }
+
+        .help-text a {
+            color: #6366f1;
+            text-decoration: none;
+        }
+
+        .help-text a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
 
-<div class="card-box p-5 text-center d-flex flex-column align-items-center justify-content-center">
-    
-    <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.9.3/dist/dotlottie-wc.js" type="module"></script>
+<!-- Background blobs -->
+<div class="bg-blob blob-1"></div>
+<div class="bg-blob blob-2"></div>
+<div class="bg-blob blob-3"></div>
 
-    <dotlottie-wc 
-        src="https://lottie.host/2c03017b-782e-4868-8f61-68386d5b65f6/juWdtLwf5k.lottie"
-        style="width: 300px; height: 300px;"
-        autoplay 
-        loop>
-    </dotlottie-wc>
+<div class="error-card">
+    <div class="error-icon-wrap">
+        <i class="mdi mdi-map-marker-off-outline"></i>
+    </div>
 
-    <h3 class="mb-4 mt-3">Page Not Found</h3>
-
-    <p class="mb-4">
-        We’re sorry, the page you are looking for does not exist. 
-        You can go back to the homepage.
+    <div class="error-code">404</div>
+    <div class="error-title">Page Not Found</div>
+    <p class="error-desc">
+        The page or record you're looking for doesn't exist, may have been moved, or you don't have permission to access it.
     </p>
 
-    <a href="{% url 'dashboard' %}" class="btn btn-primary rounded-pill py-3 px-5">
-        Go Back To Home
-    </a>
+    <div>
+        <a href="{% url 'dashboard' %}" class="btn-home">
+            <i class="mdi mdi-home-outline"></i> Go to Dashboard
+        </a>
+        <a href="javascript:history.back()" class="btn-back">
+            <i class="mdi mdi-arrow-left"></i> Go Back
+        </a>
+    </div>
 
+    <hr class="divider">
+    <p class="help-text">
+        If you believe this is a mistake, please
+        <a href="{% url 'help' %}">contact support</a> or try again.
+    </p>
 </div>
-
-<!-- Bootstrap JS (optional) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
 </html>

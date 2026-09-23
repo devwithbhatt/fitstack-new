@@ -113,7 +113,10 @@ def submit_due(request):
 @custom_permission_required('add_payment')
 def pay_due_payment(request, member_id):
     gym = getattr(request, 'gym', None)
-    member = get_object_or_404(Member, id=member_id, gym=gym)
+    member = Member.objects.filter(id=member_id, gym=gym).first()
+    if not member:
+        messages.error(request, 'Member not found.')
+        return redirect('billing:submit_due')
 
     membership_invoices = MembershipHistory.objects.filter(member=member, status='active', gym=gym).exclude(paid_amount=F('total_amount')).annotate(due=F('total_amount') - F('paid_amount'))
     pt_invoices = PersonalTrainer.objects.filter(member=member, status='active', gym=gym).exclude(paid_amount=F('total_amount')).annotate(due=F('total_amount') - F('paid_amount'))
@@ -125,9 +128,9 @@ def pay_due_payment(request, member_id):
         
         invoice = None
         if invoice_type == 'membership':
-            invoice = get_object_or_404(MembershipHistory, id=invoice_id, member=member, gym=gym)
+            invoice = MembershipHistory.objects.filter(id=invoice_id, member=member, gym=gym).first()
         elif invoice_type == 'pt':
-            invoice = get_object_or_404(PersonalTrainer, id=invoice_id, member=member, gym=gym)
+            invoice = PersonalTrainer.objects.filter(id=invoice_id, member=member, gym=gym).first()
 
         if invoice:
             due_amount = invoice.total_amount - invoice.paid_amount
@@ -221,7 +224,10 @@ def update_follow_up(request, member_id):
                     messages.error(request, "Follow-up date cannot be in the past.")
                     return redirect('billing:submit_due')
 
-                member = get_object_or_404(Member, id=member_id, gym=gym)
+                member = Member.objects.filter(id=member_id, gym=gym).first()
+                if not member:
+                    messages.error(request, 'Member not found.')
+                    return redirect('billing:submit_due')
                 
                 # Update all outstanding invoices for the member
                 MembershipHistory.objects.filter(member=member, status='active', gym=gym).exclude(paid_amount=F('total_amount')).update(follow_up_date=follow_up_date)
@@ -283,8 +289,14 @@ def update_follow_up(request, member_id):
 @custom_permission_required('view_payment')
 def invoice(request, member_id, history_id):
     gym = getattr(request, 'gym', None)
-    member = get_object_or_404(Member, id=member_id, gym=gym)
-    history = get_object_or_404(MembershipHistory, id=history_id, gym=gym)
+    member = Member.objects.filter(id=member_id, gym=gym).first()
+    if not member:
+        messages.error(request, 'Member not found.')
+        return redirect('member_list')
+    history = MembershipHistory.objects.filter(id=history_id, gym=gym).first()
+    if not history:
+        messages.error(request, 'Invoice not found.')
+        return redirect('member_profile', member_id=member.id)
 
     # Get all invoices for the member to find the next and previous
     member_invoices = list(MembershipHistory.objects.filter(member=member, gym=gym).order_by('created_at'))
@@ -320,8 +332,14 @@ def invoice(request, member_id, history_id):
 @custom_permission_required('view_payment')
 def pt_invoice(request, member_id, pt_invoice_id):
     gym = getattr(request, 'gym', None)
-    member = get_object_or_404(Member, id=member_id, gym=gym)
-    pt_invoice = get_object_or_404(PersonalTrainer, id=pt_invoice_id, gym=gym)
+    member = Member.objects.filter(id=member_id, gym=gym).first()
+    if not member:
+        messages.error(request, 'Member not found.')
+        return redirect('member_list')
+    pt_invoice = PersonalTrainer.objects.filter(id=pt_invoice_id, gym=gym).first()
+    if not pt_invoice:
+        messages.error(request, 'PT invoice not found.')
+        return redirect('member_profile', member_id=member.id)
 
     # Get all PT invoices for the member to find the next and previous
     member_pt_invoices = list(PersonalTrainer.objects.filter(member=member, gym=gym).order_by('created_at'))
@@ -426,11 +444,13 @@ def delete_invoice(request, invoice_type, invoice_id):
     if request.method == 'POST':
         try:
             if invoice_type == 'membership':
-                invoice = get_object_or_404(MembershipHistory, id=invoice_id, gym=gym)
+                invoice = MembershipHistory.objects.filter(id=invoice_id, gym=gym).first()
             elif invoice_type == 'pt':
-                invoice = get_object_or_404(PersonalTrainer, id=invoice_id, gym=gym)
+                invoice = PersonalTrainer.objects.filter(id=invoice_id, gym=gym).first()
             else:
                 return JsonResponse({'status': 'error', 'message': 'Invalid invoice type.'}, status=400)
+            if not invoice:
+                return JsonResponse({'status': 'error', 'message': 'Invoice not found.'}, status=404)
 
             invoice.is_deleted = True
             invoice.save()
@@ -481,11 +501,14 @@ def trash_invoices(request):
 def restore_invoice(request, invoice_type, invoice_id):
     gym = getattr(request, 'gym', None)
     if invoice_type == 'membership':
-        invoice = get_object_or_404(MembershipHistory, id=invoice_id, gym=gym)
+        invoice = MembershipHistory.objects.filter(id=invoice_id, gym=gym).first()
     elif invoice_type == 'pt':
-        invoice = get_object_or_404(PersonalTrainer, id=invoice_id, gym=gym)
+        invoice = PersonalTrainer.objects.filter(id=invoice_id, gym=gym).first()
     else:
         messages.error(request, 'Invalid invoice type.')
+        return redirect('billing:trash_invoices')
+    if not invoice:
+        messages.error(request, 'Invoice not found.')
         return redirect('billing:trash_invoices')
 
     invoice.is_deleted = False
@@ -498,11 +521,14 @@ def restore_invoice(request, invoice_type, invoice_id):
 def delete_permanently(request, invoice_type, invoice_id):
     gym = getattr(request, 'gym', None)
     if invoice_type == 'membership':
-        invoice = get_object_or_404(MembershipHistory, id=invoice_id, gym=gym)
+        invoice = MembershipHistory.objects.filter(id=invoice_id, gym=gym).first()
     elif invoice_type == 'pt':
-        invoice = get_object_or_404(PersonalTrainer, id=invoice_id, gym=gym)
+        invoice = PersonalTrainer.objects.filter(id=invoice_id, gym=gym).first()
     else:
         messages.error(request, 'Invalid invoice type.')
+        return redirect('billing:trash_invoices')
+    if not invoice:
+        messages.error(request, 'Invoice not found.')
         return redirect('billing:trash_invoices')
 
     invoice.delete()

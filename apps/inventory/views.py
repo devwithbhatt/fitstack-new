@@ -107,7 +107,10 @@ def all_items(request):
 def add_edit_item(request, id=None):
     gym = getattr(request, 'gym', None)
     if id:
-        item = get_object_or_404(Item, id=id, gym=gym)
+        item = Item.objects.filter(id=id, gym=gym).first()
+        if not item:
+            messages.error(request, 'Item not found.')
+            return redirect('inventory:all_items')
         form = ItemForm(request.POST or None, request.FILES or None, instance=item)
     else:
         form = ItemForm(request.POST or None, request.FILES or None)
@@ -174,9 +177,10 @@ def stock_out_view(request, item_id=None):
     else:
         initial_data = {}
         if item_id:
-            item = get_object_or_404(Item, id=item_id, gym=gym)
-            initial_data['item'] = item
-            initial_data['unit_price'] = item.selling_price
+            item = Item.objects.filter(id=item_id, gym=gym).first()
+            if item:
+                initial_data['item'] = item
+                initial_data['unit_price'] = item.selling_price
         form = StockOutForm(initial=initial_data, gym=gym)
     
     context = {
@@ -190,7 +194,10 @@ def stock_out_view(request, item_id=None):
 @login_required
 def stock_log_view(request, item_id):
     gym = getattr(request, 'gym', None)
-    item = get_object_or_404(Item, id=item_id, gym=gym)
+    item = Item.objects.filter(id=item_id, gym=gym).first()
+    if not item:
+        messages.error(request, 'Item not found.')
+        return redirect('inventory:all_items')
     logs = StockLog.objects.filter(item=item).order_by('-date')
     context = {
         'item': item,
@@ -233,7 +240,10 @@ def all_equipment(request):
 def add_edit_equipment(request, id=None):
     gym = getattr(request, 'gym', None)
     if id:
-        equipment = get_object_or_404(Equipment, id=id, gym=gym)
+        equipment = Equipment.objects.filter(id=id, gym=gym).first()
+        if not equipment:
+            messages.error(request, 'Equipment not found.')
+            return redirect('inventory:all_equipment')
         form = EquipmentForm(request.POST or None, request.FILES or None, instance=equipment)
     else:
         form = EquipmentForm(request.POST or None, request.FILES or None)

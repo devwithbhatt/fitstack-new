@@ -314,7 +314,10 @@ def trainer_client_detail_view(request, member_id):
     gym = request.gym
     today = timezone.localdate()
 
-    member = get_object_or_404(Member, id=member_id, gym=gym)
+    member = Member.objects.filter(id=member_id, gym=gym).first()
+    if not member:
+        messages.error(request, 'Member not found or you do not have access to this member.')
+        return redirect('trainer_portal:dashboard')
 
     # Personal Training History with this trainer
     pt_records_raw = PersonalTrainer.objects.filter(

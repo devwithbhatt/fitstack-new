@@ -52,6 +52,10 @@ urlpatterns = [
     path('debug/', debug, name='debug'),
 ]
 
+# ── Dev-only preview URLs (DEBUG=True only) ──────────────────────────────────
 if settings.DEBUG:
+    urlpatterns += [
+        path('preview/404/', lambda request: __import__('django.shortcuts', fromlist=['render']).render(request, '404.html', status=200), name='preview_404'),
+    ]
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

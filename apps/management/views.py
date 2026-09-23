@@ -48,7 +48,10 @@ def membership_plans(request):
 @custom_permission_required('change_membershipplan')
 def edit_membership_plan(request, pk):
     gym = getattr(request, 'gym', None)
-    plan = get_object_or_404(MembershipPlan, pk=pk, gym=gym)
+    plan = MembershipPlan.objects.filter(pk=pk, gym=gym).first()
+    if not plan:
+        messages.error(request, 'Membership plan not found.')
+        return redirect('membership_plans')
     if request.method == 'POST':
         form = MembershipPlanForm(request.POST, instance=plan)
         if form.is_valid():
@@ -65,7 +68,9 @@ def edit_membership_plan(request, pk):
 @custom_permission_required('delete_membershipplan')
 def delete_membership_plan(request, pk):
     gym = getattr(request, 'gym', None)
-    plan = get_object_or_404(MembershipPlan, pk=pk, gym=gym)
+    plan = MembershipPlan.objects.filter(pk=pk, gym=gym).first()
+    if not plan:
+        return JsonResponse({'status': 'error', 'message': 'Membership plan not found.'}, status=404)
     if request.method == 'POST':
         try:
             plan.delete()
@@ -115,8 +120,9 @@ def diet_plans(request):
 
 @never_cache
 def public_diet_plan(request, pk):
-    plan = get_object_or_404(DietPlan, pk=pk)
-    # Set request.gym so that the template (or any context processor) can use it for branding
+    plan = DietPlan.objects.filter(pk=pk).first()
+    if not plan:
+        return render(request, 'management/DietPlans/public_diet_plan.html', {'plan': None, 'error': 'This diet plan does not exist or has been removed.'})
     request.gym = plan.gym
     return render(request, 'management/DietPlans/public_diet_plan.html', {'plan': plan})
 
@@ -127,7 +133,10 @@ def public_diet_plan(request, pk):
 @custom_permission_required('change_dietplan')
 def edit_diet_plan(request, pk):
     gym = getattr(request, 'gym', None)
-    plan = get_object_or_404(DietPlan, pk=pk, gym=gym)
+    plan = DietPlan.objects.filter(pk=pk, gym=gym).first()
+    if not plan:
+        messages.error(request, 'Diet plan not found.')
+        return redirect('diet_plans')
     if request.method == 'POST':
         form = DietPlanForm(request.POST, request.FILES, instance=plan)
         if form.is_valid():
@@ -145,7 +154,9 @@ def edit_diet_plan(request, pk):
 @custom_permission_required('delete_dietplan')
 def delete_diet_plan(request, pk):
     gym = getattr(request, 'gym', None)
-    plan = get_object_or_404(DietPlan, pk=pk, gym=gym)
+    plan = DietPlan.objects.filter(pk=pk, gym=gym).first()
+    if not plan:
+        return JsonResponse({'status': 'error', 'message': 'Diet plan not found.'}, status=404)
     if request.method == 'POST':
         try:
             plan.delete()
@@ -194,7 +205,9 @@ def workout_plans(request):
 
 @never_cache
 def public_workout_plan(request, pk):
-    plan = get_object_or_404(WorkoutPlan, pk=pk)
+    plan = WorkoutPlan.objects.filter(pk=pk).first()
+    if not plan:
+        return render(request, 'management/WorkoutPlans/public_workout_plan.html', {'plan': None, 'error': 'This workout plan does not exist or has been removed.'})
     # Set request.gym so that the template can use it for branding
     request.gym = plan.gym
     return render(request, 'management/WorkoutPlans/public_workout_plan.html', {'plan': plan})
@@ -204,7 +217,10 @@ def public_workout_plan(request, pk):
 @custom_permission_required('change_workoutplan')
 def edit_workout_plan(request, pk):
     gym = getattr(request, 'gym', None)
-    plan = get_object_or_404(WorkoutPlan, pk=pk, gym=gym)
+    plan = WorkoutPlan.objects.filter(pk=pk, gym=gym).first()
+    if not plan:
+        messages.error(request, 'Workout plan not found.')
+        return redirect('workout_plans')
     if request.method == 'POST':
         form = WorkoutPlanForm(request.POST, request.FILES, instance=plan)
         if form.is_valid():
@@ -220,7 +236,9 @@ def edit_workout_plan(request, pk):
 @custom_permission_required('delete_workoutplan')
 def delete_workout_plan(request, pk):
     gym = getattr(request, 'gym', None)
-    plan = get_object_or_404(WorkoutPlan, pk=pk, gym=gym)
+    plan = WorkoutPlan.objects.filter(pk=pk, gym=gym).first()
+    if not plan:
+        return JsonResponse({'status': 'error', 'message': 'Workout plan not found.'}, status=404)
     if request.method == 'POST':
         try:
             plan.delete()

@@ -20,7 +20,10 @@ logger = logging.getLogger(__name__)
 @custom_permission_required('change_enquiry')
 def update_enquiry_status(request, enquiry_id):
     gym = getattr(request, 'gym', None)
-    enquiry = get_object_or_404(Enquiry, id=enquiry_id, gym=gym)
+    enquiry = Enquiry.objects.filter(id=enquiry_id, gym=gym).first()
+    if not enquiry:
+        messages.error(request, 'Enquiry not found.')
+        return redirect('enquiry_list')
     if request.method == 'POST':
         status = request.POST.get('status')
         if status in [choice[0] for choice in Enquiry.STATUS_CHOICES]:
@@ -167,7 +170,10 @@ def enquiry_list(request):
 @custom_permission_required('change_enquiry')
 def edit_enquiry(request, enquiry_id):
     gym = getattr(request, 'gym', None)
-    enquiry = get_object_or_404(Enquiry, id=enquiry_id, gym=gym)
+    enquiry = Enquiry.objects.filter(id=enquiry_id, gym=gym).first()
+    if not enquiry:
+        messages.error(request, 'Enquiry not found.')
+        return redirect('enquiry_list')
     if request.method == 'POST':
         form = EnquiryForm(request.POST, instance=enquiry)
         if form.is_valid():
@@ -183,7 +189,9 @@ def edit_enquiry(request, enquiry_id):
 @custom_permission_required('delete_enquiry')
 def delete_enquiry(request, enquiry_id):
     gym = getattr(request, 'gym', None)
-    enquiry = get_object_or_404(Enquiry, id=enquiry_id, gym=gym)
+    enquiry = Enquiry.objects.filter(id=enquiry_id, gym=gym).first()
+    if not enquiry:
+        return JsonResponse({'status': 'error', 'message': 'Enquiry not found.'}, status=404)
     try:
         enquiry.delete()
         messages.success(request, 'Enquiry has been deleted successfully.')
