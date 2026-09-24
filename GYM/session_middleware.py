@@ -50,6 +50,7 @@ _PUBLIC_URL_NAMES = frozenset({
     'sitemap',
     'blogs',
     'blog_detail',
+    'gym_software_lucknow',
     'bmi_calculator',
     'about',
     'features',

@@ -11,6 +11,7 @@ urlpatterns = [
     path('blogs/', views.blogs, name='blogs'),
     path('sitemap.xml', views.sitemap, name='sitemap'),
     path('blogs/<int:blog_id>/', views.blog_detail, name='blog_detail'),
+    path('gym-management-software-in-lucknow/', views.gym_software_lucknow, name='gym_software_lucknow'),
     path('bmi-calculator/', views.bmi_calculator, name='bmi_calculator'),
     path('about/', views.about, name='about'),
     path('features/', views.features, name='features'),

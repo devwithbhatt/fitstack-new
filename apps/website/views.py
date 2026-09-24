@@ -65,6 +65,11 @@ def blog_detail(request, blog_id):
 
 
 @require_GET
+def gym_software_lucknow(request):
+    return render_public_page(request, 'website/blogs/blog2.html', {'blog_id': 2})
+
+
+@require_GET
 def bmi_calculator(request):
     return render_public_page(request, 'website/bmi_calculator.html')
 
