@@ -135,12 +135,13 @@
                 <img src="{% static 'images/fitstack.png' %}" alt="FitStack logo">
             </a>
 
-            <nav class="hidden lg:flex items-center gap-8">
+            <nav class="hidden lg:flex items-center gap-7">
                 <a href="{% url 'index' %}" class="nav-link {% if request.resolver_match.url_name == 'index' %}is-active{% endif %}">Home</a>
                 <a href="{% url 'features' %}" class="nav-link {% if request.resolver_match.url_name == 'features' %}is-active{% endif %}">Features</a>
                 <a href="{% url 'pricing' %}" class="nav-link {% if request.resolver_match.url_name == 'pricing' %}is-active{% endif %}">Pricing</a>
+                <a href="{% url 'bmi_calculator' %}" class="nav-link {% if request.resolver_match.url_name == 'bmi_calculator' %}is-active{% endif %}">BMI Calculator</a>
+                <a href="{% url 'blogs' %}" class="nav-link {% if request.resolver_match.url_name == 'blogs' or 'blog' in request.resolver_match.url_name %}is-active{% endif %}">Blog</a>
                 <a href="{% url 'about' %}" class="nav-link {% if request.resolver_match.url_name == 'about' %}is-active{% endif %}">About</a>
-                <a href="{% url 'blogs' %}" class="nav-link {% if request.resolver_match.url_name == 'blogs' %}is-active{% endif %}">Blog</a>
                 <a href="{% url 'contact' %}" class="nav-link {% if request.resolver_match.url_name == 'contact' %}is-active{% endif %}">Contact</a>
             </nav>
 
