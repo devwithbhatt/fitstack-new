@@ -139,17 +139,14 @@
 .kpi-card {
   position: relative;
   border-radius: 14px;
-  padding: 1.15rem 1.1rem;
+  padding: 1.15rem 1.05rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   height: 100%;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
-}
-
-.kpi-card:hover {
-  transform: translateY(-3px);
+  min-width: 0;
 }
 
 /* Theme: Primary (Total Members) */
@@ -242,13 +239,17 @@
 .kpi-icon-warning { color: #d97706; }
 
 .kpi-value {
-  font-size: 2.1rem;
+  font-size: clamp(1.25rem, 1.55vw, 1.7rem);
   font-weight: 800;
   color: #0f172a;
-  letter-spacing: -0.03em;
-  line-height: 1.15;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
   margin-bottom: 0.4rem;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .kpi-meta {
@@ -256,9 +257,9 @@
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  flex-wrap: nowrap;
-  white-space: nowrap;
-  overflow: hidden;
+  flex-wrap: wrap;
+  row-gap: 0.25rem;
+  min-width: 0;
 }
 
 .kpi-meta-badge {
@@ -741,6 +742,27 @@
   }
 }
 
+@media (min-width: 1200px) and (max-width: 1440px) {
+  .kpi-value {
+    font-size: 1.45rem;
+  }
+  .kpi-card {
+    padding: 1rem 0.85rem;
+  }
+  .kpi-label {
+    font-size: 0.72rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .kpi-value {
+    font-size: 1.4rem;
+  }
+  .kpi-card {
+    padding: 1rem 0.85rem;
+  }
+}
+
 @media (max-width: 576px) {
   .dashboard-hero-header {
     flex-direction: column;
@@ -750,7 +772,10 @@
     grid-template-columns: repeat(2, 1fr);
   }
   .kpi-value {
-    font-size: 1.6rem;
+    font-size: 1.35rem;
+  }
+  .kpi-card {
+    padding: 0.95rem 0.8rem;
   }
 }
 

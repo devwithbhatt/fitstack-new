@@ -3,6 +3,32 @@
 
 {% block content %}
 
+<style>
+.kpi-value {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    font-size: 1.45rem !important;
+    letter-spacing: -0.02em !important;
+    line-height: 1.25 !important;
+}
+@media (min-width: 1440px) {
+    .kpi-value {
+        font-size: 1.6rem !important;
+    }
+}
+@media (max-width: 1200px) {
+    .kpi-value {
+        font-size: 1.35rem !important;
+    }
+}
+.kpi-meta {
+    flex-wrap: wrap !important;
+    row-gap: 0.25rem !important;
+}
+</style>
+
+
 <!-- Compact Breadcrumb Navigation -->
 <nav aria-label="breadcrumb" class="custom-breadcrumb mb-3">
     <ol class="breadcrumb">
@@ -117,7 +143,7 @@
                 <!-- KPI Metric Cards -->
                 <div class="row mb-4">
                 <!-- Total Income -->
-                <div class="col-xl-3 col-md-6 mb-3 mb-xl-0">
+                <div class="col-xl-3 col-sm-6 mb-3 mb-xl-0">
                     <div class="kpi-card kpi-primary">
                         <div>
                             <div class="kpi-header">
@@ -126,7 +152,7 @@
                                     <i class="mdi mdi-cash-multiple"></i>
                                 </div>
                             </div>
-                            <div class="kpi-value">₹{{ total_income|floatformat:2 }}</div>
+                            <div class="kpi-value" style="white-space: nowrap !important;" title="₹{{ total_income|floatformat:2 }}">₹{{ total_income|floatformat:2 }}</div>
                         </div>
                         <div class="kpi-meta">
                             <span class="kpi-meta-badge kpi-badge-primary">
@@ -138,7 +164,7 @@
                 </div>
 
                 <!-- Total Expense -->
-                <div class="col-xl-3 col-md-6 mb-3 mb-xl-0">
+                <div class="col-xl-3 col-sm-6 mb-3 mb-xl-0">
                     <div class="kpi-card kpi-danger">
                         <div>
                             <div class="kpi-header">
@@ -147,7 +173,7 @@
                                     <i class="mdi mdi-credit-card-outline"></i>
                                 </div>
                             </div>
-                            <div class="kpi-value">₹{{ total_expense|floatformat:2 }}</div>
+                            <div class="kpi-value" style="white-space: nowrap !important;" title="₹{{ total_expense|floatformat:2 }}">₹{{ total_expense|floatformat:2 }}</div>
                         </div>
                         <div class="kpi-meta">
                             <span class="kpi-meta-badge kpi-badge-danger">
@@ -159,7 +185,7 @@
                 </div>
 
                 <!-- Net Profit -->
-                <div class="col-xl-3 col-md-6 mb-3 mb-xl-0">
+                <div class="col-xl-3 col-sm-6 mb-3 mb-xl-0">
                     <div class="kpi-card kpi-success">
                         <div>
                             <div class="kpi-header">
@@ -168,7 +194,7 @@
                                     <i class="mdi mdi-chart-line"></i>
                                 </div>
                             </div>
-                            <div class="kpi-value">₹{{ gross_income|floatformat:2 }}</div>
+                            <div class="kpi-value" style="white-space: nowrap !important;" title="₹{{ gross_income|floatformat:2 }}">₹{{ gross_income|floatformat:2 }}</div>
                         </div>
                         <div class="kpi-meta">
                             <span class="kpi-meta-badge kpi-badge-success">
@@ -180,7 +206,7 @@
                 </div>
 
                 <!-- Total Due -->
-                <div class="col-xl-3 col-md-6 mb-3 mb-xl-0">
+                <div class="col-xl-3 col-sm-6 mb-3 mb-xl-0">
                     <div class="kpi-card kpi-warning">
                         <div>
                             <div class="kpi-header">
@@ -189,7 +215,7 @@
                                     <i class="mdi mdi-alert-circle-outline"></i>
                                 </div>
                             </div>
-                            <div class="kpi-value">₹{{ total_due|floatformat:2 }}</div>
+                            <div class="kpi-value" style="white-space: nowrap !important;" title="₹{{ total_due|floatformat:2 }}">₹{{ total_due|floatformat:2 }}</div>
                         </div>
                         <div class="kpi-meta">
                             <span class="kpi-meta-badge kpi-badge-warning">
