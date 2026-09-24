@@ -12,6 +12,7 @@ urlpatterns = [
     path('sitemap.xml', views.sitemap, name='sitemap'),
     path('blogs/<int:blog_id>/', views.blog_detail, name='blog_detail'),
     path('gym-management-software-in-lucknow/', views.gym_software_lucknow, name='gym_software_lucknow'),
+    path('how-to-start-a-gym-in-india/', views.how_to_start_gym, name='how_to_start_gym'),
     path('bmi-calculator/', views.bmi_calculator, name='bmi_calculator'),
     path('about/', views.about, name='about'),
     path('features/', views.features, name='features'),

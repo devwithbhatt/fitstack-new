@@ -22,6 +22,7 @@ PUBLIC_URL_NAMES = frozenset(
         'blogs',
         'blog_detail',
         'gym_software_lucknow',
+        'how_to_start_gym',
         'bmi_calculator',
         'about',
         'who_we_are',

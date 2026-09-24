@@ -14,6 +14,10 @@
     --radius-xl: 28px;
     --radius-lg: 20px;
     --radius-md: 14px;
+    --font-heading: "Playfair Display", Georgia, "Times New Roman", serif;
+    --font-serif: "Playfair Display", Georgia, "Times New Roman", serif;
+    --font-body: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-mono: "Space Mono", monospace;
 }
 
 html {
@@ -104,11 +108,27 @@ img {
     border-color: rgba(255, 255, 255, 0.12);
 }
 
+/* Typography: Playfair Display for editorial elegance & high-profile presence */
+h1, h2,
+.brand-heading,
+.brand-section-title,
+.brand-display,
+.font-serif,
+.brand-serif,
+.page-hero h1,
+.article-card h2,
+.docs-card h2 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.015em;
+    font-feature-settings: "kern" 1, "liga" 1;
+}
+
 .brand-heading {
-    font-size: clamp(2.6rem, 5vw, 4.8rem);
-    line-height: 1.02;
-    font-weight: 900;
-    letter-spacing: 0;
+    font-family: var(--font-heading);
+    font-size: clamp(2.5rem, 4.8vw, 4.4rem);
+    line-height: 1.1;
+    font-weight: 700;
+    letter-spacing: -0.02em;
 }
 
 .hero-full-screen {
@@ -117,7 +137,6 @@ img {
     align-items: center;
 }
 
-
 .brand-subheading {
     font-size: clamp(1rem, 1.4vw, 1.15rem);
     line-height: 1.8;
@@ -125,10 +144,30 @@ img {
 }
 
 .brand-section-title {
-    font-size: clamp(2rem, 3vw, 3rem);
-    line-height: 1.08;
-    font-weight: 800;
+    font-family: var(--font-heading);
+    font-size: clamp(2rem, 3.2vw, 3.1rem);
+    line-height: 1.15;
+    font-weight: 700;
     margin: 0 0 1rem;
+    letter-spacing: -0.015em;
+}
+
+/* Luxury accent styling for italicized words in headings */
+.brand-heading em,
+.brand-heading .italic,
+.brand-section-title em,
+.brand-section-title .italic,
+.font-serif em,
+.font-serif .italic {
+    font-family: var(--font-heading);
+    font-style: italic;
+    font-weight: 400;
+}
+
+/* Serif utility class */
+.font-serif,
+.brand-serif {
+    font-family: var(--font-heading) !important;
 }
 
 .brand-section-copy {
@@ -547,7 +586,23 @@ img {
 }
 
 .article-grid {
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 2rem;
+}
+
+@media (max-width: 1024px) {
+    .article-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1.5rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .article-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
 }
 
 .price-grid {

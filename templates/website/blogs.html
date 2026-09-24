@@ -4,7 +4,7 @@
 {% block title %}FitStack Insights | Gym Management Blog — Tips for Gym Owners & Fitness Studios{% endblock %}
 
 {% block seo %}
-<meta name="description" content="FitStack gym management blog — expert guides on gym management software in Lucknow & India, member retention, automated WhatsApp billing, biometric attendance, and fitness business growth.">
+<meta name="description" content="FitStack gym management blog — expert guides on gym management software in Lucknow & India, member retention, automated WhatsApp billing, attendance, and fitness business growth.">
 <meta name="keywords" content="gym management software in lucknow, best gym software lucknow, gym billing software lucknow, gym attendance software lucknow, gym management blog, gym owner tips India, member retention strategies, gym billing tips, gym attendance automation, fitness studio operations, gym CRM tips, personal trainer management tips, growing a gym India, fitness business growth, gym software insights">
 <meta name="author" content="FitStack by BhattSquare">
 <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
@@ -49,10 +49,17 @@
   "blogPost": [
     {
       "@type": "BlogPosting",
+      "headline": "How to Start a Gym in India (2026): Step-by-Step Business Plan, Costs & Licenses",
+      "url": "https://fitstack.nextgenapplication.com/how-to-start-a-gym-in-india/",
+      "datePublished": "2026-09-24",
+      "description": "Comprehensive step-by-step roadmap for starting a gym in India covering real budget breakdowns, equipment costs, GST licenses, and FitStack software automation."
+    },
+    {
+      "@type": "BlogPosting",
       "headline": "Best Gym Management Software in Lucknow (2026): The Ultimate Buyer's Guide",
       "url": "https://fitstack.nextgenapplication.com/gym-management-software-in-lucknow/",
       "datePublished": "2026-09-24",
-      "description": "Complete guide for gym and fitness studio owners in Lucknow looking for the best gym management software with WhatsApp reminders and biometric attendance."
+      "description": "Complete guide for gym and fitness studio owners in Lucknow looking for the best gym management software with WhatsApp reminders and attendance."
     },
     {
       "@type": "BlogPosting",
@@ -85,45 +92,84 @@
 
 <section class="brand-section">
     <div class="brand-container">
-        <div class="article-grid">
-            <article class="brand-card article-card site-reveal">
-                <div class="article-media">
-                    <img src="{% static 'images/fitstack-about.png' %}" alt="Gym management software in Lucknow" class="w-full h-full object-cover object-top">
+                <div class="article-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Blog 1: How to Start a Gym in India -->
+            <article class="brand-card article-card site-reveal flex flex-col h-full">
+                <div class="article-media h-[220px] overflow-hidden shrink-0">
+                    <img src="{% static 'images/hero_image_gym.png' %}" alt="How to start a gym in India" class="w-full h-full object-cover object-top transition-transform duration-500 hover:scale-105">
                 </div>
-                <div class="p-8">
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                <div class="article-body p-8 flex flex-col flex-1">
+                    <div class="article-tag-wrap flex items-center gap-2 mb-3 min-h-[28px]">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <i class="fa-solid fa-fire text-[10px]"></i> Startup Guide
+                        </span>
+                        <p class="brand-mono text-xs uppercase tracking-[0.18em] text-slate-500">Business</p>
+                    </div>
+                    <h2 class="article-title text-xl font-bold font-serif text-slate-900 mt-1 mb-3 min-h-[4.2rem] leading-snug">How to Start a Gym in India: Low-Budget Setup Guide (2026)</h2>
+                    <p class="article-excerpt text-slate-700 text-sm leading-relaxed mb-6 ">Practical ground-level guide: ₹6L–₹15L budget options, Meerut &amp; Jalandhar machinery sourcing, simple licenses, and fees automation with FitStack.</p>
+                    <div class="article-footer mt-auto pt-4 w-full">
+                        <a href="{% url 'how_to_start_gym' %}" class="btn btn-primary w-full text-center flex items-center justify-center font-semibold">Read full guide</a>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Blog 2: Best Gym Management Software in Lucknow -->
+            <article class="brand-card article-card site-reveal flex flex-col h-full">
+                <div class="article-media h-[220px] overflow-hidden shrink-0">
+                    <img src="{% static 'images/fitstack-about.png' %}" alt="Gym management software in Lucknow" class="w-full h-full object-cover object-top transition-transform duration-500 hover:scale-105">
+                </div>
+                <div class="article-body p-8 flex flex-col flex-1">
+                    <div class="article-tag-wrap flex items-center gap-2 mb-3 min-h-[28px]">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
                             <i class="fa-solid fa-map-pin text-[10px]"></i> Lucknow &amp; UP
                         </span>
                         <p class="brand-mono text-xs uppercase tracking-[0.18em] text-slate-500">Local Guide</p>
                     </div>
-                    <h2 class="text-2xl font-bold mt-2 mb-3">Best Gym Management Software in Lucknow (2026)</h2>
-                    <p class="text-slate-800 leading-8">Everything gym owners in Gomti Nagar, Hazratganj, Aliganj, and Indira Nagar need to know about automated fees, biometric syncing, and member retention.</p>
-                    <a href="{% url 'gym_software_lucknow' %}" class="btn btn-primary mt-6">Read full guide</a>
+                    <h2 class="article-title text-xl font-bold font-serif text-slate-900 mt-1 mb-3 min-h-[4.2rem] leading-snug">Best Gym Management Software in Lucknow (2026)</h2>
+                    <p class="article-excerpt text-slate-700 text-sm leading-relaxed mb-6 ">Everything gym owners in Gomti Nagar, Hazratganj, Aliganj, and Indira Nagar need to know about automated fees, syncing, and member retention.</p>
+                    <div class="article-footer mt-auto pt-4 w-full">
+                        <a href="{% url 'gym_software_lucknow' %}" class="btn btn-primary w-full text-center flex items-center justify-center font-semibold">Read full guide</a>
+                    </div>
                 </div>
             </article>
 
-            <article class="brand-card article-card site-reveal">
-                <div class="article-media">
-                    <img src="{% static 'images/gymaboutimage.png' %}" alt="Member retention article">
+            <!-- Blog 3: Membership Retention Systems -->
+            <article class="brand-card article-card site-reveal flex flex-col h-full">
+                <div class="article-media h-[220px] overflow-hidden shrink-0">
+                    <img src="{% static 'images/home_hero_image_gym.png' %}" alt="Membership retention systems" class="w-full h-full object-cover object-center transition-transform duration-500 hover:scale-105">
                 </div>
-                <div class="p-8">
-                    <p class="brand-mono text-xs uppercase tracking-[0.2em] text-slate-500">Retention</p>
-                    <h2 class="text-2xl font-bold mt-3 mb-3">Membership retention systems that actually hold up in daily use</h2>
-                    <p class="text-slate-800 leading-8">Use automation, follow-up discipline, and clearer member signals to improve consistency without making the experience feel robotic.</p>
-                    <a href="{% url 'blog_detail' 1 %}" class="btn btn-outline mt-6">Open article</a>
+                <div class="article-body p-8 flex flex-col flex-1">
+                    <div class="article-tag-wrap flex items-center gap-2 mb-3 min-h-[28px]">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">
+                            <i class="fa-solid fa-chart-line text-[10px]"></i> Retention Guide
+                        </span>
+                        <p class="brand-mono text-xs uppercase tracking-[0.18em] text-slate-500">Member Growth</p>
+                    </div>
+                    <h2 class="article-title text-xl font-bold font-serif text-slate-900 mt-1 mb-3 min-h-[4.2rem] leading-snug">Membership retention systems that actually hold up in daily use</h2>
+                    <p class="article-excerpt text-slate-700 text-sm leading-relaxed mb-6 ">Use automation, follow-up discipline, and clearer member signals to improve consistency without making the experience feel robotic.</p>
+                    <div class="article-footer mt-auto pt-4 w-full">
+                        <a href="{% url 'blog_detail' 1 %}" class="btn btn-primary w-full text-center flex items-center justify-center font-semibold">Read full guide</a>
+                    </div>
                 </div>
             </article>
 
-            <article class="brand-card article-card site-reveal">
-                <div class="article-media">
-                    <img src="{% static 'images/hero_img.jpg' %}" alt="Billing operations article">
+            <!-- Blog 4: Billing Discipline & Operations -->
+            <article class="brand-card article-card site-reveal flex flex-col h-full">
+                <div class="article-media h-[220px] overflow-hidden shrink-0">
+                    <img src="{% static 'images/hero_img.jpg' %}" alt="Billing operations article" class="w-full h-full object-cover object-center transition-transform duration-500 hover:scale-105">
                 </div>
-                <div class="p-8">
-                    <p class="brand-mono text-xs uppercase tracking-[0.2em] text-slate-500">Billing</p>
-                    <h2 class="text-2xl font-bold mt-3 mb-3">Why billing discipline shapes the whole member experience</h2>
-                    <p class="text-slate-800 leading-8">Good billing systems reduce stress for teams, improve visibility for owners, and remove awkward fee collection conversations.</p>
-                    <span class="comparison-pill secondary mt-6">More insights coming</span>
+                <div class="article-body p-8 flex flex-col flex-1">
+                    <div class="article-tag-wrap flex items-center gap-2 mb-3 min-h-[28px]">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                            <i class="fa-solid fa-receipt text-[10px]"></i> Smart Billing
+                        </span>
+                        <p class="brand-mono text-xs uppercase tracking-[0.18em] text-slate-500">Operations</p>
+                    </div>
+                    <h2 class="article-title text-xl font-bold font-serif text-slate-900 mt-1 mb-3 min-h-[4.2rem] leading-snug">Why billing discipline shapes the whole member experience</h2>
+                    <p class="article-excerpt text-slate-700 text-sm leading-relaxed mb-6 ">Good billing systems reduce stress for teams, improve visibility for owners, and remove awkward fee collection conversations.</p>
+                    <div class="article-footer mt-auto pt-4 w-full">
+                        <span class="comparison-pill secondary w-full text-center block py-2.5">More insights coming</span>
+                    </div>
                 </div>
             </article>
         </div>

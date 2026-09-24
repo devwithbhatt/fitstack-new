@@ -249,7 +249,7 @@ MODULE_DEFINITIONS = [
         'title': 'Members Management',
         'icon': 'mdi-account-group-outline',
         'badge_class': 'badge-soft-info',
-        'desc': 'Member profiles, registrations, biometric KYC, and membership freeze',
+        'desc': 'Member profiles, registrations, KYC, and membership freeze',
     },
     {
         'app': 'trainers',
@@ -263,7 +263,7 @@ MODULE_DEFINITIONS = [
         'title': 'Attendance & Check-Ins',
         'icon': 'mdi-calendar-check-outline',
         'badge_class': 'badge-soft-warning',
-        'desc': 'Daily check-in logs, biometric QR scanner records, and staff leaves',
+        'desc': 'Daily check-in logs, QR scanner records, and staff leaves',
     },
     {
         'app': 'billing',
