@@ -192,10 +192,17 @@ def scan_attendance(request, gym_id):
 
 def handle_member_attendance(request, member, gym):
     today = timezone.now().date()
-    existing_attendance = MemberAttendance.objects.filter(member=member, check_in_time__date=today, check_out_time__isnull=True).first()
+    existing_attendance = MemberAttendance.objects.filter(member=member, check_in_time__date=today, check_out_time__isnull=True, gym=gym).first()
 
     if existing_attendance:
-        messages.warning(request, f'{member.name} is already checked in.')
+        fifteen_minutes_ago = timezone.now() - timedelta(minutes=15)
+        if existing_attendance.check_in_time > fifteen_minutes_ago:
+            messages.warning(request, f'{member.name} is already checked in.')
+        else:
+            existing_attendance.check_out_time = timezone.now()
+            existing_attendance.status = 'outside'
+            existing_attendance.save()
+            messages.success(request, f'Goodbye, {member.name}! You have been checked out successfully.')
     else:
         MemberAttendance.objects.create(member=member, check_in_time=timezone.now(), gym=gym)
         messages.success(request, f'Welcome, {member.name}! You have been successfully checked in.')

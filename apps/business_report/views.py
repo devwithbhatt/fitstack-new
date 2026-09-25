@@ -9,6 +9,8 @@ from apps.members.models import MembershipHistory, PersonalTrainer
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from django.contrib.auth.decorators import login_required
+from apps.login.decorators import custom_permission_required
+from django.views.decorators.cache import never_cache
 from apps.superadmin.models import GymAdmin
 from django.core.paginator import Paginator
 import openpyxl
@@ -16,7 +18,9 @@ from openpyxl.styles import Font, Alignment
 from django.http import HttpResponse
 
 
+@never_cache
 @login_required
+@custom_permission_required('view_payment')
 def business_report(request):
     gym = getattr(request, 'gym', None)
     if not gym:

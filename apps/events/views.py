@@ -158,7 +158,8 @@ def create_event(request):
 @login_required
 @custom_permission_required('change_event')
 def edit_event(request, event_id):
-    event = Event.objects.filter(id=event_id).first()
+    gym = get_user_gym(request)
+    event = Event.objects.filter(id=event_id, gym=gym).first()
     if not event:
         messages.error(request, 'Event not found.')
         return redirect('events:event_list')
@@ -198,7 +199,8 @@ def edit_event(request, event_id):
 @login_required
 @custom_permission_required('delete_event')
 def cancel_event(request, event_id):
-    event = Event.objects.filter(id=event_id).first()
+    gym = get_user_gym(request)
+    event = Event.objects.filter(id=event_id, gym=gym).first()
     if not event:
         messages.error(request, 'Event not found.')
         return redirect('events:event_list')
@@ -209,7 +211,8 @@ def cancel_event(request, event_id):
 @login_required
 @custom_permission_required('change_event')
 def notify_members(request, event_id):
-    event = Event.objects.filter(id=event_id).first()
+    gym = get_user_gym(request)
+    event = Event.objects.filter(id=event_id, gym=gym).first()
     if not event:
         messages.error(request, 'Event not found.')
         return redirect('events:event_list')
@@ -220,7 +223,8 @@ def notify_members(request, event_id):
 @login_required
 @custom_permission_required('change_event')
 def update_payment_status(request, registration_id):
-    registration = EventParticipant.objects.filter(id=registration_id).first()
+    gym = get_user_gym(request)
+    registration = EventParticipant.objects.filter(id=registration_id, event__gym=gym).first()
     if not registration:
         messages.error(request, 'Registration record not found.')
         return redirect('events:all_event_registrations')

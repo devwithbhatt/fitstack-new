@@ -10,9 +10,4 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='payment',
-            name='payment_mode',
-            field=models.CharField(choices=[('cash', 'Cash'), ('upi', 'UPI'), ('credit_card', 'Credit Card'), ('debit_card', 'Debit Card'), ('net_banking', 'Net Banking'), ('other', 'Other')], default='cash', max_length=50),
-        ),
     ]

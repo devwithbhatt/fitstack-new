@@ -12,24 +12,4 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='payment',
-            name='membership_history',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='payments', to='members.membershiphistory'),
-        ),
-        migrations.AddField(
-            model_name='payment',
-            name='personal_trainer',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='payments', to='members.personaltrainer'),
-        ),
-        migrations.AddField(
-            model_name='payment',
-            name='comment',
-            field=models.TextField(blank=True, null=True),
-        ),
-        migrations.AddField(
-            model_name='payment',
-            name='follow_up_date',
-            field=models.DateField(blank=True, null=True),
-        ),
     ]

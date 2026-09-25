@@ -96,6 +96,7 @@ def submit_due(request):
     if follow_up_date_filter:
         members_with_due = members_with_due.filter(latest_follow_up_date=follow_up_date_filter)
 
+    members_with_due = members_with_due.order_by('-id')
     paginator = Paginator(members_with_due, 10)  # Show 10 members per page
     page_number = request.GET.get('page')
     members_page = paginator.get_page(page_number)
@@ -142,11 +143,12 @@ def pay_due_payment(request, member_id):
                 payment_date_str = request.POST.get('payment_date')
                 if payment_date_str:
                     try:
-                        payment.payment_date = datetime.strptime(payment_date_str, '%Y-%m-%d').date()
+                        p_date = datetime.strptime(payment_date_str, '%Y-%m-%d').date()
+                        payment.payment_date = timezone.make_aware(datetime.combine(p_date, timezone.localtime().time()))
                     except (ValueError, TypeError):
-                        payment.payment_date = timezone.localdate()
+                        payment.payment_date = timezone.now()
                 else:
-                    payment.payment_date = timezone.localdate()
+                    payment.payment_date = timezone.now()
                 
                 if invoice_type == 'membership':
                     payment.membership_history = invoice

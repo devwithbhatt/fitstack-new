@@ -500,8 +500,15 @@ def view_subadmins(request):
 @login_required(login_url='login')
 @gym_admin_required
 def delete_subadmin(request, sub_admin_id):
+    gym = getattr(request, 'gym', None)
+    if not gym and hasattr(request.user, 'gymadmin'):
+        gym = request.user.gymadmin.gym
+    if not gym:
+        messages.error(request, 'Gym not found.')
+        return redirect('view_subadmins')
+
     try:
-        sub_admin = SubAdmin.objects.get(id=sub_admin_id)
+        sub_admin = SubAdmin.objects.get(id=sub_admin_id, gym=gym)
         user = sub_admin.user
         sub_admin.delete()
         user.delete()
@@ -516,8 +523,15 @@ def delete_subadmin(request, sub_admin_id):
 @login_required(login_url='login')
 @gym_admin_required
 def edit_subadmin(request, sub_admin_id):
+    gym = getattr(request, 'gym', None)
+    if not gym and hasattr(request.user, 'gymadmin'):
+        gym = request.user.gymadmin.gym
+    if not gym:
+        messages.error(request, 'Gym not found.')
+        return redirect('view_subadmins')
+
     try:
-        sub_admin = SubAdmin.objects.get(id=sub_admin_id)
+        sub_admin = SubAdmin.objects.get(id=sub_admin_id, gym=gym)
         user = sub_admin.user
     except SubAdmin.DoesNotExist:
         messages.error(request, 'Sub-admin not found.')

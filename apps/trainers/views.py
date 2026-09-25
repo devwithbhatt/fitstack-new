@@ -119,6 +119,7 @@ def delete_trainer(request, trainer_id):
 
 @never_cache
 @login_required(login_url='login')
+@custom_permission_required('change_trainer')
 def toggle_trainer_status(request, trainer_id):
     gym = getattr(request, 'gym', None)
     trainer = Trainer.objects.filter(id=trainer_id, gym=gym).first()
@@ -161,4 +162,4 @@ def reset_trainer_password(request, trainer_id):
         'mobile': trainer.phone,
         'new_password': raw_pwd,
         'share_text': share_text,
-    })
+    })

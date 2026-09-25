@@ -26,6 +26,8 @@ from datetime import date, datetime, timedelta
 from django.contrib import messages
 from apps.website.models import WebsiteContactSubmission
 
+@login_required
+@superadmin_required
 def invoice_view(request, subscription_id):
     subscription = get_object_or_404(
         GymSubscription.objects.select_related('gym', 'subscription'),

@@ -9,6 +9,7 @@ from apps.login.decorators import custom_permission_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django.views.decorators.cache import never_cache
 
 # LIST EXPENSES (not deleted)
 @login_required
@@ -115,7 +116,9 @@ def expense_delete(request, pk):
 
 
 # TRASH PAGE
+@never_cache
 @login_required
+@custom_permission_required('view_expense')
 def expense_trash(request):
     gym = getattr(request, 'gym', None)
     trash_list = Expense.objects.filter(is_deleted=True, gym=gym).order_by('-date')

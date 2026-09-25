@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
 from apps.login.decorators import custom_permission_required
+from django.views.decorators.cache import never_cache
 from django.db.models import Q, F, Case, When, Value, IntegerField
 from django.utils import timezone
 from apps.whatsapp.services import WhatsAppService
@@ -16,6 +17,7 @@ from apps.whatsapp.services import WhatsAppService
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
 
+@never_cache
 @login_required
 @custom_permission_required('change_enquiry')
 def update_enquiry_status(request, enquiry_id):
@@ -32,6 +34,7 @@ def update_enquiry_status(request, enquiry_id):
             messages.success(request, f"Status for {enquiry.name} updated successfully.")
     return redirect('enquiry_list')
 
+@never_cache
 @login_required
 @custom_permission_required('add_enquiry')
 def add_new_enquiry(request):
@@ -74,6 +77,8 @@ def add_new_enquiry(request):
     else:
         form = EnquiryForm()
     return render(request, 'enquiry/add_new_enquiry.html', {'form': form})
+
+@never_cache
 @login_required
 @custom_permission_required('view_enquiry')
 def enquiry_list(request):
@@ -166,6 +171,8 @@ def enquiry_list(request):
         'enquiries': enquiries,
         'status_choices': Enquiry.STATUS_CHOICES,
     })
+
+@never_cache
 @login_required
 @custom_permission_required('change_enquiry')
 def edit_enquiry(request, enquiry_id):
@@ -184,6 +191,7 @@ def edit_enquiry(request, enquiry_id):
         form = EnquiryForm(instance=enquiry)
     return render(request, 'enquiry/edit_enquiry.html', {'form': form})
 
+@never_cache
 @login_required
 @require_POST
 @custom_permission_required('delete_enquiry')

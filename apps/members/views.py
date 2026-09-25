@@ -156,8 +156,8 @@ def member_profile(request, member_id):
 
     total_due_amount = membership_due_amount + pt_due_amount
 
-    assigned_diet_plans = AssignDietPlan.objects.filter(member=member).order_by('-assigned_at')
-    assigned_workout_plans = AssignWorkoutPlan.objects.filter(member=member).order_by('-assigned_at')
+    assigned_diet_plans = AssignDietPlan.objects.filter(member=member, gym=gym).order_by('-assigned_at')
+    assigned_workout_plans = AssignWorkoutPlan.objects.filter(member=member, gym=gym).order_by('-assigned_at')
 
     return render(request, 'members/member_profile.html', {
         'member': member, 
@@ -495,7 +495,7 @@ def delete_member(request, member_id):
         member.is_deleted = True
         member.save()
         messages.success(request, 'Member has been marked as deleted due to existing dependencies.')
-        # return JsonResponse({'status': 'success', 'message': 'Member marked as deleted.'})
+        return JsonResponse({'status': 'success', 'message': 'Member has been marked as deleted due to existing dependencies.'})
     except Exception as e:
         messages.error(request, f'An error occurred: {e}')
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
@@ -690,8 +690,10 @@ def assign_pt_trainer(request, member_id):
 
 
 @login_required(login_url='login')
+@custom_permission_required('change_member')
 def unfreeze_membership(request, membership_id):
-    membership = MembershipHistory.objects.filter(id=membership_id).first()
+    gym = getattr(request, 'gym', None)
+    membership = MembershipHistory.objects.filter(id=membership_id, gym=gym).first()
     if not membership:
         messages.error(request, 'Membership record not found.')
         return redirect('member_list')
@@ -715,8 +717,10 @@ def unfreeze_membership(request, membership_id):
 
 
 @login_required(login_url='login')
+@custom_permission_required('change_member')
 def freeze_membership(request, membership_id):
-    membership = MembershipHistory.objects.filter(id=membership_id).first()
+    gym = getattr(request, 'gym', None)
+    membership = MembershipHistory.objects.filter(id=membership_id, gym=gym).first()
     if not membership:
         messages.error(request, 'Membership record not found.')
         return redirect('member_list')
@@ -831,10 +835,13 @@ def assign_workout_plan(request, member_id):
     
     return render(request, 'members/assign_workout_plan.html', {'member': member, 'form': form})
 
-@login_required
+@never_cache
+@login_required(login_url='login')
+@custom_permission_required('change_member')
 @require_POST
 def delete_assigned_diet_plan(request, assigned_plan_id):
-    assigned_plan = AssignDietPlan.objects.filter(id=assigned_plan_id).first()
+    gym = getattr(request, 'gym', None)
+    assigned_plan = AssignDietPlan.objects.filter(id=assigned_plan_id, gym=gym).first()
     if not assigned_plan:
         return JsonResponse({'status': 'error', 'message': 'Diet plan assignment not found.'}, status=404)
     try:
@@ -843,10 +850,13 @@ def delete_assigned_diet_plan(request, assigned_plan_id):
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
-@login_required
+@never_cache
+@login_required(login_url='login')
+@custom_permission_required('change_member')
 @require_POST
 def delete_assigned_workout_plan(request, assigned_plan_id):
-    assigned_plan = AssignWorkoutPlan.objects.filter(id=assigned_plan_id).first()
+    gym = getattr(request, 'gym', None)
+    assigned_plan = AssignWorkoutPlan.objects.filter(id=assigned_plan_id, gym=gym).first()
     if not assigned_plan:
         return JsonResponse({'status': 'error', 'message': 'Workout plan assignment not found.'}, status=404)
     try:
@@ -886,4 +896,4 @@ def reset_member_password(request, member_id):
         'mobile': member.mobile_number,
         'new_password': raw_pwd,
         'share_text': share_text,
-    })
+    })
