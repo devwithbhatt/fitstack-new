@@ -40,7 +40,7 @@ def inventory_dashboard(request):
     monthly_stock_usage = StockLog.objects.filter(
         gym=gym,
         transaction_type='stock_out',
-        date__range=[start_date, end_date]
+        date__date__range=[start_date, end_date]
     ).values('item__name').annotate(total_quantity=Sum('quantity')).order_by('-total_quantity')[:10]
 
     equipment_status = Equipment.objects.filter(gym=gym, is_deleted=False).values('status').annotate(count=Count('id'))

@@ -633,7 +633,7 @@ def submit_due(request):
                     Payment.objects.create(
                         gym=gym,
                         amount=amount_to_pay_decimal,
-                        payment_date=date.today(),
+                        payment_date=timezone.now(),
                         payment_mode=payment_method,
                         comment=notes
                     )

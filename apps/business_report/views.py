@@ -258,7 +258,7 @@ def business_report(request):
 
         labels.append(month.strftime("%b %Y"))
 
-        monthly_income = Payment.objects.filter(member__gym=gym, payment_date__range=[month_start, month_end]).aggregate(Sum('amount'))['amount__sum'] or 0
+        monthly_income = Payment.objects.filter(member__gym=gym, payment_date__date__range=[month_start, month_end]).aggregate(Sum('amount'))['amount__sum'] or 0
         income_data.append(float(monthly_income))
 
         monthly_expense = Expense.objects.filter(gym=gym, date__range=[month_start, month_end]).aggregate(Sum('amount'))['amount__sum'] or 0

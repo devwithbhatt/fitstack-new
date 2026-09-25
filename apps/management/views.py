@@ -25,7 +25,7 @@ def membership_plans(request):
     else:
         form = MembershipPlanForm()
     
-    plans = MembershipPlan.objects.filter(gym=gym)
+    plans = MembershipPlan.objects.filter(gym=gym).order_by('-id')
     
     # Search functionality
     query = request.GET.get('q')

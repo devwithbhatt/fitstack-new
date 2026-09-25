@@ -20,7 +20,7 @@ from django.db import IntegrityError
 @custom_permission_required('view_trainer')
 def trainer_list(request):
     gym = getattr(request, 'gym', None)
-    trainers_list = Trainer.objects.filter(gym=gym)
+    trainers_list = Trainer.objects.filter(gym=gym).order_by('-id')
 
     query = request.GET.get('q')
     if query:
