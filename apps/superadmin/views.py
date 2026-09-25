@@ -13,7 +13,7 @@ from .notifications import (
 )
 from apps.members.models import Member, MembershipHistory
 from apps.billing.models import Payment
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q, Sum, F, Count, Value
 from django.db.models.functions import Concat
 from django.contrib.auth.models import User
@@ -610,33 +610,39 @@ def submit_due(request):
                 messages.error(request, 'Amount to pay cannot be greater than the total due amount.')
             else:
                 # Apply payment to subscriptions, oldest first
-                subscriptions = GymSubscription.objects.filter(gym=gym, is_deleted=False).annotate(
-                    due=F('total_amount') - F('paid_amount')
-                ).filter(due__gt=0).order_by('start_date')
-                
-                payment_to_apply = amount_to_pay_decimal
-                for sub in subscriptions:
-                    if payment_to_apply <= 0:
-                        break
+                with transaction.atomic():
+                    subscriptions = list(GymSubscription.objects.filter(gym=gym, is_deleted=False).annotate(
+                        due=F('total_amount') - F('paid_amount')
+                    ).filter(due__gt=0).order_by('start_date'))
                     
-                    current_due = sub.total_amount - sub.paid_amount
-                    payable = min(payment_to_apply, current_due)
-                    sub.paid_amount += payable
-                    sub.save()
-                    payment_to_apply -= payable
+                    payment_to_apply = amount_to_pay_decimal
+                    last_updated_sub = None
+                    for sub in subscriptions:
+                        if payment_to_apply <= 0:
+                            break
+                        
+                        current_due = sub.total_amount - sub.paid_amount
+                        payable = min(payment_to_apply, current_due)
+                        sub.paid_amount += payable
+                        sub.save()
+                        payment_to_apply -= payable
+                        last_updated_sub = sub
 
-                Payment.objects.create(
-                    gym=gym,
-                    amount=amount_to_pay_decimal,
-                    payment_date=date.today(),
-                    payment_mode=payment_method,
-                    comment=notes
-                )
+                    Payment.objects.create(
+                        gym=gym,
+                        amount=amount_to_pay_decimal,
+                        payment_date=date.today(),
+                        payment_mode=payment_method,
+                        comment=notes
+                    )
+
                 messages.success(request, 'Due amount submitted successfully.')
-                # Open invoice in new tab via session
-                if subscriptions:
-                    last_sub = subscriptions.last()
-                    request.session['open_invoice_id'] = last_sub.id
+                # Open invoice in new tab via session safely
+                target_sub = last_updated_sub or (subscriptions[-1] if subscriptions else None)
+                if not target_sub:
+                    target_sub = GymSubscription.objects.filter(gym=gym, is_deleted=False).order_by('-start_date').first()
+                if target_sub:
+                    request.session['open_invoice_id'] = target_sub.id
         
         next_url = request.POST.get('next')
         if next_url:
