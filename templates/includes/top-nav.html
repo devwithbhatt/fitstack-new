@@ -90,9 +90,9 @@
         <a class="nav-link dropdown-toggle text-dark d-flex align-items-center topbar-profile-trigger p-1" id="profileDropdown" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="text-decoration: none;">
           <!-- Avatar -->
           {% if user_avatar_url %}
-            <img class="nav-profile-img" alt="{{ user_display_name }}" src="{{ user_avatar_url }}" />
+            <img class="nav-profile-img" alt="{{ user_display_name }}" src="{{ user_avatar_url }}" width="32" height="32" style="width: 32px !important; height: 32px !important; max-width: 32px !important; max-height: 32px !important; object-fit: cover; border-radius: 50%;" />
           {% else %}
-            <img class="nav-profile-img" alt="{{ user_display_name }}" src="{% static 'images/face16.png' %}" />
+            <img class="nav-profile-img" alt="{{ user_display_name }}" src="{% static 'images/face16.png' %}" width="32" height="32" style="width: 32px !important; height: 32px !important; max-width: 32px !important; max-height: 32px !important; object-fit: cover; border-radius: 50%;" />
           {% endif %}
           
           <!-- Name & Role Badge in one clean row -->

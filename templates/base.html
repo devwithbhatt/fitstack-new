@@ -50,6 +50,15 @@
     <link rel="stylesheet" href="{% static 'css/dashboard_modern.css' %}?v=3.5">
     <link rel="shortcut icon" href="{% static 'images/favicon.png' %}" />
 
+    <!-- Critical Anti-FOUC Styles to prevent layout jumps / huge images before stylesheets load -->
+    <style>
+      .nav-profile-img { width: 32px !important; height: 32px !important; max-width: 32px !important; max-height: 32px !important; object-fit: cover !important; border-radius: 50% !important; display: inline-block !important; }
+      .avatar-wrapper { width: 32px !important; height: 32px !important; min-width: 32px !important; flex-shrink: 0 !important; display: inline-block !important; }
+      .avatar-wrapper img { width: 32px !important; height: 32px !important; max-width: 32px !important; max-height: 32px !important; object-fit: cover !important; border-radius: 50% !important; display: block !important; }
+      .sidebar-brand.brand-logo img { max-height: 45px !important; max-width: 140px !important; width: auto !important; object-fit: contain !important; }
+      .sidebar-brand.brand-logo-mini img { max-height: 35px !important; max-width: 35px !important; width: auto !important; object-fit: contain !important; }
+    </style>
+
     <link rel="manifest" href="{% static 'manifest.json' %}" />
     <!-- PWA Icons -->
     <link

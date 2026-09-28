@@ -54,8 +54,8 @@
            data-bs-display="static" 
            aria-haspopup="true" 
            aria-expanded="false">
-          <div class="position-relative avatar-wrapper mr-sm-2">
-            <img class="rounded-circle" alt="Superadmin" src="{% static 'images/face16.png' %}" />
+          <div class="position-relative avatar-wrapper mr-sm-2" style="width: 32px; height: 32px; min-width: 32px; flex-shrink: 0;">
+            <img class="rounded-circle" alt="Superadmin" src="{% static 'images/face16.png' %}" width="32" height="32" style="width: 32px !important; height: 32px !important; max-width: 32px !important; max-height: 32px !important; object-fit: cover; display: block; border-radius: 50%; border: 1.5px solid #fff;" />
             <span class="online-status-dot"></span>
           </div>
           <div class="d-none d-sm-flex flex-column text-left mr-1 user-info-wrapper">
@@ -413,4 +413,4 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 </script>
 
-{% include 'includes/notification_drawer.html' %}
+{% include 'includes/notification_drawer.html' %}
