@@ -132,11 +132,11 @@ class Member(models.Model):
     def latest_membership(self):
         # Use prefetched data if available to avoid N+1 queries
         if 'membership_history' in getattr(self, '_prefetched_objects_cache', {}):
-            histories = list(self.membership_history.all())
+            histories = [h for h in self.membership_history.all() if not getattr(h, 'is_deleted', False)]
             if histories:
                 return sorted(histories, key=lambda h: h.membership_start_date, reverse=True)[0]
             return None
-        return self.membership_history.order_by('-membership_start_date').first()
+        return self.membership_history.filter(is_deleted=False).order_by('-membership_start_date').first()
 
     @property
     def current_status(self):

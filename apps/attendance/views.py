@@ -398,7 +398,7 @@ def member_attendance(request):
     # Stats
     checked_in_today = MemberAttendance.objects.filter(check_in_time__date=today, gym=gym).values('member').distinct().count()
     currently_inside = MemberAttendance.objects.filter(status='inside', check_in_time__date=today, gym=gym).count()
-    total_members = Member.objects.filter(gym=gym).count()
+    total_members = Member.objects.filter(gym=gym, is_deleted=False).count()
 
     # Get all active members
     query = request.GET.get('q')
@@ -407,10 +407,11 @@ def member_attendance(request):
             (Q(full_name__icontains=query) |
             Q(mobile_number__icontains=query) |
             Q(member_id__icontains=query)),
-            gym=gym
+            gym=gym,
+            is_deleted=False
         ).order_by('first_name', 'last_name')
     else:
-        members_list = Member.objects.filter(gym=gym).order_by('first_name', 'last_name')
+        members_list = Member.objects.filter(gym=gym, is_deleted=False).order_by('first_name', 'last_name')
 
     paginator = Paginator(members_list, settings.ITEMS_PER_PAGE)
     page_number = request.GET.get('page')
@@ -484,7 +485,7 @@ def attendance_report(request):
         if user_id:
             records = records.filter(trainer__id=user_id)
 
-    all_members = Member.objects.filter(gym=gym)
+    all_members = Member.objects.filter(gym=gym, is_deleted=False)
     all_trainers = Trainer.objects.filter(gym=gym)
 
     paginator = Paginator(records, settings.ITEMS_PER_PAGE) # 15 records per page

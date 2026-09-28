@@ -31,7 +31,7 @@ def dashboard(request):
     # Single optimized query with all related data prefetched
     members = Member.objects.filter(gym=gym, is_deleted=False).prefetch_related(
         Prefetch('membership_history',
-                 queryset=MembershipHistory.objects.select_related('plan').prefetch_related('freezes')),
+                 queryset=MembershipHistory.objects.filter(is_deleted=False).select_related('plan').prefetch_related('freezes')),
     )
     total_members = members.count()
 
@@ -63,6 +63,7 @@ def dashboard(request):
     thirty_days_ago = today - timedelta(days=30)
     new_members_last_30_days = Member.objects.filter(
         gym=gym, is_deleted=False,
+        membership_history__is_deleted=False,
         membership_history__membership_start_date__gte=thirty_days_ago
     ).distinct().count()
 
@@ -70,6 +71,7 @@ def dashboard(request):
     six_months_ago = timezone.now() - timedelta(days=180)
     new_members_data = list(Member.objects.filter(
         gym=gym, is_deleted=False,
+        membership_history__is_deleted=False,
         membership_history__membership_start_date__gte=six_months_ago
     ).annotate(
         month=TruncMonth('membership_history__membership_start_date')
@@ -142,10 +144,10 @@ def dashboard(request):
 
     # Dues (2 queries)
     membership_dues = MembershipHistory.objects.filter(
-        gym=gym, status='active'
+        gym=gym, status='active', is_deleted=False, member__is_deleted=False
     ).exclude(paid_amount=models.F('total_amount')).select_related('member', 'plan')
     pt_dues = PersonalTrainer.objects.filter(
-        gym=gym, status='active'
+        gym=gym, status='active', is_deleted=False, member__is_deleted=False
     ).exclude(paid_amount=models.F('total_amount')).select_related('member', 'trainer')
 
     future_dues = [
@@ -157,7 +159,15 @@ def dashboard(request):
     recent_dues = all_dues[:5]
 
     # Recent Payments (1 query)
-    recent_payments = Payment.objects.filter(member__gym=gym).select_related('member').order_by('-payment_date')[:10]
+    recent_payments = Payment.objects.filter(
+        member__gym=gym,
+        is_deleted=False,
+        member__is_deleted=False
+    ).exclude(
+        membership_history__is_deleted=True
+    ).exclude(
+        personal_trainer__is_deleted=True
+    ).select_related('member').order_by('-payment_date')[:10]
     total_recent_payments = sum(payment.amount for payment in recent_payments)
 
     # Birthdays — single combined query instead of 7 separate queries

@@ -105,7 +105,7 @@ def member_dashboard(request):
 
     # 4. Personal Trainer
     pt_assignment = PersonalTrainer.objects.filter(
-        member=member, status='active'
+        member=member, status='active', is_deleted=False
     ).select_related('trainer').first()
 
     pt_end_date = pt_assignment.get_end_date() if pt_assignment else None
@@ -113,11 +113,16 @@ def member_dashboard(request):
 
     # 5. Financial Dues & Latest Payments
     due_amount = MembershipHistory.objects.filter(
-        member=member, status='active'
+        member=member, status='active', is_deleted=False
     ).aggregate(total_due=Sum(F('total_amount') - F('paid_amount')))['total_due'] or 0
 
     recent_payments = Payment.objects.filter(
-        member=member
+        member=member,
+        is_deleted=False
+    ).exclude(
+        membership_history__is_deleted=True
+    ).exclude(
+        personal_trainer__is_deleted=True
     ).order_by('-payment_date')[:5]
 
     context = {
@@ -330,11 +335,17 @@ def member_billing_view(request):
     gym = request.gym
 
     payments = Payment.objects.filter(
-        member=member
+        member=member,
+        is_deleted=False
+    ).exclude(
+        membership_history__is_deleted=True
+    ).exclude(
+        personal_trainer__is_deleted=True
     ).order_by('-payment_date')
 
     histories = MembershipHistory.objects.filter(
-        member=member
+        member=member,
+        is_deleted=False
     ).select_related('plan').order_by('-membership_start_date')
 
     due_amount = histories.filter(status='active').aggregate(

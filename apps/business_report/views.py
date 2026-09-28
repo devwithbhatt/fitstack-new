@@ -54,9 +54,17 @@ def business_report(request):
 
     is_filtered = bool(start_date or end_date)
 
-    # Base Querysets
-    payments_base = Payment.objects.filter(member__gym=gym)
-    expenses_base = Expense.objects.filter(gym=gym)
+    # Base Querysets (Strictly exclude soft-deleted/trashed records)
+    payments_base = Payment.objects.filter(
+        member__gym=gym,
+        is_deleted=False,
+        member__is_deleted=False
+    ).exclude(
+        membership_history__is_deleted=True
+    ).exclude(
+        personal_trainer__is_deleted=True
+    )
+    expenses_base = Expense.objects.filter(gym=gym, is_deleted=False)
     
     if start_date and end_date:
         payments_base = payments_base.filter(payment_date__date__range=[start_date, end_date])
@@ -105,9 +113,10 @@ def business_report(request):
             if p.personal_trainer:
                 trans_type = "PT"
             elif p.membership_history:
-                is_first_payment = p.membership_history.payments.order_by('payment_date').first().id == p.id
+                first_pay = p.membership_history.payments.filter(is_deleted=False).order_by('payment_date').first()
+                is_first_payment = (first_pay.id == p.id) if first_pay else False
                 if is_first_payment:
-                    is_first_ever = not MembershipHistory.objects.filter(member=p.member, pk__lt=p.membership_history.pk).exists()
+                    is_first_ever = not MembershipHistory.objects.filter(member=p.member, pk__lt=p.membership_history.pk, is_deleted=False).exists()
                     trans_type = "New" if is_first_ever else "Renewal"
             
             invoice_id = f"#{invoice.id}" if invoice else "N/A"
@@ -167,9 +176,9 @@ def business_report(request):
     total_expense = expenses_base.aggregate(Sum('amount'))['amount__sum'] or 0
     gross_income = total_income - total_expense
 
-    # Dues Calculation
-    mh_queryset = MembershipHistory.objects.filter(member__gym=gym, status='active')
-    pt_queryset = PersonalTrainer.objects.filter(member__gym=gym, status='active')
+    # Dues Calculation (Exclude trashed invoices and deleted members)
+    mh_queryset = MembershipHistory.objects.filter(member__gym=gym, status='active', is_deleted=False, member__is_deleted=False)
+    pt_queryset = PersonalTrainer.objects.filter(member__gym=gym, status='active', is_deleted=False, member__is_deleted=False)
 
     if start_date and end_date:
         mh_queryset = mh_queryset.filter(membership_start_date__range=[start_date, end_date])
@@ -185,7 +194,7 @@ def business_report(request):
     pt_dues = pt_queryset.aggregate(total_due=Sum(F('total_amount') - F('paid_amount')))['total_due'] or 0
     total_due = membership_dues + pt_dues
 
-    payments_queryset = Payment.objects.filter(member__gym=gym).select_related('member', 'membership_history', 'personal_trainer').order_by('-payment_date')
+    payments_queryset = payments_base.select_related('member', 'membership_history', 'personal_trainer').order_by('-payment_date')
     
     if start_date and end_date:
         payments_queryset = payments_queryset.filter(payment_date__date__range=[start_date, end_date])
@@ -218,9 +227,10 @@ def business_report(request):
             trans_type = "PT"
         elif p.membership_history:
             # Note: This query is still inside the loop, but it's only 20 queries max per page now.
-            is_first_payment = p.membership_history.payments.order_by('payment_date').first().id == p.id
+            first_pay = p.membership_history.payments.filter(is_deleted=False).order_by('payment_date').first()
+            is_first_payment = (first_pay.id == p.id) if first_pay else False
             if is_first_payment:
-                is_first_ever = not MembershipHistory.objects.filter(member=p.member, pk__lt=p.membership_history.pk).exists()
+                is_first_ever = not MembershipHistory.objects.filter(member=p.member, pk__lt=p.membership_history.pk, is_deleted=False).exists()
                 trans_type = "New" if is_first_ever else "Renewal"
         
         transactions.append({
@@ -238,7 +248,7 @@ def business_report(request):
 
     latest_transactions = page_obj
     
-    latest_expenses = Expense.objects.filter(gym=gym).order_by('-date')
+    latest_expenses = Expense.objects.filter(gym=gym, is_deleted=False).order_by('-date')
     if start_date and end_date:
         latest_expenses = latest_expenses.filter(date__range=[start_date, end_date])
     elif start_date:
@@ -258,10 +268,23 @@ def business_report(request):
 
         labels.append(month.strftime("%b %Y"))
 
-        monthly_income = Payment.objects.filter(member__gym=gym, payment_date__date__range=[month_start, month_end]).aggregate(Sum('amount'))['amount__sum'] or 0
+        monthly_income = Payment.objects.filter(
+            member__gym=gym,
+            is_deleted=False,
+            member__is_deleted=False,
+            payment_date__date__range=[month_start, month_end]
+        ).exclude(
+            membership_history__is_deleted=True
+        ).exclude(
+            personal_trainer__is_deleted=True
+        ).aggregate(Sum('amount'))['amount__sum'] or 0
         income_data.append(float(monthly_income))
 
-        monthly_expense = Expense.objects.filter(gym=gym, date__range=[month_start, month_end]).aggregate(Sum('amount'))['amount__sum'] or 0
+        monthly_expense = Expense.objects.filter(
+            gym=gym,
+            is_deleted=False,
+            date__range=[month_start, month_end]
+        ).aggregate(Sum('amount'))['amount__sum'] or 0
         expense_data.append(float(monthly_expense))
 
     expense_breakdown = (

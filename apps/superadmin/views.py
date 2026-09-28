@@ -60,7 +60,7 @@ def dashboard(request):
     total_gyms = Gym.objects.count()
     active_gyms = Gym.objects.filter(is_frozen=False).count()
     frozen_gyms = Gym.objects.filter(is_frozen=True).count()
-    total_members = Member.objects.count()
+    total_members = Member.objects.filter(is_deleted=False).count()
 
     today = timezone.now().date()
     subscriptions = GymSubscription.objects.filter(is_deleted=False)

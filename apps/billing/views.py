@@ -30,19 +30,21 @@ logger = logging.getLogger(__name__)
 def submit_due(request):
     gym = getattr(request, 'gym', None)
 
-    # Subquery for membership due
+    # Subquery for membership due (exclude trashed invoices)
     membership_due_subquery = MembershipHistory.objects.filter(
         member=models.OuterRef('pk'),
         status='active',
+        is_deleted=False,
         gym=gym
     ).values('member').annotate(
         total_due=Sum(F('total_amount') - F('paid_amount'))
     ).values('total_due')
 
-    # Subquery for personal trainer due
+    # Subquery for personal trainer due (exclude trashed invoices)
     pt_due_subquery = PersonalTrainer.objects.filter(
         member=models.OuterRef('pk'),
         status='active',
+        is_deleted=False,
         gym=gym
     ).values('member').annotate(
         total_due=Sum(F('total_amount') - F('paid_amount'))
@@ -50,15 +52,17 @@ def submit_due(request):
 
     latest_membership_follow_up = MembershipHistory.objects.filter(
         member=models.OuterRef('pk'),
-        follow_up_date__isnull=False
+        follow_up_date__isnull=False,
+        is_deleted=False
     ).order_by('-follow_up_date').values('follow_up_date')[:1]
 
     latest_pt_follow_up = PersonalTrainer.objects.filter(
         member=models.OuterRef('pk'),
-        follow_up_date__isnull=False
+        follow_up_date__isnull=False,
+        is_deleted=False
     ).order_by('-follow_up_date').values('follow_up_date')[:1]
 
-    members_with_due = Member.objects.filter(gym=gym).annotate(
+    members_with_due = Member.objects.filter(gym=gym, is_deleted=False).annotate(
         membership_due=Coalesce(models.Subquery(membership_due_subquery, output_field=DecimalField()), Value(0, output_field=DecimalField())),
         pt_due=Coalesce(models.Subquery(pt_due_subquery, output_field=DecimalField()), Value(0, output_field=DecimalField())),
         latest_membership_follow_up_date=models.Subquery(latest_membership_follow_up),
@@ -114,13 +118,13 @@ def submit_due(request):
 @custom_permission_required('add_payment')
 def pay_due_payment(request, member_id):
     gym = getattr(request, 'gym', None)
-    member = Member.objects.filter(id=member_id, gym=gym).first()
+    member = Member.objects.filter(id=member_id, gym=gym, is_deleted=False).first()
     if not member:
         messages.error(request, 'Member not found.')
         return redirect('billing:submit_due')
 
-    membership_invoices = MembershipHistory.objects.filter(member=member, status='active', gym=gym).exclude(paid_amount=F('total_amount')).annotate(due=F('total_amount') - F('paid_amount'))
-    pt_invoices = PersonalTrainer.objects.filter(member=member, status='active', gym=gym).exclude(paid_amount=F('total_amount')).annotate(due=F('total_amount') - F('paid_amount'))
+    membership_invoices = MembershipHistory.objects.filter(member=member, status='active', is_deleted=False, gym=gym).exclude(paid_amount=F('total_amount')).annotate(due=F('total_amount') - F('paid_amount'))
+    pt_invoices = PersonalTrainer.objects.filter(member=member, status='active', is_deleted=False, gym=gym).exclude(paid_amount=F('total_amount')).annotate(due=F('total_amount') - F('paid_amount'))
 
     form = PaymentForm()
     if request.method == 'POST':
@@ -129,9 +133,9 @@ def pay_due_payment(request, member_id):
         
         invoice = None
         if invoice_type == 'membership':
-            invoice = MembershipHistory.objects.filter(id=invoice_id, member=member, gym=gym).first()
+            invoice = MembershipHistory.objects.filter(id=invoice_id, member=member, is_deleted=False, gym=gym).first()
         elif invoice_type == 'pt':
-            invoice = PersonalTrainer.objects.filter(id=invoice_id, member=member, gym=gym).first()
+            invoice = PersonalTrainer.objects.filter(id=invoice_id, member=member, is_deleted=False, gym=gym).first()
 
         if invoice:
             due_amount = invoice.total_amount - invoice.paid_amount
@@ -226,27 +230,27 @@ def update_follow_up(request, member_id):
                     messages.error(request, "Follow-up date cannot be in the past.")
                     return redirect('billing:submit_due')
 
-                member = Member.objects.filter(id=member_id, gym=gym).first()
+                member = Member.objects.filter(id=member_id, gym=gym, is_deleted=False).first()
                 if not member:
                     messages.error(request, 'Member not found.')
                     return redirect('billing:submit_due')
                 
-                # Update all outstanding invoices for the member
-                MembershipHistory.objects.filter(member=member, status='active', gym=gym).exclude(paid_amount=F('total_amount')).update(follow_up_date=follow_up_date)
-                PersonalTrainer.objects.filter(member=member, status='active', gym=gym).exclude(paid_amount=F('total_amount')).update(follow_up_date=follow_up_date)
+                # Update all outstanding non-deleted invoices for the member
+                MembershipHistory.objects.filter(member=member, status='active', is_deleted=False, gym=gym).exclude(paid_amount=F('total_amount')).update(follow_up_date=follow_up_date)
+                PersonalTrainer.objects.filter(member=member, status='active', is_deleted=False, gym=gym).exclude(paid_amount=F('total_amount')).update(follow_up_date=follow_up_date)
 
                 messages.success(request, f"Follow-up date for {member.first_name} {member.last_name} has been updated.")
 
                 # Calculate total due for the member
                 from django.db.models import Sum, F as F_expr
                 membership_due = MembershipHistory.objects.filter(
-                    member=member, status='active', gym=gym
+                    member=member, status='active', is_deleted=False, gym=gym
                 ).exclude(paid_amount=F_expr('total_amount')).aggregate(
                     total=Sum(F_expr('total_amount') - F_expr('paid_amount'))
                 )['total'] or 0
 
                 pt_due = PersonalTrainer.objects.filter(
-                    member=member, status='active', gym=gym
+                    member=member, status='active', is_deleted=False, gym=gym
                 ).exclude(paid_amount=F_expr('total_amount')).aggregate(
                     total=Sum(F_expr('total_amount') - F_expr('paid_amount'))
                 )['total'] or 0
@@ -291,17 +295,17 @@ def update_follow_up(request, member_id):
 @custom_permission_required('view_payment')
 def invoice(request, member_id, history_id):
     gym = getattr(request, 'gym', None)
-    member = Member.objects.filter(id=member_id, gym=gym).first()
+    member = Member.objects.filter(id=member_id, gym=gym, is_deleted=False).first()
     if not member:
         messages.error(request, 'Member not found.')
         return redirect('member_list')
-    history = MembershipHistory.objects.filter(id=history_id, gym=gym).first()
+    history = MembershipHistory.objects.filter(id=history_id, is_deleted=False, gym=gym).first()
     if not history:
         messages.error(request, 'Invoice not found.')
         return redirect('member_profile', member_id=member.id)
 
-    # Get all invoices for the member to find the next and previous
-    member_invoices = list(MembershipHistory.objects.filter(member=member, gym=gym).order_by('created_at'))
+    # Get all non-deleted invoices for the member to find the next and previous
+    member_invoices = list(MembershipHistory.objects.filter(member=member, is_deleted=False, gym=gym).order_by('created_at'))
     current_invoice_index = member_invoices.index(history)
 
     previous_invoice = member_invoices[current_invoice_index - 1] if current_invoice_index > 0 else None
@@ -334,17 +338,17 @@ def invoice(request, member_id, history_id):
 @custom_permission_required('view_payment')
 def pt_invoice(request, member_id, pt_invoice_id):
     gym = getattr(request, 'gym', None)
-    member = Member.objects.filter(id=member_id, gym=gym).first()
+    member = Member.objects.filter(id=member_id, gym=gym, is_deleted=False).first()
     if not member:
         messages.error(request, 'Member not found.')
         return redirect('member_list')
-    pt_invoice = PersonalTrainer.objects.filter(id=pt_invoice_id, gym=gym).first()
+    pt_invoice = PersonalTrainer.objects.filter(id=pt_invoice_id, is_deleted=False, gym=gym).first()
     if not pt_invoice:
         messages.error(request, 'PT invoice not found.')
         return redirect('member_profile', member_id=member.id)
 
-    # Get all PT invoices for the member to find the next and previous
-    member_pt_invoices = list(PersonalTrainer.objects.filter(member=member, gym=gym).order_by('created_at'))
+    # Get all non-deleted PT invoices for the member to find the next and previous
+    member_pt_invoices = list(PersonalTrainer.objects.filter(member=member, is_deleted=False, gym=gym).order_by('created_at'))
     current_invoice_index = member_pt_invoices.index(pt_invoice)
 
     previous_invoice = member_pt_invoices[current_invoice_index - 1] if current_invoice_index > 0 else None
@@ -370,7 +374,7 @@ def invoices_list(request):
     sort_by = request.GET.get('sort', '-date')
 
     # Fetch membership invoices
-    membership_invoices = MembershipHistory.objects.select_related('member', 'plan').filter(gym=gym, is_deleted=False).annotate(
+    membership_invoices = MembershipHistory.objects.select_related('member', 'plan').filter(gym=gym, is_deleted=False, member__is_deleted=False).annotate(
         date=F('payment_date'),
         type=Value('membership', output_field=models.CharField()),
         amount=F('total_amount'),
@@ -380,7 +384,7 @@ def invoices_list(request):
     ).values('invoice_id', 'date', 'type', 'amount', 'paid_amount', 'due_amount', 'member_id', 'member__member_id', 'member__first_name', 'member__last_name', 'member__mobile_number', 'plan_title')
 
     # Fetch personal training invoices
-    pt_invoices = PersonalTrainer.objects.select_related('member', 'trainer').filter(gym=gym, is_deleted=False).annotate(
+    pt_invoices = PersonalTrainer.objects.select_related('member', 'trainer').filter(gym=gym, is_deleted=False, member__is_deleted=False).annotate(
         date=F('payment_date'),
         type=Value('pt', output_field=models.CharField()),
         amount=F('total_amount'),
@@ -456,6 +460,8 @@ def delete_invoice(request, invoice_type, invoice_id):
 
             invoice.is_deleted = True
             invoice.save()
+            # Also soft-delete any associated payments so they do not count in reports/income
+            invoice.payments.all().update(is_deleted=True)
             return JsonResponse({'status': 'success', 'message': 'Invoice moved to trash successfully.'})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
@@ -515,6 +521,8 @@ def restore_invoice(request, invoice_type, invoice_id):
 
     invoice.is_deleted = False
     invoice.save()
+    # Restore associated payments
+    invoice.payments.all().update(is_deleted=False)
     messages.success(request, 'Invoice restored successfully.')
     return redirect('billing:trash_invoices')
 
@@ -533,6 +541,7 @@ def delete_permanently(request, invoice_type, invoice_id):
         messages.error(request, 'Invoice not found.')
         return redirect('billing:trash_invoices')
 
+    invoice.payments.all().delete()
     invoice.delete()
     messages.success(request, 'Invoice deleted permanently.')
     return redirect('billing:trash_invoices')

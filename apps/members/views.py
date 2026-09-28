@@ -127,13 +127,13 @@ def member_profile(request, member_id):
         messages.error(request, 'Member not found or has been removed.')
         return redirect('member_list')
     
-    # Fetch both active and frozen memberships
+    # Fetch both active and frozen memberships (excluding trashed)
     membership_histories = MembershipHistory.objects.filter(
-        member=member, gym=gym
+        member=member, gym=gym, is_deleted=False
     ).order_by('-id')
     
     pt_member = PersonalTrainer.objects.select_related('trainer').filter(
-        member=member, status='active', gym=gym
+        member=member, status='active', gym=gym, is_deleted=False
     ).order_by('-id')
     
     # The latest membership can be active or frozen
@@ -142,7 +142,15 @@ def member_profile(request, member_id):
     # Determine if the plan is active
     is_plan_active = member.current_status == 'Active'
     
-    payments = Payment.objects.filter(member=member, gym=gym).order_by('-payment_date')
+    payments = Payment.objects.filter(
+        member=member,
+        gym=gym,
+        is_deleted=False
+    ).exclude(
+        membership_history__is_deleted=True
+    ).exclude(
+        personal_trainer__is_deleted=True
+    ).order_by('-payment_date')
 
     # Calculate the total due amount for active memberships only
     membership_due_amount = membership_histories.filter(status='active').aggregate(
@@ -248,8 +256,8 @@ def member_list(request):
     # Initial fetch with prefetching
     member_qs = Member.objects.filter(gym=gym, is_deleted=False).prefetch_related(
         Prefetch('membership_history',
-                 queryset=MembershipHistory.objects.select_related('plan').prefetch_related('freezes')),
-        Prefetch('personal_trainer', queryset=PersonalTrainer.objects.select_related('trainer')),
+                 queryset=MembershipHistory.objects.filter(is_deleted=False).select_related('plan').prefetch_related('freezes')),
+        Prefetch('personal_trainer', queryset=PersonalTrainer.objects.filter(is_deleted=False).select_related('trainer')),
     )
 
     if query:
@@ -618,7 +626,7 @@ def assign_membership_plan(request, member_id, history_id=None):
         initial_data = {}
         if not history_id:
             # For new assignments, pre-fill start date based on previous plan's expiry
-            latest_history = MembershipHistory.objects.filter(member=member, gym=gym).order_by('-membership_start_date').first()
+            latest_history = MembershipHistory.objects.filter(member=member, gym=gym, is_deleted=False).order_by('-membership_start_date').first()
             initial_start_date = timezone.localdate()
             if latest_history:
                 end_date = latest_history.get_end_date()
