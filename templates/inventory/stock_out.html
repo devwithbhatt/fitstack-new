@@ -236,7 +236,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const itemSelect = document.getElementById('{{ form.item.id_for_label }}');
     const quantityInput = document.getElementById('{{ form.quantity.id_for_label }}');
     const discountInput = document.getElementById('{{ form.discount.id_for_label }}');
-    const taxInput = document.getElementById('{{ form.tax.id_for_label }}');
 
     const summaryUnitPrice = document.getElementById('summary-unit-price');
     const summarySubtotal = document.getElementById('summary-subtotal');
@@ -244,13 +243,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const summaryTotal = document.getElementById('summary-total');
 
     function calculateTotal() {
-        const quantity = parseFloat(quantityInput.value) || 0;
-        const selectedOption = itemSelect.options[itemSelect.selectedIndex];
+        const quantity = parseFloat(quantityInput ? quantityInput.value : 0) || 0;
+        const selectedOption = itemSelect && itemSelect.selectedIndex >= 0 ? itemSelect.options[itemSelect.selectedIndex] : null;
         const unitPrice = selectedOption ? parseFloat(selectedOption.getAttribute('data-selling-price')) || 0 : 0;
-        const discount = parseFloat(discountInput.value) || 0;
+        const discount = parseFloat(discountInput ? discountInput.value : 0) || 0;
 
-        const subtotal = quantity * unitPrice;
-        const total = subtotal - discount;
+        const subtotal = Math.max(0, quantity * unitPrice);
+        const total = Math.max(0, subtotal - discount);
 
         summaryUnitPrice.textContent = `₹${unitPrice.toFixed(2)}`;
         summarySubtotal.textContent = `₹${subtotal.toFixed(2)}`;

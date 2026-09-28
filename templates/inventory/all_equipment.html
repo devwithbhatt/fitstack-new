@@ -45,6 +45,7 @@
             <div class="row mb-4">
                 <div class="col-12">
                     <form method="get" action="{% url 'inventory:all_equipment' %}" id="equipmentFilterForm">
+                        {% csrf_token %}
                         <div class="filter-card-box">
                             <div class="row g-2 g-md-3 align-items-end">
                                 
@@ -137,19 +138,27 @@
                                     </td>
                                     <td data-label="Equipment Name">
                                         <strong>{{ equipment.name }}</strong>
-                                        {% if equipment.model_number %}
-                                            <br><small class="text-muted">Model: {{ equipment.model_number }}</small>
+                                        {% if equipment.model %}
+                                            <br><small class="text-muted">Model: {{ equipment.model }}</small>
                                         {% endif %}
                                     </td>
-                                    <td data-label="Category">{{ equipment.get_category_display }}</td>
+                                    <td data-label="Category">{{ equipment.get_category_display|default:equipment.category }}</td>
                                     <td data-label="Serial Number">{{ equipment.serial_number|default:"-" }}</td>
-                                    <td data-label="Purchase Date">{{ equipment.purchase_date|date:"Y-m-d"|default:"-" }}</td>
-                                    <td data-label="Warranty End">{{ equipment.warranty_end_date|date:"Y-m-d"|default:"-" }}</td>
-                                    <td data-label="Location">{{ equipment.get_location_display|default:"-" }}</td>
+                                    <td data-label="Purchase Date">{{ equipment.purchase_date|date:"d M Y"|default:"-" }}</td>
+                                    <td data-label="Warranty End">
+                                        {% if equipment.warranty_end_date %}
+                                            {{ equipment.warranty_end_date|date:"d M Y" }}
+                                        {% elif equipment.warranty_period %}
+                                            {{ equipment.warranty_period }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td data-label="Location">{{ equipment.location|default:"-" }}</td>
                                     <td data-label="Condition">
                                         <span class="badge 
-                                            {% if equipment.condition == 'excellent' %}bg-success
-                                            {% elif equipment.condition == 'good' %}bg-primary
+                                            {% if equipment.condition == 'new' or equipment.condition == 'excellent' %}bg-success
+                                            {% elif equipment.condition == 'good' %}bg-info
                                             {% elif equipment.condition == 'fair' %}bg-warning
                                             {% else %}bg-danger{% endif %}">
                                             {{ equipment.get_condition_display }}
@@ -165,9 +174,14 @@
                                     </td>
                                     
                                     <td data-label="Actions">
-                                        <a href="{% url 'inventory:edit_equipment' id=equipment.id %}" class="btn btn-sm btn-outline-primary">
-                                            <i class="mdi mdi-pencil"></i> Edit
-                                        </a>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'inventory:edit_equipment' id=equipment.id %}" class="btn btn-sm btn-outline-primary" title="Edit Equipment">
+                                                <i class="mdi mdi-pencil"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" title="Delete Equipment" onclick="confirmDelete('{{ equipment.id }}', '{{ equipment.name|escapejs }}', '{% url 'inventory:delete_equipment' equipment.id %}')">
+                                                <i class="mdi mdi-delete-outline"></i>
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             {% empty %}
@@ -182,6 +196,13 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            <!-- Equipment Pagination -->
+            <div id="equipmentPaginationContainer" class="mt-3">
+                {% if equipments.has_other_pages %}
+                    {% include 'includes/pagination.html' with page_obj=equipments %}
+                {% endif %}
             </div>
         </div>
     </div>
@@ -226,6 +247,7 @@ $(document).ready(function() {
     const statusSelect = document.getElementById("equipment_status");
     const resetBtn = document.getElementById("resetEquipmentFilterBtn");
     const tableContainer = document.getElementById("equipmentTableContainer");
+    const paginationContainer = document.getElementById("equipmentPaginationContainer");
 
     let debounceTimer = null;
     let currentAbortController = null;
@@ -273,6 +295,10 @@ $(document).ready(function() {
             const newTable = doc.querySelector("#equipmentTableContainer");
             if (newTable && tableContainer) {
                 tableContainer.innerHTML = newTable.innerHTML;
+            }
+            const newPagination = doc.querySelector("#equipmentPaginationContainer");
+            if (newPagination && paginationContainer) {
+                paginationContainer.innerHTML = newPagination.innerHTML;
             }
             window.history.replaceState(null, "", url);
             initImagePreview();

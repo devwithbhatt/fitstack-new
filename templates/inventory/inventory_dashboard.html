@@ -230,7 +230,10 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="6" class="text-center">No recent transactions found.</td>
+                                <td colspan="7" class="text-center py-4 text-muted">
+                                    <i class="mdi mdi-history mdi-24px d-block mb-1 text-muted"></i>
+                                    No recent stock transactions found for this period.
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>

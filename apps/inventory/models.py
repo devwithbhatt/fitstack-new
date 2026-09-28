@@ -140,13 +140,20 @@ class Equipment(models.Model):
 
     @property
     def warranty_end_date(self):
-        # This is a simplified calculation. A more robust solution would parse the warranty_period string.
-        if self.purchase_date and self.warranty_period and "year" in self.warranty_period:
-            try:
-                years = int(self.warranty_period.split()[0])
-                return self.purchase_date + timezone.timedelta(days=365 * years)
-            except (ValueError, IndexError):
-                return None
+        if self.purchase_date and self.warranty_period:
+            wp = self.warranty_period.lower().strip()
+            if "year" in wp:
+                try:
+                    years = int(wp.split()[0])
+                    return self.purchase_date + timezone.timedelta(days=365 * years)
+                except (ValueError, IndexError):
+                    return None
+            elif "month" in wp:
+                try:
+                    months = int(wp.split()[0])
+                    return self.purchase_date + timezone.timedelta(days=30 * months)
+                except (ValueError, IndexError):
+                    return None
         return None
 
 class Maintenance(models.Model):

@@ -41,6 +41,7 @@
             <div class="row mb-4">
                 <div class="col-12">
                     <form method="get" action="{% url 'inventory:all_items' %}" id="itemsFilterForm">
+                        {% csrf_token %}
                         <div class="filter-card-box">
                             <div class="row g-2 g-md-3 align-items-end">
                                 
@@ -175,7 +176,7 @@
                                     <a href="{% url 'inventory:stock_log' item.id %}" class="btn btn-outline-info btn-sm" data-bs-toggle="tooltip" title="History">
                                         <i class="fas fa-history"></i>
                                     </a>
-                                    <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete" onclick="deleteItem('{{ item.id }}')">
+                                    <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete" onclick="confirmDelete('{{ item.id }}', '{{ item.name|escapejs }}', '{% url 'inventory:delete_item' item.id %}')">
                                         <i class="fas fa-trash-alt"></i>
                                     </button>
                                 </div>
@@ -323,12 +324,6 @@ $(document).ready(function() {
 
 {% block scripts %}
 <script>
-    function deleteItem(itemId) {
-        if (confirm('Are you sure you want to delete this item?')) {
-            console.log('Deleting item:', itemId);
-        }
-    }
-
     document.addEventListener('DOMContentLoaded', function () {
         function initTooltipsAndModals() {
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
