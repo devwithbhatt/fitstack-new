@@ -263,7 +263,11 @@
                                 {% with pt=pt_member.first %}
                                 <div class="d-flex justify-content-between mb-2">
                                     <span><i class="mdi mdi-account-star mr-2 text-primary"></i>Trainer</span>
-                                    <span class="text-muted">{{ pt.trainer.name }}</span>
+                                    <span>
+                                        <a href="{% url 'trainer_profile' pt.trainer.id %}" class="font-weight-bold text-dark text-decoration-none hover-primary">
+                                            {{ pt.trainer.name }}
+                                        </a>
+                                    </span>
                                 </div>
                                 <div class="d-flex justify-content-between">
                                     <span><i class="mdi mdi-calendar-clock mr-2 text-primary"></i>End Date</span>
@@ -375,7 +379,11 @@
                                                     <tbody>
                                                         <tr>
                                                             <th>Trainer Name</th>
-                                                            <td>{{ pt.trainer.name }}</td>
+                                                            <td>
+                                                                <a href="{% url 'trainer_profile' pt.trainer.id %}" class="font-weight-bold text-dark text-decoration-none hover-primary">
+                                                                    {{ pt.trainer.name }}
+                                                                </a>
+                                                            </td>
                                                         </tr>
                                                         <tr>
                                                             <th>Months</th>

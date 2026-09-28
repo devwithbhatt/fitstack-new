@@ -1,12 +1,16 @@
+from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django.utils import timezone
 
 from .models import Trainer
 from .forms import TrainerForm
+from apps.members.models import PersonalTrainer
+from apps.attendance.models import TrainerAttendance, TrainerLeave
 
 from django.contrib.auth.decorators import login_required
 from apps.login.decorators import custom_permission_required
@@ -31,6 +35,7 @@ def trainer_list(request):
             Q(specialization__icontains=query)
         ).distinct()
 
+    trainers_list = trainers_list.order_by('-id')
     paginator = Paginator(trainers_list, 10)  # Show 10 trainers per page
     page = request.GET.get('page')
 
@@ -83,6 +88,109 @@ def add_trainer(request):
 
 @never_cache
 @login_required(login_url='login')
+@custom_permission_required('view_trainer')
+def trainer_profile(request, trainer_id):
+    gym = getattr(request, 'gym', None)
+    trainer = Trainer.objects.filter(id=trainer_id, gym=gym).first()
+    if not trainer:
+        messages.error(request, 'Trainer not found or has been removed.')
+        return redirect('trainer_list')
+
+    # Personal Training (PT) Clients
+    pt_clients = PersonalTrainer.objects.select_related('member').filter(
+        trainer=trainer, gym=gym, is_deleted=False
+    ).order_by('-id')
+
+    active_pt_clients = pt_clients.filter(status='active')
+    expired_pt_clients = pt_clients.exclude(status='active')
+
+    total_clients_count = pt_clients.count()
+    active_clients_count = active_pt_clients.count()
+
+    # Financial aggregations on PT clients
+    total_pt_revenue = pt_clients.aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
+    total_pt_paid = pt_clients.aggregate(paid=Sum('paid_amount'))['paid'] or Decimal('0.00')
+    total_pt_due = total_pt_revenue - total_pt_paid
+
+    # Monthly active PT client revenue estimate
+    active_pt_monthly_earnings = sum(
+        (client.trainer_fee / client.months) if client.months and client.trainer_fee else Decimal('0.00')
+        for client in active_pt_clients
+    )
+    total_estimated_monthly_income = (trainer.salary or Decimal('0.00')) + active_pt_monthly_earnings
+
+    # Attendance Records & Analytics
+    attendance_records = TrainerAttendance.objects.filter(
+        trainer=trainer, gym=gym
+    ).order_by('-check_in_time')[:30]
+
+    now = timezone.now()
+    current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    month_attendance = TrainerAttendance.objects.filter(
+        trainer=trainer, gym=gym, check_in_time__gte=current_month_start
+    )
+    month_present_days = month_attendance.values('check_in_time__date').distinct().count()
+
+    total_seconds = 0
+    for rec in month_attendance:
+        if rec.check_in_time and rec.check_out_time:
+            total_seconds += int((rec.check_out_time - rec.check_in_time).total_seconds())
+    month_total_hours = round(total_seconds / 3600, 1)
+
+    latest_attendance = attendance_records.first()
+
+    # Leave Records
+    leave_records = TrainerLeave.objects.filter(
+        trainer=trainer, gym=gym
+    ).order_by('-start_date')
+    approved_leaves = leave_records.filter(status='approved').count()
+    pending_leaves = leave_records.filter(status='pending').count()
+    rejected_leaves = leave_records.filter(status='rejected').count()
+
+    # Tenure Calculation
+    tenure_str = "Recently Joined"
+    if trainer.joining_date:
+        days_joined = (timezone.localdate() - trainer.joining_date).days
+        years = days_joined // 365
+        months = (days_joined % 365) // 30
+        if years > 0 and months > 0:
+            tenure_str = f"{years} yr {months} mos"
+        elif years > 0:
+            tenure_str = f"{years} yr{'s' if years > 1 else ''}"
+        elif months > 0:
+            tenure_str = f"{months} mo{'s' if months > 1 else ''}"
+        elif days_joined > 0:
+            tenure_str = f"{days_joined} days"
+        else:
+            tenure_str = "Joined Today"
+
+    context = {
+        'trainer': trainer,
+        'pt_clients': pt_clients,
+        'active_pt_clients': active_pt_clients,
+        'expired_pt_clients': expired_pt_clients,
+        'total_clients_count': total_clients_count,
+        'active_clients_count': active_clients_count,
+        'total_pt_revenue': total_pt_revenue,
+        'total_pt_paid': total_pt_paid,
+        'total_pt_due': total_pt_due,
+        'active_pt_monthly_earnings': active_pt_monthly_earnings,
+        'total_estimated_monthly_income': total_estimated_monthly_income,
+        'attendance_records': attendance_records,
+        'month_present_days': month_present_days,
+        'month_total_hours': month_total_hours,
+        'latest_attendance': latest_attendance,
+        'leave_records': leave_records,
+        'approved_leaves': approved_leaves,
+        'pending_leaves': pending_leaves,
+        'rejected_leaves': rejected_leaves,
+        'tenure_str': tenure_str,
+    }
+    return render(request, 'trainers/trainer_profile.html', context)
+
+
+@never_cache
+@login_required(login_url='login')
 @custom_permission_required('change_trainer')
 def edit_trainer(request, trainer_id):
     gym = getattr(request, 'gym', None)
@@ -94,11 +202,18 @@ def edit_trainer(request, trainer_id):
         form = TrainerForm(request.POST, request.FILES, instance=trainer)
         if form.is_valid():
             form.save()
+            if trainer.user:
+                names = (trainer.name or '').strip().split(' ', 1)
+                trainer.user.first_name = names[0]
+                trainer.user.last_name = names[1] if len(names) > 1 else ''
+                if trainer.email:
+                    trainer.user.email = trainer.email
+                trainer.user.save()
             messages.success(request, 'Trainer updated successfully!')
-            return redirect('trainer_list')
+            return redirect('trainer_profile', trainer_id=trainer.id)
     else:
         form = TrainerForm(instance=trainer)
-    return render(request, 'trainers/edit_trainer.html', {'form': form})
+    return render(request, 'trainers/edit_trainer.html', {'form': form, 'trainer': trainer})
 
 @never_cache
 @login_required(login_url='login')
@@ -129,6 +244,9 @@ def toggle_trainer_status(request, trainer_id):
     trainer.is_active = not trainer.is_active
     trainer.save()
     messages.success(request, f"Trainer {trainer.name} has been marked as {'Active' if trainer.is_active else 'Inactive'}.")
+    referer = request.META.get('HTTP_REFERER', '')
+    if 'profile' in referer:
+        return redirect('trainer_profile', trainer_id=trainer.id)
     return redirect('trainer_list')
 
 

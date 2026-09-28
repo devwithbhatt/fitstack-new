@@ -3,6 +3,18 @@
 {% block content %}
 {% load static %}
 <link rel="stylesheet" href="{% static 'css/customstyle.css' %}">
+<style>
+.trainer-name-link {
+    color: #0d6efd !important;
+    text-decoration: none !important;
+    font-weight: 600;
+    transition: color 0.15s ease, text-decoration 0.15s ease;
+}
+.trainer-name-link:hover {
+    color: #0a58ca !important;
+    text-decoration: underline !important;
+}
+</style>
 <!-- Compact Breadcrumb Navigation -->
 <nav aria-label="breadcrumb" class="custom-breadcrumb mb-3">
     <ol class="breadcrumb">
@@ -39,10 +51,6 @@
                             <th class="font-weight-semibold py-2">Name</th>
                             <th class="font-weight-semibold py-2">Specialization</th>
                             <th class="font-weight-semibold py-2">Phone</th>
-                            <th class="font-weight-semibold py-2">Address</th>
-                            <th class="font-weight-semibold py-2">Joining Date</th>
-                            <th class="font-weight-semibold py-2">Salary ₹</th>
-                            <th class="font-weight-semibold py-2">PT/Monthly ₹</th>
                             <th class="font-weight-semibold py-2">Time Slot</th>
                             <th class="font-weight-semibold py-2">Status</th>
                             <th>Actions</th>
@@ -54,22 +62,22 @@
                             <td data-label="SR. No.">{{ forloop.counter0|add:trainers.start_index }}</td>
 
                             <td data-label="Photo">
-                                {% if trainer.photo %}
-                                    <img src="{{ trainer.photo.url }}" alt="{{ trainer.name }}" class="img-fluid rounded-circle equipment-image" style="width: 40px; height: 40px; object-fit: cover; cursor: pointer;">
-                                {% else %}
-                                    <img src="{% static 'images/gym-guy.jpg' %}" alt="Default" class="img-fluid rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
-                                {% endif %}
+                                <a href="{% url 'trainer_profile' trainer.id %}" title="View {{ trainer.name }}'s Profile">
+                                    {% if trainer.photo %}
+                                        <img src="{{ trainer.photo.url }}" alt="{{ trainer.name }}" class="img-fluid rounded-circle equipment-image" style="width: 40px; height: 40px; object-fit: cover; cursor: pointer;">
+                                    {% else %}
+                                        <img src="{% static 'images/gym-guy.jpg' %}" alt="Default" class="img-fluid rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                                    {% endif %}
+                                </a>
                             </td>
                             <td data-label="Name">
-                                 <strong>{{ trainer.name }}</strong><br>
+                                <a href="{% url 'trainer_profile' trainer.id %}" class="trainer-name-link font-weight-bold" style="color: #0d6efd !important;" title="View Profile">
+                                    {{ trainer.name }}
+                                </a><br>
                                 <small class="text-muted">#{{ trainer.trainer_id }}</small>
                             </td>
                             <td data-label="Specialization">{{ trainer.specialization|default:"—" }}</td>
                             <td data-label="Phone">{{ trainer.phone|default:"—" }}</td>
-                            <td data-label="Address">{{ trainer.address|default:"—" }}</td>
-                            <td data-label="Joining Date">{{ trainer.joining_date }}</td>
-                            <td data-label="Salary">{{ trainer.salary|default:"—" }}</td>
-                            <td data-label="PT Monthly Amount">{{ trainer.personal_training_monthly_amount|default:"—" }}</td>
                             <td data-label="Time Slot">{{ trainer.time_slot|default:"—" }}</td>
                             <td data-label="Status">
                                 {% if trainer.is_active %}
@@ -79,6 +87,7 @@
                                 {% endif %}
                             </td>
                             <td data-label="Actions">
+                                <a href="{% url 'trainer_profile' trainer.id %}" class="btn btn-info btn-sm" title="View Trainer Profile"><i class="mdi mdi-eye-outline"></i></a>
                                 <a href="{% url 'edit_trainer' trainer.id %}" class="btn btn-primary btn-sm" title="Edit Trainer Details"><i class="mdi mdi-pencil-outline"></i></a>
                                 <button type="button" class="btn btn-dark btn-sm" onclick="openResetTrainerPasswordModal('{{ trainer.id }}', '{{ trainer.name|escapejs }}', '{{ trainer.phone }}', '{{ trainer.trainer_id }}')" title="Reset Credentials"><i class="mdi mdi-key-variant"></i></button>
                                 <a href="{% url 'toggle_trainer_status' trainer.id %}" class="btn btn-warning btn-sm" title="{% if trainer.is_active %}Deactivate this trainer{% else %}Activate this trainer{% endif %}">

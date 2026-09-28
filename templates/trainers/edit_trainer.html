@@ -93,8 +93,8 @@
                                 <i class="mdi mdi-camera"></i> 
                             </button>
                         </div>
-                        <div id="preview_id_photo" class="mt-2" style="display: none;">
-                            <img src="" class="img-thumbnail" style="max-height: 150px;">
+                        <div id="preview_id_photo" class="mt-2" style="display: {% if form.instance.photo %}block{% else %}none{% endif %};">
+                            <img src="{% if form.instance.photo %}{{ form.instance.photo.url }}{% endif %}" class="img-thumbnail" style="max-height: 150px;">
                         </div>
                         {% if form.photo.errors %}
                             {% for error in form.photo.errors %}
@@ -110,7 +110,7 @@
 
                 <div class="d-flex justify-content-end">
                     <button type="submit" class="btn btn-primary me-2">Submit</button>
-                    <a href="{% url 'trainer_list' %}" class="btn btn-light">Cancel</a>
+                    <a href="{% if trainer %}{% url 'trainer_profile' trainer.id %}{% else %}{% url 'trainer_list' %}{% endif %}" class="btn btn-light">Cancel</a>
                 </div>
             </form>
         </div>

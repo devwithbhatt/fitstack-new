@@ -138,6 +138,18 @@
   .table td {
     vertical-align: middle;
   }
+  /* Clickable Member Name Link */
+  .member-name-link {
+    color: #0d6efd !important;
+    text-decoration: none !important;
+    font-weight: 600;
+    transition: color 0.15s ease, text-decoration 0.15s ease;
+  }
+  .member-name-link:hover {
+    color: #0a58ca !important;
+    text-decoration: underline !important;
+  }
+
 
   /* Empty State Action Buttons (Prevent global 34px square button squish) */
   .table td .btn-empty-action,
@@ -319,23 +331,27 @@
               </td>
 
               <td data-label="Profile">
-                <img
-                  src="{% if member.profile_picture %}{{ member.profile_picture.url }}{% else %}{% static 'images/member_dp.jpg' %}{% endif %}"
-                  class="rounded-circle border equipment-image"
-                  style="
-                    width: 40px;
-                    height: 40px;
-                    object-fit: cover;
-                    cursor: pointer;
-                  "
-                  alt="{{ member.first_name }} {{ member.last_name }}"
-                />
+                <a href="{% url 'member_profile' member.id %}" title="View {{ member.name }}'s Profile">
+                  <img
+                    src="{% if member.profile_picture %}{{ member.profile_picture.url }}{% else %}{% static 'images/member_dp.jpg' %}{% endif %}"
+                    class="rounded-circle border equipment-image"
+                    style="
+                      width: 40px;
+                      height: 40px;
+                      object-fit: cover;
+                      cursor: pointer;
+                    "
+                    alt="{{ member.first_name }} {{ member.last_name }}"
+                  />
+                </a>
               </td>
               <td data-label="Name">
                 <strong>
                   <a
                     href="{% url 'member_profile' member.id %}"
-                    class="text-decoration-none text-dark"
+                    class="member-name-link font-weight-bold"
+                    style="color: #0d6efd !important; text-decoration: none;"
+                    title="View Profile"
                     >{{ member.name }}</a
                   ></strong><br />
                 <small class="text-muted">#{{ member.member_id }}</small>
