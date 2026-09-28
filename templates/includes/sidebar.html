@@ -161,7 +161,7 @@
       </a>
       <div class="collapse {% if request.resolver_match.url_name == 'member_list' or request.resolver_match.url_name == 'add_new_member' or request.resolver_match.url_name == 'member_profile' or request.resolver_match.url_name == 'edit_member' %}show{% endif %}" id="members">
         <ul class="nav flex-column sub-menu">
-          <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'member_list' %}active{% endif %}" href="{% url 'member_list' %}">All Members</a></li>
+          <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'member_list' or request.resolver_match.url_name == 'member_profile' or request.resolver_match.url_name == 'edit_member' %}active{% endif %}" href="{% url 'member_list' %}">All Members</a></li>
           <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'add_new_member' %}active{% endif %}" href="{% url 'add_new_member' %}">Add Member</a></li>
         
         </ul>
@@ -173,16 +173,16 @@
 
     <!--  Trainers -->
     {% if request.user|has_module_permission:'trainer' %}
-    <li class="nav-item {% if request.resolver_match.url_name == 'trainer_list' or request.resolver_match.url_name == 'add_trainer' %}active{% endif %}">
-      <a class="nav-link" data-toggle="collapse" href="#trainers" aria-expanded="{% if request.resolver_match.url_name == 'trainer_list' or request.resolver_match.url_name == 'add_trainer' %}true{% else %}false{% endif %}" aria-controls="trainers">
+    <li class="nav-item {% if request.resolver_match.url_name == 'trainer_list' or request.resolver_match.url_name == 'add_trainer' or request.resolver_match.url_name == 'trainer_profile' or request.resolver_match.url_name == 'edit_trainer' %}active{% endif %}">
+      <a class="nav-link" data-toggle="collapse" href="#trainers" aria-expanded="{% if request.resolver_match.url_name == 'trainer_list' or request.resolver_match.url_name == 'add_trainer' or request.resolver_match.url_name == 'trainer_profile' or request.resolver_match.url_name == 'edit_trainer' %}true{% else %}false{% endif %}" aria-controls="trainers">
         <i class="mdi mdi-human-male-female menu-icon"></i>
         <span class="menu-title">Trainers</span>
         <i class="menu-arrow"></i>
       </a>
-      <div class="collapse {% if request.resolver_match.url_name == 'trainer_list' or request.resolver_match.url_name == 'add_trainer' %}show{% endif %}" id="trainers">
+      <div class="collapse {% if request.resolver_match.url_name == 'trainer_list' or request.resolver_match.url_name == 'add_trainer' or request.resolver_match.url_name == 'trainer_profile' or request.resolver_match.url_name == 'edit_trainer' %}show{% endif %}" id="trainers">
         <ul class="nav flex-column sub-menu">
           {% if request.user|has_permission:'view_trainer' %}
-          <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'trainer_list' %}active{% endif %}" href="{% url 'trainer_list' %}">All Trainers</a></li>
+          <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'trainer_list' or request.resolver_match.url_name == 'trainer_profile' or request.resolver_match.url_name == 'edit_trainer' %}active{% endif %}" href="{% url 'trainer_list' %}">All Trainers</a></li>
           {% endif %}
           {% if request.user|has_permission:'add_trainer' %}
           <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'add_trainer' %}active{% endif %}" href="{% url 'add_trainer' %}">Add Trainer</a></li>
