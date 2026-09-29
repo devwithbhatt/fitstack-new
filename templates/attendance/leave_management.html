@@ -161,7 +161,13 @@
                                 {% endif %}
                             </td>
                             <td>{{ leave.leave_type|capfirst }}</td>
-                            <td><span class="badge bg-info text-white">{{ leave.duration_days }} day{{ leave.duration_days|pluralize }}</span></td>
+                            <td>
+                                {% if leave.is_half_day %}
+                                    <span class="badge bg-warning text-dark font-weight-bold">0.5 Day ({{ leave.half_day_period }})</span>
+                                {% else %}
+                                    <span class="badge bg-info text-white">{{ leave.duration_days }} day{{ leave.duration_days|pluralize }}</span>
+                                {% endif %}
+                            </td>
                             <td>
                                 <small>{{ leave.start_date|date:"d M Y" }}<br>to {{ leave.end_date|date:"d M Y" }}</small>
                             </td>
@@ -172,19 +178,47 @@
                                 {% if leave.status == 'pending' %}
                                     <span class="badge badge-pending">Pending</span>
                                 {% elif leave.status == 'approved' %}
-                                    <span class="badge badge-approved">Approved</span>
+                                    {% if leave.type == 'trainer' %}
+                                        {% if leave.is_paid %}
+                                            <span class="badge badge-approved" title="Paid Leave - counts towards payable salary">
+                                                <i class="fas fa-check-circle mr-1"></i>Approved (Paid)
+                                            </span>
+                                        {% else %}
+                                            <span class="badge badge-secondary" title="Unpaid Leave - salary deduction applies">
+                                                <i class="fas fa-minus-circle mr-1"></i>Approved (Unpaid)
+                                            </span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge badge-approved"><i class="fas fa-check mr-1"></i>Approved</span>
+                                    {% endif %}
                                 {% else %}
-                                    <span class="badge badge-rejected">Rejected</span>
+                                    <span class="badge badge-rejected"><i class="fas fa-times mr-1"></i>Rejected</span>
+                                {% endif %}
+                                {% if leave.admin_notes %}
+                                    <div class="small text-muted mt-1" style="font-size: 0.75rem;">
+                                        <i class="fas fa-comment-alt mr-1"></i>{{ leave.admin_notes|truncatechars:35 }}
+                                    </div>
                                 {% endif %}
                             </td>
                             <td><small>{{ leave.created_at|date:"d M Y" }}</small></td>
                             <td class="text-center">
                                 <div class="btn-group" role="group">
                                     {% if leave.status == 'pending' %}
-                                        <a href="{% url 'attendance:update_leave_status' leave.type leave.id 'approved' %}" 
-                                           class="btn btn-sm btn-success action-btn" data-action="approve" data-bs-toggle="tooltip" title="Approve">
-                                            <i class="fas fa-check"></i>
-                                        </a>
+                                        {% if leave.type == 'trainer' %}
+                                            <a href="{% url 'attendance:update_leave_status' leave.type leave.id 'approved' %}?is_paid=1" 
+                                               class="btn btn-sm btn-success action-btn" data-action="approve" data-bs-toggle="tooltip" title="Approve as Paid Leave">
+                                                <i class="fas fa-check"></i><small class="d-none d-xl-inline ml-1 font-weight-bold">Paid</small>
+                                            </a>
+                                            <a href="{% url 'attendance:update_leave_status' leave.type leave.id 'approved' %}?is_paid=0" 
+                                               class="btn btn-sm btn-info action-btn" data-action="approve" data-bs-toggle="tooltip" title="Approve as Unpaid Leave">
+                                                <i class="fas fa-calendar-times"></i><small class="d-none d-xl-inline ml-1 font-weight-bold">Unpaid</small>
+                                            </a>
+                                        {% else %}
+                                            <a href="{% url 'attendance:update_leave_status' leave.type leave.id 'approved' %}" 
+                                               class="btn btn-sm btn-success action-btn" data-action="approve" data-bs-toggle="tooltip" title="Approve">
+                                                <i class="fas fa-check"></i>
+                                            </a>
+                                        {% endif %}
                                         <a href="{% url 'attendance:update_leave_status' leave.type leave.id 'rejected' %}" 
                                            class="btn btn-sm btn-warning action-btn" data-action="reject" data-bs-toggle="tooltip" title="Reject">
                                             <i class="fas fa-times"></i>

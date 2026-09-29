@@ -568,10 +568,18 @@ def leave_management(request):
             'person_type': 'Trainer',
             'start_date': leave.start_date,
             'end_date': leave.end_date,
+            'start_date_str': leave.start_date.strftime('%Y-%m-%d') if leave.start_date else '',
+            'end_date_str': leave.end_date.strftime('%Y-%m-%d') if leave.end_date else '',
             'duration_days': leave.duration_days,
-            'reason': leave.reason,
+            'is_half_day': leave.is_half_day,
+            'half_day_period': leave.get_half_day_period_display() if leave.is_half_day else None,
+            'half_day_period_raw': leave.half_day_period or '',
+            'is_paid': leave.is_paid,
+            'admin_notes': leave.admin_notes or '',
+            'reason': leave.reason or '',
             'status': leave.status,
             'leave_type': leave.get_leave_type_display(),
+            'leave_type_raw': leave.leave_type,
             'created_at': leave.created_at,
             'updated_at': leave.updated_at
         })
@@ -585,10 +593,18 @@ def leave_management(request):
             'person_type': 'Member',
             'start_date': leave.start_date,
             'end_date': leave.end_date,
+            'start_date_str': leave.start_date.strftime('%Y-%m-%d') if leave.start_date else '',
+            'end_date_str': leave.end_date.strftime('%Y-%m-%d') if leave.end_date else '',
             'duration_days': leave.duration_days,
-            'reason': leave.reason,
+            'is_half_day': False,
+            'half_day_period': None,
+            'half_day_period_raw': '',
+            'is_paid': False,
+            'admin_notes': leave.admin_notes or '',
+            'reason': leave.reason or '',
             'status': leave.status,
             'leave_type': leave.get_leave_type_display(),
+            'leave_type_raw': leave.leave_type,
             'created_at': leave.created_at,
             'updated_at': leave.updated_at
         })
@@ -610,6 +626,8 @@ def leave_management(request):
         'status_filter': status_filter,
         'type_filter': type_filter,
         'search_query': search_query,
+        'trainer_leave_types': TrainerLeave._meta.get_field('leave_type').choices,
+        'member_leave_types': MemberLeave._meta.get_field('leave_type').choices,
     }
     
     return render(request, 'attendance/leave_management.html', context)
@@ -710,9 +728,20 @@ def update_leave_status(request, leave_type, leave_id, status):
         messages.error(request, 'Invalid status!')
         return redirect('attendance:leave_management')
     
+    # Check if paid status or admin notes were supplied via GET or POST
+    is_paid_param = request.POST.get('is_paid') or request.GET.get('is_paid')
+    admin_notes_param = request.POST.get('admin_notes') or request.GET.get('admin_notes')
+    
     try:
         if leave_type == 'trainer':
             leave = get_object_or_404(TrainerLeave, id=leave_id, gym=gym)
+            if status == 'approved':
+                if is_paid_param is not None:
+                    leave.is_paid = (str(is_paid_param).lower() in ['true', '1', 'paid', 'yes'])
+                elif leave.leave_type == 'unpaid':
+                    leave.is_paid = False
+                else:
+                    leave.is_paid = True
         elif leave_type == 'member':
             leave = get_object_or_404(MemberLeave, id=leave_id, gym=gym)
         else:
@@ -720,10 +749,120 @@ def update_leave_status(request, leave_type, leave_id, status):
             return redirect('attendance:leave_management')
         
         leave.status = status
+        if admin_notes_param:
+            leave.admin_notes = admin_notes_param.strip()
         leave.save()
-        messages.success(request, f'Leave {status} successfully!')
+
+        pay_label = ""
+        if leave_type == 'trainer' and status == 'approved':
+            pay_label = " (Paid Leave)" if leave.is_paid else " (Unpaid Leave)"
+
+        messages.success(request, f'Leave for {leave} marked as {status}{pay_label} successfully!')
     except Exception as e:
         messages.error(request, f'Error updating leave status: {str(e)}')
+    
+    return redirect('attendance:leave_management')
+
+
+@login_required
+@custom_permission_required(['change_memberleave', 'change_trainerleave'])
+def edit_leave(request, leave_type, leave_id):
+    gym = getattr(request, 'gym', None)
+    
+    if request.method != 'POST':
+        return redirect('attendance:leave_management')
+    
+    try:
+        if leave_type == 'trainer':
+            leave = get_object_or_404(TrainerLeave, id=leave_id, gym=gym)
+            
+            new_leave_type = request.POST.get('leave_type')
+            start_date_val = request.POST.get('start_date')
+            end_date_val = request.POST.get('end_date')
+            reason_val = request.POST.get('reason', '')
+            admin_notes_val = request.POST.get('admin_notes', '')
+            status_val = request.POST.get('status')
+            is_half_day_val = request.POST.get('is_half_day') in ['on', 'true', '1']
+            half_day_period_val = request.POST.get('half_day_period')
+            is_paid_val = request.POST.get('is_paid')
+            
+            if start_date_val and end_date_val:
+                try:
+                    s_date = datetime.strptime(start_date_val, '%Y-%m-%d').date()
+                    e_date = datetime.strptime(end_date_val, '%Y-%m-%d').date()
+                    if is_half_day_val:
+                        e_date = s_date
+                    elif s_date > e_date:
+                        messages.error(request, 'End date cannot be earlier than start date!')
+                        return redirect('attendance:leave_management')
+                    leave.start_date = s_date
+                    leave.end_date = e_date
+                except ValueError:
+                    messages.error(request, 'Invalid date format!')
+                    return redirect('attendance:leave_management')
+            
+            if new_leave_type:
+                leave.leave_type = new_leave_type
+            
+            leave.reason = reason_val.strip() if reason_val else ''
+            leave.admin_notes = admin_notes_val.strip() if admin_notes_val else ''
+            
+            if status_val in ['pending', 'approved', 'rejected']:
+                leave.status = status_val
+            
+            leave.is_half_day = is_half_day_val
+            if is_half_day_val:
+                leave.half_day_period = half_day_period_val if half_day_period_val in ['first_half', 'second_half'] else 'first_half'
+            else:
+                leave.half_day_period = None
+            
+            if is_paid_val is not None:
+                leave.is_paid = (str(is_paid_val).lower() in ['1', 'true', 'yes', 'paid'])
+            elif new_leave_type == 'unpaid':
+                leave.is_paid = False
+            
+            leave.save()
+            messages.success(request, f'Leave for trainer {leave.trainer.name} updated successfully!')
+            
+        elif leave_type == 'member':
+            leave = get_object_or_404(MemberLeave, id=leave_id, gym=gym)
+            
+            new_leave_type = request.POST.get('leave_type')
+            start_date_val = request.POST.get('start_date')
+            end_date_val = request.POST.get('end_date')
+            reason_val = request.POST.get('reason', '')
+            admin_notes_val = request.POST.get('admin_notes', '')
+            status_val = request.POST.get('status')
+            
+            if start_date_val and end_date_val:
+                try:
+                    s_date = datetime.strptime(start_date_val, '%Y-%m-%d').date()
+                    e_date = datetime.strptime(end_date_val, '%Y-%m-%d').date()
+                    if s_date > e_date:
+                        messages.error(request, 'End date cannot be earlier than start date!')
+                        return redirect('attendance:leave_management')
+                    leave.start_date = s_date
+                    leave.end_date = e_date
+                except ValueError:
+                    messages.error(request, 'Invalid date format!')
+                    return redirect('attendance:leave_management')
+            
+            if new_leave_type:
+                leave.leave_type = new_leave_type
+            
+            leave.reason = reason_val.strip() if reason_val else ''
+            leave.admin_notes = admin_notes_val.strip() if admin_notes_val else ''
+            
+            if status_val in ['pending', 'approved', 'rejected']:
+                leave.status = status_val
+            
+            leave.save()
+            messages.success(request, f'Leave for member {leave.member.first_name} {leave.member.last_name} updated successfully!')
+        else:
+            messages.error(request, 'Invalid leave type!')
+            
+    except Exception as e:
+        messages.error(request, f'Error updating leave: {str(e)}')
     
     return redirect('attendance:leave_management')
 

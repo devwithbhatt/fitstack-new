@@ -3,6 +3,7 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils import timezone
 from django.contrib.auth.models import User
+from decimal import Decimal
 import random
 from apps.superadmin.models import Gym
 
@@ -107,6 +108,10 @@ class Trainer(models.Model):
 
         return self.user, raw_password
 
+    @property
+    def pt_monthly_rate(self):
+        return self.personal_training_monthly_amount or Decimal('0.00')
+
     class Meta:
         unique_together = [['gym', 'phone'], ['gym', 'email']]
 
@@ -120,3 +125,66 @@ def create_trainer_id(sender, instance, **kwargs):
         present_year = timezone.now().strftime('%y')
         random_number = ''.join([str(random.randint(0, 9)) for _ in range(6)])
         instance.trainer_id = f"{gym_id_part}-TRN-{present_year}-{random_number}"
+
+
+class TrainerSalary(models.Model):
+    STATUS_CHOICES = [
+        ('draft', 'Draft / Review'),
+        ('approved', 'Approved'),
+        ('paid', 'Paid'),
+    ]
+    PAYMENT_MODE_CHOICES = [
+        ('cash', 'Cash'),
+        ('bank_transfer', 'Bank Transfer (NEFT/IMPS)'),
+        ('upi', 'UPI / GPay / PhonePe'),
+        ('cheque', 'Cheque'),
+        ('other', 'Other'),
+    ]
+
+    gym = models.ForeignKey(Gym, on_delete=models.CASCADE, related_name='trainer_salaries')
+    trainer = models.ForeignKey(Trainer, on_delete=models.CASCADE, related_name='salary_records')
+    month = models.PositiveSmallIntegerField()  # 1 - 12
+    year = models.PositiveSmallIntegerField()   # e.g. 2026
+
+    # Base configuration & calendar
+    base_salary = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    total_days = models.PositiveSmallIntegerField(default=30)
+
+    # Attendance Breakdown
+    present_days = models.DecimalField(max_digits=5, decimal_places=1, default=0.0)
+    half_days = models.PositiveSmallIntegerField(default=0)
+    paid_leave_days = models.DecimalField(max_digits=5, decimal_places=1, default=0.0)
+    unpaid_leave_days = models.DecimalField(max_digits=5, decimal_places=1, default=0.0)
+    absent_days = models.DecimalField(max_digits=5, decimal_places=1, default=0.0)
+    payable_days = models.DecimalField(max_digits=5, decimal_places=1, default=0.0)
+
+    # Financial breakdown
+    base_salary_earned = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    pt_clients_count = models.PositiveIntegerField(default=0)
+    pt_commission = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    bonus = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    deductions = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    net_salary = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    payment_date = models.DateField(null=True, blank=True)
+    payment_mode = models.CharField(max_length=30, choices=PAYMENT_MODE_CHOICES, blank=True, null=True)
+    transaction_id = models.CharField(max_length=100, blank=True, null=True)
+    remarks = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def total_earnings(self):
+        return (self.base_salary_earned or Decimal('0.00')) + (self.pt_commission or Decimal('0.00')) + (self.bonus or Decimal('0.00'))
+
+    @property
+    def total_deductions(self):
+        return self.deductions or Decimal('0.00')
+
+    class Meta:
+        unique_together = ('trainer', 'month', 'year')
+        ordering = ['-year', '-month', 'trainer__name']
+
+    def __str__(self):
+        return f"{self.trainer.name} - {self.month}/{self.year} (₹{self.net_salary})"

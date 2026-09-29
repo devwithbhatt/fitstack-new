@@ -1,3 +1,5 @@
+import calendar
+from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
@@ -7,9 +9,10 @@ from django.http import JsonResponse
 from django.db.models import Sum, F, Q
 from functools import wraps
 
-from apps.trainers.models import Trainer
+from apps.trainers.models import Trainer, TrainerSalary
+from apps.trainers.views import compute_trainer_salary, amount_to_words_inr, generate_payslip_pdf_response
 from apps.members.models import Member, PersonalTrainer, AssignDietPlan, AssignWorkoutPlan
-from apps.attendance.models import TrainerAttendance, MemberAttendance
+from apps.attendance.models import TrainerAttendance, MemberAttendance, TrainerLeave
 from apps.management.models import DietPlan, WorkoutPlan
 
 
@@ -96,6 +99,10 @@ def trainer_dashboard(request):
                 pt.days_left = days_left
                 expiring_clients.append(pt)
 
+    this_month_salary = TrainerSalary.objects.filter(
+        trainer=trainer, gym=gym, year=today.year, month=today.month
+    ).first()
+
     context = {
         'trainer': trainer,
         'gym': gym,
@@ -111,6 +118,7 @@ def trainer_dashboard(request):
         'this_month_sessions': this_month_sessions,
         'recent_logs': recent_logs,
         'clients_attended_today': clients_attended_today,
+        'this_month_salary': this_month_salary,
     }
     return render(request, 'portal/trainer/dashboard.html', context)
 
@@ -393,6 +401,10 @@ def trainer_attendance_view(request):
         check_out_time__isnull=True
     ).order_by('-check_in_time').first()
 
+    my_leaves = TrainerLeave.objects.filter(
+        trainer=trainer
+    ).order_by('-created_at')[:30]
+
     context = {
         'trainer': trainer,
         'gym': gym,
@@ -402,8 +414,77 @@ def trainer_attendance_view(request):
         'is_checked_in': active_attendance is not None,
         'total_days': total_days,
         'this_month_count': this_month_count,
+        'my_leaves': my_leaves,
     }
     return render(request, 'portal/trainer/attendance.html', context)
+
+
+@never_cache
+@trainer_required
+def trainer_apply_leave(request):
+    """
+    Handles leave submission by trainers (full-day or half-day).
+    """
+    if request.method != 'POST':
+        return redirect('trainer_portal:attendance')
+
+    trainer = request.trainer
+    gym = request.gym
+    leave_type = request.POST.get('leave_type', 'casual').strip()
+    start_date_str = request.POST.get('start_date', '').strip()
+    end_date_str = request.POST.get('end_date', '').strip()
+    is_half_day = request.POST.get('is_half_day') in ['true', 'True', '1', 'on']
+    half_day_period = request.POST.get('half_day_period', 'first_half').strip()
+    reason = request.POST.get('reason', '').strip()
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.POST.get('format') == 'json'
+
+    if not start_date_str:
+        msg = "Start date is required to request leave."
+        if is_ajax:
+            return JsonResponse({'status': 'error', 'message': msg})
+        messages.error(request, msg)
+        return redirect('trainer_portal:attendance')
+
+    try:
+        from datetime import datetime
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        if is_half_day or not end_date_str:
+            end_date = start_date
+        else:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+
+        if end_date < start_date:
+            msg = "End date cannot be earlier than start date."
+            if is_ajax:
+                return JsonResponse({'status': 'error', 'message': msg})
+            messages.error(request, msg)
+            return redirect('trainer_portal:attendance')
+
+        leave = TrainerLeave.objects.create(
+            gym=gym,
+            trainer=trainer,
+            leave_type=leave_type,
+            start_date=start_date,
+            end_date=end_date,
+            is_half_day=is_half_day,
+            half_day_period=half_day_period if is_half_day else None,
+            reason=reason,
+            status='pending',
+            is_paid=True
+        )
+
+        msg = f"Leave application for {leave.duration_days} day(s) submitted successfully. Waiting for admin approval."
+        if is_ajax:
+            return JsonResponse({'status': 'success', 'message': msg})
+        messages.success(request, msg)
+        return redirect('trainer_portal:attendance')
+
+    except Exception as e:
+        msg = f"Failed to submit leave request: {str(e)}"
+        if is_ajax:
+            return JsonResponse({'status': 'error', 'message': msg})
+        messages.error(request, msg)
+        return redirect('trainer_portal:attendance')
 
 
 @never_cache
@@ -432,3 +513,84 @@ def trainer_profile_view(request):
         'gym': gym,
     }
     return render(request, 'portal/trainer/profile.html', context)
+
+
+@never_cache
+@trainer_required
+def trainer_salary_view(request):
+    trainer = request.trainer
+    gym = request.gym
+    today = timezone.localdate()
+
+    try:
+        selected_month = int(request.GET.get('month', today.month))
+    except (ValueError, TypeError):
+        selected_month = today.month
+
+    try:
+        selected_year = int(request.GET.get('year', today.year))
+    except (ValueError, TypeError):
+        selected_year = today.year
+
+    # Check if salary record exists or compute if not yet marked as paid
+    salary_record = TrainerSalary.objects.filter(
+        trainer=trainer,
+        gym=gym,
+        month=selected_month,
+        year=selected_year
+    ).first()
+
+    if not salary_record or salary_record.status != 'paid':
+        salary_record = compute_trainer_salary(gym, trainer, selected_year, selected_month)
+
+    # History of all salary records for this trainer
+    salary_history = TrainerSalary.objects.filter(
+        trainer=trainer,
+        gym=gym
+    ).order_by('-year', '-month')
+
+    months_list = [(i, calendar.month_name[i]) for i in range(1, 13)]
+    current_year = today.year
+    years_list = list(range(current_year - 2, current_year + 2))
+    month_name = calendar.month_name[selected_month]
+
+    context = {
+        'trainer': trainer,
+        'gym': gym,
+        'salary': salary_record,
+        'salary_history': salary_history,
+        'selected_month': selected_month,
+        'selected_year': selected_year,
+        'selected_month_name': month_name,
+        'months': months_list,
+        'years': years_list,
+    }
+    return render(request, 'portal/trainer/salary.html', context)
+
+
+@never_cache
+@trainer_required
+def trainer_payslip_view(request, salary_id):
+    trainer = request.trainer
+    gym = request.gym
+    salary = get_object_or_404(TrainerSalary, id=salary_id, trainer=trainer, gym=gym)
+
+    month_name = calendar.month_name[salary.month]
+    net_in_words = amount_to_words_inr(salary.net_salary)
+
+    context = {
+        'salary': salary,
+        'trainer': trainer,
+        'gym': gym,
+        'month_name': month_name,
+        'year': salary.year,
+        'net_in_words': net_in_words,
+        'is_trainer_portal': True,
+    }
+
+    if request.GET.get('download') == 'pdf':
+        safe_name = trainer.name.replace(' ', '_')
+        return generate_payslip_pdf_response(request, context, f"Payslip_{safe_name}_{month_name}_{salary.year}.pdf")
+
+    return render(request, 'trainers/payslip.html', context)
+

@@ -9,5 +9,8 @@ urlpatterns = [
     path('client/<int:member_id>/', views.trainer_client_detail_view, name='client_detail'),
     path('attendance/', views.trainer_attendance_view, name='attendance'),
     path('attendance/action/', views.trainer_attendance_action, name='attendance_action'),
+    path('leave/apply/', views.trainer_apply_leave, name='apply_leave'),
     path('profile/', views.trainer_profile_view, name='profile'),
+    path('salary/', views.trainer_salary_view, name='salary'),
+    path('salary/<int:salary_id>/payslip/', views.trainer_payslip_view, name='payslip'),
 ]

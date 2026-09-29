@@ -9,7 +9,7 @@ from functools import wraps
 from django.db.models import Sum, F
 
 from apps.members.models import Member, MembershipHistory, PersonalTrainer, AssignDietPlan, AssignWorkoutPlan
-from apps.attendance.models import MemberAttendance
+from apps.attendance.models import MemberAttendance, MemberLeave
 from apps.billing.models import Payment
 from apps.management.models import DietPlan, WorkoutPlan
 
@@ -273,6 +273,10 @@ def member_attendance_view(request):
         check_out_time__isnull=True
     ).order_by('-check_in_time').first()
 
+    my_leaves = MemberLeave.objects.filter(
+        member=member
+    ).order_by('-created_at')[:30]
+
     context = {
         'member': member,
         'gym': gym,
@@ -282,8 +286,69 @@ def member_attendance_view(request):
         'is_checked_in': active_attendance is not None,
         'total_days': total_days,
         'this_month_count': this_month_count,
+        'my_leaves': my_leaves,
     }
     return render(request, 'portal/member/attendance.html', context)
+
+
+@never_cache
+@member_required
+def member_apply_leave(request):
+    """
+    Handles leave submission by gym members.
+    """
+    if request.method != 'POST':
+        return redirect('member_portal:attendance')
+
+    member = request.member
+    gym = request.gym
+    leave_type = request.POST.get('leave_type', 'personal').strip()
+    start_date_str = request.POST.get('start_date', '').strip()
+    end_date_str = request.POST.get('end_date', '').strip()
+    reason = request.POST.get('reason', '').strip()
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.POST.get('format') == 'json'
+
+    if not start_date_str or not end_date_str:
+        msg = "Start date and End date are both required."
+        if is_ajax:
+            return JsonResponse({'status': 'error', 'message': msg})
+        messages.error(request, msg)
+        return redirect('member_portal:attendance')
+
+    try:
+        from datetime import datetime
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+
+        if end_date < start_date:
+            msg = "End date cannot be earlier than start date."
+            if is_ajax:
+                return JsonResponse({'status': 'error', 'message': msg})
+            messages.error(request, msg)
+            return redirect('member_portal:attendance')
+
+        leave = MemberLeave.objects.create(
+            gym=gym,
+            member=member,
+            leave_type=leave_type,
+            start_date=start_date,
+            end_date=end_date,
+            reason=reason,
+            status='pending'
+        )
+
+        msg = f"Leave application for {leave.duration_days} day(s) submitted successfully. Waiting for gym approval."
+        if is_ajax:
+            return JsonResponse({'status': 'success', 'message': msg})
+        messages.success(request, msg)
+        return redirect('member_portal:attendance')
+
+    except Exception as e:
+        msg = f"Failed to submit leave request: {str(e)}"
+        if is_ajax:
+            return JsonResponse({'status': 'error', 'message': msg})
+        messages.error(request, msg)
+        return redirect('member_portal:attendance')
 
 
 @never_cache

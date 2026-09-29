@@ -38,14 +38,24 @@ class TrainerLeave(models.Model):
         ('sick', 'Sick Leave'),
         ('casual', 'Casual Leave'),
         ('earned', 'Earned Leave'),
+        ('half_day', 'Half Day Leave'),
         ('maternity', 'Maternity Leave'),
         ('paternity', 'Paternity Leave'),
         ('unpaid', 'Unpaid Leave'),
         ('other', 'Other')
     ], default='casual')
+    is_half_day = models.BooleanField(default=False)
+    half_day_period = models.CharField(max_length=20, choices=[
+        ('first_half', 'First Half'),
+        ('second_half', 'Second Half')
+    ], blank=True, null=True)
+    is_paid = models.BooleanField(default=True)
+    admin_notes = models.TextField(blank=True, null=True)
     
     @property
     def duration_days(self):
+        if self.is_half_day:
+            return 0.5
         return (self.end_date - self.start_date).days + 1
 
     def __str__(self):
@@ -67,6 +77,7 @@ class MemberLeave(models.Model):
         ('personal', 'Personal Leave'),
         ('other', 'Other')
     ], default='casual')
+    admin_notes = models.TextField(blank=True, null=True)
     
     @property
     def duration_days(self):

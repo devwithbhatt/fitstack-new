@@ -118,6 +118,12 @@
         <span class="menu-title">My Attendance</span>
       </a>
     </li>
+    <li class="nav-item {% if request.resolver_match.app_name == 'trainer_portal' and request.resolver_match.url_name in 'salary,payslip' %}active{% endif %}">
+      <a class="nav-link" href="{% url 'trainer_portal:salary' %}">
+        <i class="mdi mdi-cash-multiple menu-icon"></i>
+        <span class="menu-title">My Salary & Payslips</span>
+      </a>
+    </li>
     <li class="nav-item {% if request.resolver_match.app_name == 'trainer_portal' and request.resolver_match.url_name == 'profile' %}active{% endif %}">
       <a class="nav-link" href="{% url 'trainer_portal:profile' %}">
         <i class="mdi mdi-account-circle menu-icon"></i>
@@ -179,13 +185,16 @@
         <span class="menu-title">Trainers</span>
         <i class="menu-arrow"></i>
       </a>
-      <div class="collapse {% if request.resolver_match.url_name == 'trainer_list' or request.resolver_match.url_name == 'add_trainer' or request.resolver_match.url_name == 'trainer_profile' or request.resolver_match.url_name == 'edit_trainer' %}show{% endif %}" id="trainers">
+      <div class="collapse {% if request.resolver_match.url_name == 'trainer_list' or request.resolver_match.url_name == 'add_trainer' or request.resolver_match.url_name == 'trainer_profile' or request.resolver_match.url_name == 'edit_trainer' or request.resolver_match.url_name == 'trainer_salary_list' or request.resolver_match.url_name == 'trainer_payslip' %}show{% endif %}" id="trainers">
         <ul class="nav flex-column sub-menu">
           {% if request.user|has_permission:'view_trainer' %}
           <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'trainer_list' or request.resolver_match.url_name == 'trainer_profile' or request.resolver_match.url_name == 'edit_trainer' %}active{% endif %}" href="{% url 'trainer_list' %}">All Trainers</a></li>
           {% endif %}
           {% if request.user|has_permission:'add_trainer' %}
           <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'add_trainer' %}active{% endif %}" href="{% url 'add_trainer' %}">Add Trainer</a></li>
+          {% endif %}
+          {% if request.user|has_permission:'view_trainer' %}
+          <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'trainer_salary_list' or request.resolver_match.url_name == 'trainer_payslip' %}active{% endif %}" href="{% url 'trainer_salary_list' %}">Trainer Payroll</a></li>
           {% endif %}
         </ul>
       </div>

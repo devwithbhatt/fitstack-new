@@ -212,18 +212,28 @@
       <div class="kpi-card kpi-warning">
         <div>
           <div class="kpi-header">
-            <span class="kpi-label">Monthly PT Rate</span>
+            <span class="kpi-label">My Salary ({% now 'M Y' %})</span>
             <div class="kpi-icon-wrap kpi-icon-warning">
               <i class="fas fa-rupee-sign"></i>
             </div>
           </div>
-          <div class="kpi-value">&#8377;{{ trainer.personal_training_monthly_amount|default:0|intcomma }}</div>
+          <div class="kpi-value">&#8377;{{ this_month_salary.net_salary|default:trainer.salary|default:0|floatformat:2|intcomma }}</div>
         </div>
         <div class="kpi-meta">
-          <span class="kpi-meta-badge kpi-badge-warning">
-            <i class="fas fa-certificate mr-1"></i> {{ trainer.get_specialization_display|default:'Trainer' }}
-          </span>
-          <span class="kpi-meta-desc">Active Certified</span>
+          {% if this_month_salary.status == 'paid' %}
+            <span class="kpi-meta-badge kpi-badge-success">
+              <i class="fas fa-check-double mr-1"></i> Paid
+            </span>
+          {% elif this_month_salary.status == 'approved' %}
+            <span class="kpi-meta-badge kpi-badge-primary">
+              <i class="fas fa-check mr-1"></i> Approved
+            </span>
+          {% else %}
+            <span class="kpi-meta-badge kpi-badge-warning">
+              <i class="fas fa-calculator mr-1"></i> Calculating
+            </span>
+          {% endif %}
+          <a href="{% url 'trainer_portal:salary' %}" class="kpi-meta-desc text-warning font-weight-bold">View Statement &rarr;</a>
         </div>
       </div>
     </div>
