@@ -145,7 +145,7 @@
                             <th>Reason</th>
                             <th>Status</th>
                             <th>Applied On</th>
-                            <th class="text-center">Actions</th>
+                            <th class="text-center" style="min-width: 175px; width: 175px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -201,31 +201,47 @@
                                 {% endif %}
                             </td>
                             <td><small>{{ leave.created_at|date:"d M Y" }}</small></td>
-                            <td class="text-center">
-                                <div class="btn-group" role="group">
+                            <td class="text-center align-middle" style="white-space: nowrap;">
+                                <div class="d-inline-flex align-items-center justify-content-center" style="gap: 5px;">
                                     {% if leave.status == 'pending' %}
                                         {% if leave.type == 'trainer' %}
                                             <a href="{% url 'attendance:update_leave_status' leave.type leave.id 'approved' %}?is_paid=1" 
-                                               class="btn btn-sm btn-success action-btn" data-action="approve" data-bs-toggle="tooltip" title="Approve as Paid Leave">
-                                                <i class="fas fa-check"></i><small class="d-none d-xl-inline ml-1 font-weight-bold">Paid</small>
+                                               class="btn btn-sm btn-success action-btn shadow-none" data-action="approve" data-bs-toggle="tooltip" title="Approve as Paid Leave"
+                                               style="width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px;">
+                                                <i class="fas fa-check"></i>
                                             </a>
                                             <a href="{% url 'attendance:update_leave_status' leave.type leave.id 'approved' %}?is_paid=0" 
-                                               class="btn btn-sm btn-info action-btn" data-action="approve" data-bs-toggle="tooltip" title="Approve as Unpaid Leave">
-                                                <i class="fas fa-calendar-times"></i><small class="d-none d-xl-inline ml-1 font-weight-bold">Unpaid</small>
+                                               class="btn btn-sm btn-info text-white action-btn shadow-none" data-action="approve" data-bs-toggle="tooltip" title="Approve as Unpaid Leave"
+                                               style="width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px;">
+                                                <i class="fas fa-calendar-times"></i>
                                             </a>
                                         {% else %}
                                             <a href="{% url 'attendance:update_leave_status' leave.type leave.id 'approved' %}" 
-                                               class="btn btn-sm btn-success action-btn" data-action="approve" data-bs-toggle="tooltip" title="Approve">
+                                               class="btn btn-sm btn-success action-btn shadow-none" data-action="approve" data-bs-toggle="tooltip" title="Approve"
+                                               style="width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px;">
                                                 <i class="fas fa-check"></i>
                                             </a>
                                         {% endif %}
                                         <a href="{% url 'attendance:update_leave_status' leave.type leave.id 'rejected' %}" 
-                                           class="btn btn-sm btn-warning action-btn" data-action="reject" data-bs-toggle="tooltip" title="Reject">
+                                           class="btn btn-sm btn-warning text-white action-btn shadow-none" data-action="reject" data-bs-toggle="tooltip" title="Reject"
+                                           style="width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px;">
                                             <i class="fas fa-times"></i>
                                         </a>
                                     {% endif %}
+                                    <button type="button" 
+                                            class="btn btn-sm btn-primary action-btn-edit shadow-none" 
+                                            data-toggle="modal" 
+                                            data-target="#editLeaveModal_{{ leave.type }}_{{ leave.id }}" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#editLeaveModal_{{ leave.type }}_{{ leave.id }}" 
+                                            data-bs-toggle="tooltip"
+                                            title="Edit Leave Details"
+                                            style="width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px;">
+                                        <i class="fas fa-pencil-alt"></i>
+                                    </button>
                                     <a href="{% url 'attendance:delete_leave' leave.type leave.id %}" 
-                                       class="btn btn-sm btn-danger action-btn" data-action="delete" data-bs-toggle="tooltip" title="Delete">
+                                       class="btn btn-sm btn-danger action-btn shadow-none" data-action="delete" data-bs-toggle="tooltip" title="Delete"
+                                       style="width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px;">
                                         <i class="fas fa-trash"></i>
                                     </a>
                                 </div>
@@ -254,6 +270,112 @@
         </div>
     </div>
 </div>
+
+<!-- Edit Leave Modals Container (placed outside card to prevent backdrop/z-index clipping) -->
+<div id="leaveModalsContainer">
+    {% for leave in page_obj %}
+    <div class="modal fade" id="editLeaveModal_{{ leave.type }}_{{ leave.id }}" tabindex="-1" role="dialog" aria-labelledby="editLeaveModalLabel_{{ leave.type }}_{{ leave.id }}" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title font-weight-bold" id="editLeaveModalLabel_{{ leave.type }}_{{ leave.id }}">
+                        <i class="fas fa-edit mr-2 me-2"></i>Edit Leave - {{ leave.person_name }}
+                    </h5>
+                    <button type="button" class="close btn-close text-white" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close" style="background:none; border:none; font-size:1.25rem;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form action="{% url 'attendance:edit_leave' leave.type leave.id %}" method="POST">
+                    {% csrf_token %}
+                    <div class="modal-body text-start" style="text-align: left;">
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold fw-bold">Person</label>
+                            <input type="text" class="form-control" value="{{ leave.person_name }} ({{ leave.person_type }})" disabled readonly>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold fw-bold text-dark">Leave Type <span class="text-danger">*</span></label>
+                            <select name="leave_type" class="form-select form-control" required>
+                                {% if leave.type == 'trainer' %}
+                                    {% for val, label in trainer_leave_types %}
+                                        <option value="{{ val }}" {% if leave.leave_type_raw == val %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                {% else %}
+                                    {% for val, label in member_leave_types %}
+                                        <option value="{{ val }}" {% if leave.leave_type_raw == val %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                {% endif %}
+                            </select>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label font-weight-bold fw-bold text-dark">Start Date <span class="text-danger">*</span></label>
+                                <input type="date" name="start_date" class="form-control" value="{{ leave.start_date_str }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label font-weight-bold fw-bold text-dark">End Date <span class="text-danger">*</span></label>
+                                <input type="date" name="end_date" class="form-control" value="{{ leave.end_date_str }}" required>
+                            </div>
+                        </div>
+
+                        {% if leave.type == 'trainer' %}
+                        <div class="card bg-light border p-2 mb-3">
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" name="is_half_day" id="halfDay_{{ leave.id }}" value="1" {% if leave.is_half_day %}checked{% endif %} onchange="toggleHalfDayOptions('{{ leave.id }}', this.checked)">
+                                <label class="form-check-label font-weight-bold fw-bold text-dark ms-2 ml-2" for="halfDay_{{ leave.id }}">
+                                    Half Day Leave
+                                </label>
+                            </div>
+                            <div id="halfDayPeriodDiv_{{ leave.id }}" style="display: {% if leave.is_half_day %}block{% else %}none{% endif %};">
+                                <label class="form-label font-weight-bold fw-bold text-dark small">Half Day Period</label>
+                                <select name="half_day_period" class="form-select form-control form-control-sm">
+                                    <option value="first_half" {% if leave.half_day_period_raw == 'first_half' %}selected{% endif %}>First Half</option>
+                                    <option value="second_half" {% if leave.half_day_period_raw == 'second_half' %}selected{% endif %}>Second Half</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold fw-bold text-dark">Payment Status</label>
+                            <select name="is_paid" class="form-select form-control">
+                                <option value="1" {% if leave.is_paid %}selected{% endif %}>Paid Leave</option>
+                                <option value="0" {% if not leave.is_paid %}selected{% endif %}>Unpaid Leave</option>
+                            </select>
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold fw-bold text-dark">Status</label>
+                            <select name="status" class="form-select form-control">
+                                <option value="pending" {% if leave.status == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="approved" {% if leave.status == 'approved' %}selected{% endif %}>Approved</option>
+                                <option value="rejected" {% if leave.status == 'rejected' %}selected{% endif %}>Rejected</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold fw-bold text-dark">Reason</label>
+                            <textarea name="reason" rows="2" class="form-control" placeholder="Reason for leave...">{{ leave.reason }}</textarea>
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label font-weight-bold fw-bold text-dark">Admin Notes</label>
+                            <textarea name="admin_notes" rows="2" class="form-control" placeholder="Optional internal notes...">{{ leave.admin_notes }}</textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary font-weight-bold">
+                            <i class="fas fa-save mr-1 me-1"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
 {% endblock content %}
 
 {% block extra_js %}
@@ -271,6 +393,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let debounceTimer = null;
     let abortController = null;
+
+    window.toggleHalfDayOptions = function(id, isChecked) {
+        const el = document.getElementById('halfDayPeriodDiv_' + id);
+        if (el) {
+            el.style.display = isChecked ? 'block' : 'none';
+        }
+    };
 
     function bindActionButtons() {
         // Tooltips
@@ -375,6 +504,11 @@ document.addEventListener('DOMContentLoaded', function () {
             const newPagination = doc.querySelector("#leavePaginationContainer");
             if (newPagination && paginationContainer) {
                 paginationContainer.innerHTML = newPagination.innerHTML;
+            }
+            const newModals = doc.querySelector("#leaveModalsContainer");
+            const modalsContainer = document.getElementById("leaveModalsContainer");
+            if (newModals && modalsContainer) {
+                modalsContainer.innerHTML = newModals.innerHTML;
             }
 
             // Update badge count in card header if present
