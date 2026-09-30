@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 from decimal import Decimal
 from django.test import TestCase, Client
+from unittest.mock import patch, MagicMock
 from django.contrib.auth.models import User
 from django.urls import reverse
 from apps.superadmin.models import Gym, GymAdmin
@@ -123,3 +124,98 @@ class MemberSecurityAndTenantIsolationTests(TestCase):
         url = reverse('reset_member_password', kwargs={'member_id': self.member2.id})
         response = self.client1.post(url, {'new_password': 'HackedPassword!'}, secure=True)
         self.assertEqual(response.status_code, 404)
+
+    @patch('apps.members.views.WhatsAppService')
+    def test_assign_membership_plan_whatsapp_success(self, mock_wa_class):
+        """When plan is assigned/renewed and WhatsApp succeeds, message is sent without warning."""
+        mock_instance = MagicMock()
+        mock_instance.send_membership_plan_details.return_value = {'success': True, 'message_id': 'MSG123'}
+        mock_wa_class.return_value = mock_instance
+
+        url = reverse('assign_membership_plan', kwargs={'member_id': self.member1.id})
+        post_data = {
+            'plan': self.plan1.id,
+            'membership_start_date': date.today().strftime('%Y-%m-%d'),
+            'payment_date': date.today().strftime('%Y-%m-%d'),
+            'registration_fee': '0.00',
+            'add_on_days': 0,
+            'discount': '0.00',
+            'total_amount': '3000.00',
+            'paid_amount': '3000.00',
+            'payment_mode': 'cash',
+        }
+        response = self.client1.post(url, post_data, secure=True, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(mock_instance.send_membership_plan_details.called)
+        
+        # Verify no warning message was issued
+        messages_list = list(response.context['messages'])
+        self.assertFalse(any(m.level_tag == 'warning' for m in messages_list))
+
+    @patch('apps.members.views.WhatsAppService')
+    def test_assign_membership_plan_whatsapp_failure_shows_warning(self, mock_wa_class):
+        """When WhatsApp fails (e.g. Twilio suspended), a visible warning message is displayed."""
+        mock_instance = MagicMock()
+        mock_instance.send_membership_plan_details.return_value = {
+            'success': False,
+            'error': 'authentication failed, account dummy_account_sid with status 4 is not active'
+        }
+        mock_wa_class.return_value = mock_instance
+
+        url = reverse('assign_membership_plan', kwargs={'member_id': self.member1.id})
+        post_data = {
+            'plan': self.plan1.id,
+            'membership_start_date': date.today().strftime('%Y-%m-%d'),
+            'payment_date': date.today().strftime('%Y-%m-%d'),
+            'registration_fee': '0.00',
+            'add_on_days': 0,
+            'discount': '0.00',
+            'total_amount': '3000.00',
+            'paid_amount': '3000.00',
+            'payment_mode': 'cash',
+        }
+        response = self.client1.post(url, post_data, secure=True, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(mock_instance.send_membership_plan_details.called)
+        
+        # Verify warning message was displayed with the error
+        messages_list = list(response.context['messages'])
+        warnings = [m for m in messages_list if m.level_tag == 'warning']
+        self.assertTrue(len(warnings) > 0)
+        self.assertIn('status 4 is not active', str(warnings[0]))
+
+    @patch('apps.members.views.WhatsAppService')
+    def test_upgrade_or_renew_active_plan_triggers_whatsapp(self, mock_wa_class):
+        """When an existing active membership plan is updated/renewed, WhatsApp is now triggered."""
+        mock_instance = MagicMock()
+        mock_instance.send_membership_plan_details.return_value = {'success': True, 'message_id': 'MSG456'}
+        mock_wa_class.return_value = mock_instance
+
+        # Create an existing membership for member1
+        history1 = MembershipHistory.objects.create(
+            gym=self.gym1,
+            member=self.member1,
+            plan=self.plan1,
+            membership_start_date=date.today(),
+            total_amount=Decimal('3000.00'),
+            paid_amount=Decimal('3000.00'),
+            status='active'
+        )
+
+        url = reverse('update_membership_plan', kwargs={'member_id': self.member1.id, 'history_id': history1.id})
+        post_data = {
+            'plan': self.plan1.id,
+            'membership_start_date': date.today().strftime('%Y-%m-%d'),
+            'payment_date': date.today().strftime('%Y-%m-%d'),
+            'registration_fee': '0.00',
+            'add_on_days': 0,
+            'discount': '0.00',
+            'total_amount': '3000.00',
+            'paid_amount': '3000.00',
+            'payment_mode': 'upi',
+        }
+        response = self.client1.post(url, post_data, secure=True, follow=True)
+        self.assertEqual(response.status_code, 200)
+        # Previously this was skipped because history_id was set. Now it MUST be called.
+        self.assertTrue(mock_instance.send_membership_plan_details.called)
+

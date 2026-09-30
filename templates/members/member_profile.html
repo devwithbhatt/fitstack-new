@@ -60,9 +60,19 @@
                     <a href="{% url 'edit_member' member.id %}" class="btn btn-sm btn-secondary mr-2" data-toggle="tooltip" title="Edit Member">
                         <i class="mdi mdi-pencil"></i>
                     </a>
+                    {% if not membership_history %}
                     <a href="{% url 'assign_membership_plan' member.id %}" class="btn btn-sm btn-success mr-2" data-toggle="tooltip" title="Assign Membership Plan">
                         <i class="mdi mdi-file-document-box-plus-outline"></i>
                     </a>
+                    {% elif is_plan_active %}
+                    <a href="{% url 'update_membership_plan' member.id membership_history.id %}" class="btn btn-sm btn-secondary mr-2" data-toggle="tooltip" title="Upgrade Membership Plan">
+                        <i class="mdi mdi-arrow-up-bold-circle-outline"></i>
+                    </a>
+                    {% else %}
+                    <a href="{% url 'assign_membership_plan' member.id %}" class="btn btn-sm btn-success mr-2" data-toggle="tooltip" title="Renew Membership Plan">
+                        <i class="mdi mdi-autorenew"></i>
+                    </a>
+                    {% endif %}
                     <a href="{% url 'assign_pt_trainer' member.id %}" class="btn btn-sm btn-danger mr-2" data-toggle="tooltip" title="Assign Personal Trainer">
                         <i class="mdi mdi-account-plus"></i>
                     </a>
@@ -87,17 +97,6 @@
                         <i class="mdi mdi-key-variant"></i>
                     </button>
                     {% endif %}
-                    {% if membership_history and request.user|has_permission:'change_member' %}
-                        {% if is_plan_active %}
-                            <a href="{% url 'update_membership_plan' member.id membership_history.id %}" class="btn btn-sm btn-secondary mr-2" data-toggle="tooltip" title="Upgrade Membership Plan">
-                                <i class="mdi mdi-arrow-up-bold-circle-outline"></i>
-                            </a>
-                        {% else %}
-                            <a href="{% url 'assign_membership_plan' member.id %}" class="btn btn-sm btn-success mr-2" data-toggle="tooltip" title="Renew Membership Plan">
-                                <i class="mdi mdi-autorenew"></i>
-                            </a>
-                        {% endif %}
-                    {% endif %}
                     {% if request.user|has_permission:'delete_member' %}
                     <button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete('{{ member.id }}', '{{ member.first_name }} {{ member.last_name }}', '{% url 'delete_member' member.id %}', '{% url 'member_list' %}')" data-toggle="tooltip" title="Delete">
                         <i class="mdi mdi-delete-outline"></i>
@@ -115,9 +114,19 @@
                             <a class="dropdown-item py-2 d-flex align-items-center" href="{% url 'edit_member' member.id %}">
                                 <div class="bg-light rounded p-1 mr-3"><i class="mdi mdi-pencil text-secondary"></i></div> Edit Member
                             </a>
+                            {% if not membership_history %}
                             <a class="dropdown-item py-2 d-flex align-items-center" href="{% url 'assign_membership_plan' member.id %}">
                                 <div class="bg-light rounded p-1 mr-3"><i class="mdi mdi-file-document-box-plus-outline text-success"></i></div> Assign Membership Plan
                             </a>
+                            {% elif is_plan_active %}
+                            <a class="dropdown-item py-2 d-flex align-items-center" href="{% url 'update_membership_plan' member.id membership_history.id %}">
+                                <div class="bg-light rounded p-1 mr-3"><i class="mdi mdi-arrow-up-bold-circle-outline text-secondary"></i></div> Upgrade Membership Plan
+                            </a>
+                            {% else %}
+                            <a class="dropdown-item py-2 d-flex align-items-center" href="{% url 'assign_membership_plan' member.id %}">
+                                <div class="bg-light rounded p-1 mr-3"><i class="mdi mdi-autorenew text-success"></i></div> Renew Membership Plan
+                            </a>
+                            {% endif %}
                             <a class="dropdown-item py-2 d-flex align-items-center" href="{% url 'assign_pt_trainer' member.id %}">
                                 <div class="bg-light rounded p-1 mr-3"><i class="mdi mdi-account-plus text-danger"></i></div> Assign Personal Trainer
                             </a>
@@ -136,17 +145,6 @@
                             <a class="dropdown-item py-2 d-flex align-items-center" href="{% url 'billing:pay_due_payment' member.id %}">
                                 <div class="bg-light rounded p-1 mr-3"><i class="mdi mdi-currency-usd text-info"></i></div> Submit Due Payment
                             </a>
-                            {% endif %}
-                            {% if membership_history and request.user|has_permission:'change_member' %}
-                                {% if is_plan_active %}
-                                    <a class="dropdown-item py-2 d-flex align-items-center" href="{% url 'update_membership_plan' member.id membership_history.id %}">
-                                        <div class="bg-light rounded p-1 mr-3"><i class="mdi mdi-arrow-up-bold-circle-outline text-secondary"></i></div> Upgrade Membership Plan
-                                    </a>
-                                {% else %}
-                                    <a class="dropdown-item py-2 d-flex align-items-center" href="{% url 'assign_membership_plan' member.id %}">
-                                        <div class="bg-light rounded p-1 mr-3"><i class="mdi mdi-autorenew text-success"></i></div> Renew Membership Plan
-                                    </a>
-                                {% endif %}
                             {% endif %}
                             {% if request.user|has_permission:'change_member' or request.user.is_superuser or request.user.gymadmin %}
                             <a class="dropdown-item py-2 d-flex align-items-center" href="#" onclick="openResetMemberPasswordModal('{{ member.id }}', '{{ member.name|escapejs }}', '{{ member.mobile_number }}', '{{ member.member_id }}'); return false;">

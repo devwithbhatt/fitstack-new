@@ -602,11 +602,11 @@ def assign_membership_plan(request, member_id, history_id=None):
             success_msg = f'Membership plan "{history.plan.title}" upgraded for {member.name}.' if history_id else f'Membership plan "{history.plan.title}" assigned to {member.name}.'
             messages.success(request, success_msg)
             
-            # Only send WhatsApp if it's a new assignment or important change (optional refinement)
-            if not history_id and gym.whatsapp_enabled:
+            # Send WhatsApp notification on plan assignment / renewal
+            if gym.whatsapp_enabled:
                 try:
                     whatsapp_service = WhatsAppService(gym_id=gym.id)
-                    whatsapp_service.send_membership_plan_details(
+                    wa_res = whatsapp_service.send_membership_plan_details(
                         request=request,
                         to_number=member.mobile_number,
                         name=member.name,
@@ -618,6 +618,8 @@ def assign_membership_plan(request, member_id, history_id=None):
                         gym_contact_number=gym.phone,
                         gym_logo_url=gym.logo.url if gym.logo else None
                     )
+                    if wa_res and not wa_res.get('success'):
+                        messages.warning(request, f"Membership updated successfully, but WhatsApp message failed: {wa_res.get('error')}")
                 except Exception as e:
                     messages.error(request, f"Failed to send WhatsApp message: {e}")
 
