@@ -4,7 +4,8 @@ from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
 from apps.superadmin.models import Gym, GymAdmin
-from apps.members.models import Member, MembershipHistory
+from apps.members.models import Member, MembershipHistory, PersonalTrainer
+from apps.trainers.models import Trainer
 from apps.management.models import MembershipPlan
 from apps.billing.models import Payment
 
@@ -161,3 +162,99 @@ class BillingTenantIsolationAndPaymentTests(TestCase):
         # Confirm paid amount has not changed
         self.history1.refresh_from_db()
         self.assertEqual(self.history1.paid_amount, Decimal('3000.00'))
+
+    def test_submit_due_filter_by_due_type(self):
+        """Verify submit_due filters members correctly according to due_type (membership, pt, both)."""
+        trainer = Trainer.objects.create(
+            gym=self.gym1,
+            name='Test Trainer',
+            phone='9876543210'
+        )
+
+        # member3 has only PT due
+        member3 = Member.objects.create(
+            gym=self.gym1,
+            first_name='PT',
+            last_name='Member',
+            mobile_number='9999900003',
+            email='m3@test.com',
+            gender='Male',
+            date_of_birth=date(1995, 1, 1),
+        )
+        PersonalTrainer.objects.create(
+            gym=self.gym1,
+            member=member3,
+            trainer=trainer,
+            months=1,
+            trainer_fee=Decimal('2000.00'),
+            gym_charges=Decimal('500.00'),
+            pt_start_date=date.today(),
+            total_amount=Decimal('2500.00'),
+            paid_amount=Decimal('1000.00'),
+            status='active'
+        )
+
+        # member4 has both Membership due and PT due
+        member4 = Member.objects.create(
+            gym=self.gym1,
+            first_name='Both',
+            last_name='Member',
+            mobile_number='9999900004',
+            email='m4@test.com',
+            gender='Female',
+            date_of_birth=date(1994, 1, 1),
+        )
+        MembershipHistory.objects.create(
+            gym=self.gym1,
+            member=member4,
+            plan=self.plan1,
+            membership_start_date=date.today(),
+            total_amount=Decimal('5000.00'),
+            paid_amount=Decimal('2000.00'),
+            status='active'
+        )
+        PersonalTrainer.objects.create(
+            gym=self.gym1,
+            member=member4,
+            trainer=trainer,
+            months=1,
+            trainer_fee=Decimal('3000.00'),
+            gym_charges=Decimal('500.00'),
+            pt_start_date=date.today(),
+            total_amount=Decimal('3500.00'),
+            paid_amount=Decimal('1500.00'),
+            status='active'
+        )
+
+        # 1. Default (All Dues): member1, member3, member4 are all present
+        resp_all = self.client1.get(reverse('billing:submit_due'), secure=True)
+        self.assertEqual(resp_all.status_code, 200)
+        ids_all = [m.id for m in resp_all.context['members']]
+        self.assertIn(self.member1.id, ids_all)
+        self.assertIn(member3.id, ids_all)
+        self.assertIn(member4.id, ids_all)
+
+        # 2. Filter Membership Due: member1 and member4 should be included, member3 excluded
+        resp_mem = self.client1.get(reverse('billing:submit_due'), {'due_type': 'membership'}, secure=True)
+        self.assertEqual(resp_mem.status_code, 200)
+        ids_mem = [m.id for m in resp_mem.context['members']]
+        self.assertIn(self.member1.id, ids_mem)
+        self.assertIn(member4.id, ids_mem)
+        self.assertNotIn(member3.id, ids_mem)
+
+        # 3. Filter PT Due: member3 and member4 should be included, member1 excluded
+        resp_pt = self.client1.get(reverse('billing:submit_due'), {'due_type': 'pt'}, secure=True)
+        self.assertEqual(resp_pt.status_code, 200)
+        ids_pt = [m.id for m in resp_pt.context['members']]
+        self.assertIn(member3.id, ids_pt)
+        self.assertIn(member4.id, ids_pt)
+        self.assertNotIn(self.member1.id, ids_pt)
+
+        # 4. Filter Both: only member4 should be included
+        resp_both = self.client1.get(reverse('billing:submit_due'), {'due_type': 'both'}, secure=True)
+        self.assertEqual(resp_both.status_code, 200)
+        ids_both = [m.id for m in resp_both.context['members']]
+        self.assertIn(member4.id, ids_both)
+        self.assertNotIn(self.member1.id, ids_both)
+        self.assertNotIn(member3.id, ids_both)
+

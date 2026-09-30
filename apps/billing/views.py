@@ -79,6 +79,7 @@ def submit_due(request):
     ).filter(Q(membership_due__gt=0) | Q(pt_due__gt=0)).distinct()
 
     query = request.GET.get('q')
+    due_type = request.GET.get('due_type')
     from_date = request.GET.get('from_date')
     to_date = request.GET.get('to_date')
     follow_up_date_filter = request.GET.get('follow_up_date')
@@ -94,6 +95,13 @@ def submit_due(request):
             Q(member_id__icontains=query)
         )
 
+    if due_type in ['membership', 'membership_due']:
+        members_with_due = members_with_due.filter(membership_due__gt=0)
+    elif due_type in ['pt', 'pt_due']:
+        members_with_due = members_with_due.filter(pt_due__gt=0)
+    elif due_type == 'both':
+        members_with_due = members_with_due.filter(membership_due__gt=0, pt_due__gt=0)
+
     if from_date and to_date:
         members_with_due = members_with_due.filter(latest_follow_up_date__range=[from_date, to_date])
     
@@ -108,6 +116,7 @@ def submit_due(request):
     context = {
         'members': members_page,
         'query': query,
+        'due_type': due_type,
         'from_date': from_date,
         'to_date': to_date,
         'follow_up_date': follow_up_date_filter,

@@ -38,7 +38,7 @@
                             <div class="row g-2 g-md-3 align-items-end">
                                 
                                 <!-- 1. Live Search Input -->
-                                <div class="col-xl-4 col-lg-4 col-md-6 col-12">
+                                <div class="col-xl-3 col-lg-3 col-md-6 col-12">
                                     <label for="due_search" class="filter-label">Search Member</label>
                                     <div class="filter-search-wrapper" style="position: relative; display: flex; align-items: center; width: 100%;">
                                         <i class="mdi mdi-magnify filter-search-icon" style="position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: #9ca3af; pointer-events: none; font-size: 17px; line-height: 1; z-index: 4; margin: 0;"></i>
@@ -59,8 +59,23 @@
                                     </div>
                                 </div>
 
-                                <!-- 2. From Date -->
-                                <div class="col-xl-2 col-lg-2 col-md-4 col-6">
+                                <!-- 2. Due Type Select -->
+                                <div class="col-xl-2 col-lg-2 col-md-6 col-12">
+                                    <label for="due_type" class="filter-label">Due Type</label>
+                                    <select
+                                        name="due_type"
+                                        id="due_type"
+                                        class="form-control filter-control"
+                                    >
+                                        <option value="">All Due Types</option>
+                                        <option value="membership" {% if due_type == 'membership' %}selected{% endif %}>Membership Due</option>
+                                        <option value="pt" {% if due_type == 'pt' %}selected{% endif %}>PT Due</option>
+                                        <option value="both" {% if due_type == 'both' %}selected{% endif %}>Both (Membership & PT)</option>
+                                    </select>
+                                </div>
+
+                                <!-- 3. From Date -->
+                                <div class="col-xl-2 col-lg-2 col-md-3 col-6">
                                     <label for="from_date" class="filter-label">From</label>
                                     <input
                                         type="date"
@@ -71,8 +86,8 @@
                                     />
                                 </div>
 
-                                <!-- 3. To Date -->
-                                <div class="col-xl-2 col-lg-2 col-md-4 col-6">
+                                <!-- 4. To Date -->
+                                <div class="col-xl-2 col-lg-2 col-md-3 col-6">
                                     <label for="to_date" class="filter-label">To</label>
                                     <input
                                         type="date"
@@ -83,8 +98,8 @@
                                     />
                                 </div>
 
-                                <!-- 4. Follow Up Date -->
-                                <div class="col-xl-3 col-lg-3 col-md-4 col-6">
+                                <!-- 5. Follow Up Date -->
+                                <div class="col-xl-2 col-lg-2 col-md-3 col-6">
                                     <label for="follow_up_date" class="filter-label">Follow Up Date</label>
                                     <input
                                         type="date"
@@ -95,8 +110,8 @@
                                     />
                                 </div>
 
-                                <!-- 5. Reset / Reload Button -->
-                                <div class="col-xl-1 col-lg-1 col-md-4 col-12">
+                                <!-- 6. Reset / Reload Button -->
+                                <div class="col-xl-1 col-lg-1 col-md-3 col-6">
                                     <button type="button" class="btn btn-secondary w-100 filter-control filter-reset-btn" id="resetDueFilterBtn" title="Reset all filters">
                                         <i class="mdi mdi-reload font-weight-bold"></i>
                                     </button>
@@ -253,6 +268,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById("due_search");
     const clearSearchBtn = document.getElementById("clearDueSearchBtn");
     const searchSpinner = document.getElementById("dueSearchSpinner");
+    const dueTypeSelect = document.getElementById("due_type");
     const fromDateInput = document.getElementById("from_date");
     const toDateInput = document.getElementById("to_date");
     const followUpInput = document.getElementById("follow_up_date");
@@ -274,11 +290,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const params = new URLSearchParams();
 
         const qVal = (searchInput?.value || "").trim();
+        const dueTypeVal = dueTypeSelect?.value || "";
         const fromVal = fromDateInput?.value || "";
         const toVal = toDateInput?.value || "";
         const followVal = followUpInput?.value || "";
 
         if (qVal) params.set("q", qVal);
+        if (dueTypeVal) params.set("due_type", dueTypeVal);
         if (fromVal) params.set("from_date", fromVal);
         if (toVal) params.set("to_date", toVal);
         if (followVal) params.set("follow_up_date", followVal);
@@ -359,6 +377,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    if (dueTypeSelect) {
+        dueTypeSelect.addEventListener("change", function() {
+            triggerAutoFilter(0);
+        });
+    }
+
     if (fromDateInput) {
         fromDateInput.addEventListener("change", function() {
             triggerAutoFilter(0);
@@ -380,6 +404,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (resetBtn) {
         resetBtn.addEventListener("click", function() {
             if (searchInput) searchInput.value = "";
+            if (dueTypeSelect) dueTypeSelect.value = "";
             if (fromDateInput) fromDateInput.value = "";
             if (toDateInput) toDateInput.value = "";
             if (followUpInput) followUpInput.value = "";
