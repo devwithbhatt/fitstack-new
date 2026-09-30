@@ -60,18 +60,19 @@ def add_new_enquiry(request):
                         gym_contact_number=gym.phone if gym else "N/A",
                         gym_logo_url=logo_url
                     )
+                    msg_text = 'Enquiry added successfully.'
                     if result.get('success'):
-                        messages.success(request, 'Enquiry added and confirmation sent!')
+                        messages.success(request, msg_text, extra_tags='whatsapp_success')
                     else:
                         # Log the detailed error for debugging
                         error_details = result.get('error', 'Unknown error')
                         logger.error(f"WhatsApp API failed for enquiry {enquiry.id}: {error_details}")
-                        messages.warning(request, "Enquiry added, but the confirmation message could not be sent.")
+                        messages.warning(request, msg_text, extra_tags='whatsapp_warning')
                 except Exception as e:
                     logger.error(f"An unexpected error occurred sending WhatsApp confirmation for enquiry {enquiry.id}: {e}")
-                    messages.error(request, "Enquiry added, but an unexpected error occurred while sending the confirmation.")
+                    messages.warning(request, 'Enquiry added successfully.', extra_tags='whatsapp_warning')
             else:
-                messages.success(request, 'Enquiry added successfully!')
+                messages.warning(request, 'Enquiry added successfully.', extra_tags='whatsapp_warning')
             
             return redirect('enquiry_list')
     else:

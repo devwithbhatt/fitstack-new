@@ -148,9 +148,10 @@ class MemberSecurityAndTenantIsolationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(mock_instance.send_membership_plan_details.called)
         
-        # Verify no warning message was issued
+        # Verify whatsapp_success tag was issued
         messages_list = list(response.context['messages'])
         self.assertFalse(any(m.level_tag == 'warning' for m in messages_list))
+        self.assertTrue(any('whatsapp_success' in m.tags for m in messages_list))
 
     @patch('apps.members.views.WhatsAppService')
     def test_assign_membership_plan_whatsapp_failure_shows_warning(self, mock_wa_class):
@@ -182,7 +183,8 @@ class MemberSecurityAndTenantIsolationTests(TestCase):
         messages_list = list(response.context['messages'])
         warnings = [m for m in messages_list if m.level_tag == 'warning']
         self.assertTrue(len(warnings) > 0)
-        self.assertIn('status 4 is not active', str(warnings[0]))
+        self.assertIn('successfully', str(warnings[0]))
+        self.assertIn('whatsapp_warning', warnings[0].tags)
 
     @patch('apps.members.views.WhatsAppService')
     def test_upgrade_or_renew_active_plan_triggers_whatsapp(self, mock_wa_class):

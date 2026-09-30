@@ -599,9 +599,7 @@ def assign_membership_plan(request, member_id, history_id=None):
             except Exception as notif_err:
                 pass
 
-            success_msg = f'Membership plan "{history.plan.title}" upgraded for {member.name}.' if history_id else f'Membership plan "{history.plan.title}" assigned to {member.name}.'
-            messages.success(request, success_msg)
-            
+            action_text = "upgraded" if history_id else "assigned"
             # Send WhatsApp notification on plan assignment / renewal
             if gym.whatsapp_enabled:
                 try:
@@ -618,10 +616,16 @@ def assign_membership_plan(request, member_id, history_id=None):
                         gym_contact_number=gym.phone,
                         gym_logo_url=gym.logo.url if gym.logo else None
                     )
-                    if wa_res and not wa_res.get('success'):
-                        messages.warning(request, f"Membership updated successfully, but WhatsApp message failed: {wa_res.get('error')}")
-                except Exception as e:
-                    messages.error(request, f"Failed to send WhatsApp message: {e}")
+                    msg_text = f'Membership plan "{history.plan.title}" {action_text} successfully.'
+                    if wa_res and wa_res.get('success'):
+                        messages.success(request, msg_text, extra_tags='whatsapp_success')
+                    else:
+                        messages.warning(request, msg_text, extra_tags='whatsapp_warning')
+                except Exception:
+                    messages.warning(request, msg_text, extra_tags='whatsapp_warning')
+            else:
+                msg_text = f'Membership plan "{history.plan.title}" {action_text} successfully.'
+                messages.warning(request, msg_text, extra_tags='whatsapp_warning')
 
             return redirect('billing:invoice', member_id=member.id, history_id=history.id)
     else:
@@ -790,11 +794,19 @@ def assign_diet_plan(request, member_id):
                     )
                     
                     whatsapp_service = WhatsAppService(gym_id=gym.id)
-                    whatsapp_service.send_message(to_number=member.mobile_number, message=whatsapp_msg)
-                except Exception as e:
-                    messages.warning(request, f'Diet plan assigned, but failed to send WhatsApp message: {e}')
+                    wa_res = whatsapp_service.send_message(to_number=member.mobile_number, message=whatsapp_msg)
+                    msg_text = f'Diet plan assigned to {member.name} successfully.'
+                    if wa_res and wa_res.get('success'):
+                        messages.success(request, msg_text, extra_tags='whatsapp_success')
+                    else:
+                        messages.warning(request, msg_text, extra_tags='whatsapp_warning')
+                except Exception:
+                    msg_text = f'Diet plan assigned to {member.name} successfully.'
+                    messages.warning(request, msg_text, extra_tags='whatsapp_warning')
+            else:
+                msg_text = f'Diet plan assigned to {member.name} successfully.'
+                messages.warning(request, msg_text, extra_tags='whatsapp_warning')
             
-            messages.success(request, f'Diet plan assigned to {member.name}.')
             return redirect('member_profile', member_id=member.id)
     else:
         form = AssignDietPlanForm(gym=gym)
@@ -834,11 +846,19 @@ def assign_workout_plan(request, member_id):
                     )
                     
                     whatsapp_service = WhatsAppService(gym_id=gym.id)
-                    whatsapp_service.send_message(to_number=member.mobile_number, message=whatsapp_msg)
-                except Exception as e:
-                    messages.warning(request, f'Workout plan assigned, but failed to send WhatsApp message: {e}')
-                
-            messages.success(request, f'Workout plan assigned to {member.name}.')
+                    wa_res = whatsapp_service.send_message(to_number=member.mobile_number, message=whatsapp_msg)
+                    msg_text = f'Workout plan assigned to {member.name} successfully.'
+                    if wa_res and wa_res.get('success'):
+                        messages.success(request, msg_text, extra_tags='whatsapp_success')
+                    else:
+                        messages.warning(request, msg_text, extra_tags='whatsapp_warning')
+                except Exception:
+                    msg_text = f'Workout plan assigned to {member.name} successfully.'
+                    messages.warning(request, msg_text, extra_tags='whatsapp_warning')
+            else:
+                msg_text = f'Workout plan assigned to {member.name} successfully.'
+                messages.warning(request, msg_text, extra_tags='whatsapp_warning')
+            
             return redirect('member_profile', member_id=member.id)
     else:
         form = AssignWorkoutPlanForm(gym=gym)

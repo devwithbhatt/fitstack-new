@@ -174,14 +174,12 @@ def pay_due_payment(request, member_id):
                 except Exception as notif_err:
                     logger.error(f"Failed to dispatch payment notification: {notif_err}")
 
-                messages.success(request, 'Payment submitted successfully.')
-
-                if gym.whatsapp_enabled:
+                if gym and gym.whatsapp_enabled:
                     try:
                         whatsapp_service = WhatsAppService(gym_id=gym.id)
                         plan_name = invoice.plan.title if invoice_type == 'membership' else "Personal Training"
                         
-                        whatsapp_service.send_due_payment_received(
+                        wa_res = whatsapp_service.send_due_payment_received(
                             request=request,
                             to_number=member.mobile_number,
                             name=member.name,
@@ -193,9 +191,16 @@ def pay_due_payment(request, member_id):
                             gym_contact_number=gym.phone,
                             gym_logo_url=gym.logo.url if gym.logo else None
                         )
+                        msg_text = 'Payment submitted successfully.'
+                        if wa_res and wa_res.get('success'):
+                            messages.success(request, msg_text, extra_tags='whatsapp_success')
+                        else:
+                            messages.warning(request, msg_text, extra_tags='whatsapp_warning')
                     except Exception as e:
                         logger.error(f"WhatsApp Error: {e}")
-                        messages.error(request, f"Failed to send WhatsApp notification: {e}")
+                        messages.warning(request, 'Payment submitted successfully.', extra_tags='whatsapp_warning')
+                else:
+                    messages.warning(request, 'Payment submitted successfully.', extra_tags='whatsapp_warning')
 
                 if invoice_type == 'pt':
                     return redirect('billing:pt_invoice', member_id=member.id, pt_invoice_id=invoice.id)
@@ -239,8 +244,6 @@ def update_follow_up(request, member_id):
                 MembershipHistory.objects.filter(member=member, status='active', is_deleted=False, gym=gym).exclude(paid_amount=F('total_amount')).update(follow_up_date=follow_up_date)
                 PersonalTrainer.objects.filter(member=member, status='active', is_deleted=False, gym=gym).exclude(paid_amount=F('total_amount')).update(follow_up_date=follow_up_date)
 
-                messages.success(request, f"Follow-up date for {member.first_name} {member.last_name} has been updated.")
-
                 # Calculate total due for the member
                 from django.db.models import Sum, F as F_expr
                 membership_due = MembershipHistory.objects.filter(
@@ -264,10 +267,10 @@ def update_follow_up(request, member_id):
                 follow_up_date_formatted = follow_up_date.strftime('%d-%m-%Y')
 
                 # Send WhatsApp follow-up reminder
-                if gym.whatsapp_enabled:
+                if gym and gym.whatsapp_enabled:
                     try:
                         whatsapp_service = WhatsAppService(gym_id=gym.id)
-                        whatsapp_service.send_due_follow_up_reminder(
+                        wa_res = whatsapp_service.send_due_follow_up_reminder(
                             request=request,
                             to_number=member.mobile_number,
                             name=member.name,
@@ -279,8 +282,18 @@ def update_follow_up(request, member_id):
                             gym_contact_number=gym.phone,
                             gym_logo_url=gym.logo.url if gym.logo else "/static/images/logo.jpg"
                         )
+                        msg_text = f"Follow-up date for {member.first_name} {member.last_name} updated successfully."
+                        if wa_res and wa_res.get('success'):
+                            messages.success(request, msg_text, extra_tags='whatsapp_success')
+                        else:
+                            messages.warning(request, msg_text, extra_tags='whatsapp_warning')
                     except Exception as e:
                         logger.error(f"WhatsApp follow-up reminder error: {e}")
+                        msg_text = f"Follow-up date for {member.first_name} {member.last_name} updated successfully."
+                        messages.warning(request, msg_text, extra_tags='whatsapp_warning')
+                else:
+                    msg_text = f"Follow-up date for {member.first_name} {member.last_name} updated successfully."
+                    messages.warning(request, msg_text, extra_tags='whatsapp_warning')
 
             except (ValueError, TypeError):
                 messages.error(request, "Invalid date format.")
