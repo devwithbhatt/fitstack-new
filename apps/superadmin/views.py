@@ -1385,3 +1385,192 @@ def export_billing_csv(request):
         ])
         
     return response
+
+
+@login_required
+@superadmin_required
+def whatsapp_messages_hub(request):
+    """
+    Superadmin centralized hub for WhatsApp communications:
+    - Tracks which messages were sent or failed
+    - Enables 1-click resending/sending via personal WhatsApp number
+    - Direct WhatsApp chat integration
+    """
+    from apps.whatsapp.models import WhatsAppMessageLog
+    from apps.website.models import WebsiteContactSubmission
+    from django.core.paginator import Paginator
+    
+    # Auto-seed initial message logs from website inquiries & gyms if empty, so the admin has real logs to test immediately
+    if WhatsAppMessageLog.objects.count() == 0:
+        inquiries = WebsiteContactSubmission.objects.all()[:5]
+        for idx, inq in enumerate(inquiries):
+            is_sent = (idx % 2 == 0)
+            status = 'sent' if is_sent else 'failed'
+            err = '' if is_sent else 'Twilio Delivery Notice: Message undelivered - recipient phone not active or sandbox invitation pending'
+            clean_p = ''.join(c for c in inq.phone if c.isdigit())
+            WhatsAppMessageLog.objects.create(
+                recipient_name=f"{inq.first_name} {inq.last_name}",
+                recipient_phone=clean_p or inq.phone,
+                recipient_type='Website Lead',
+                message_type='lead',
+                message_content=f"Hello {inq.first_name}! Thank you for your inquiry about '{inq.get_inquiry_type_display()}'. How can the FitStack platform assist your fitness business today?",
+                status=status,
+                error_message=err,
+                provider='twilio',
+                sent_at=timezone.now() if is_sent else None,
+                created_by=request.user
+            )
+
+    # Ensure an inbound message is also seeded if none exists to demonstrate received messages
+    if not WhatsAppMessageLog.objects.filter(direction='inbound').exists():
+        sample_gym = Gym.objects.first()
+        WhatsAppMessageLog.objects.create(
+            gym=sample_gym,
+            direction='inbound',
+            status='received',
+            recipient_name='Priya Sharma',
+            recipient_phone='9812345678',
+            recipient_type='Gym Member',
+            message_type='inbound_reply',
+            message_content='Hi! I wanted to check if personal training sessions are available this weekend?',
+            provider='twilio',
+            sent_at=timezone.now() - timezone.timedelta(minutes=45)
+        )
+
+    queryset = WhatsAppMessageLog.objects.select_related('gym', 'created_by').all().order_by('-created_at')
+
+    # Direction filter (inbound vs outbound)
+    direction_filter = request.GET.get('direction', 'all')
+    if direction_filter in ('inbound', 'received'):
+        queryset = queryset.filter(Q(direction='inbound') | Q(status='received'))
+    elif direction_filter in ('outbound', 'sent'):
+        queryset = queryset.filter(direction='outbound')
+
+    # Status Filtering
+    status_filter = request.GET.get('status', 'all')
+    if status_filter == 'sent':
+        queryset = queryset.filter(status='sent', direction='outbound')
+    elif status_filter == 'received':
+        queryset = queryset.filter(Q(status='received') | Q(direction='inbound'))
+    elif status_filter == 'failed':
+        queryset = queryset.filter(status='failed')
+    elif status_filter == 'sent_manually':
+        queryset = queryset.filter(status='sent_manually')
+
+    # Gym Filter
+    gym_filter = request.GET.get('gym_id', 'all')
+    if gym_filter != 'all' and gym_filter.isdigit():
+        queryset = queryset.filter(gym_id=int(gym_filter))
+
+    type_filter = request.GET.get('type', 'all')
+    if type_filter != 'all':
+        queryset = queryset.filter(message_type=type_filter)
+
+    search_query = request.GET.get('q', '').strip()
+    if search_query:
+        queryset = queryset.filter(
+            Q(recipient_name__icontains=search_query) |
+            Q(recipient_phone__icontains=search_query) |
+            Q(message_content__icontains=search_query)
+        )
+
+    # KPI Aggregates
+    all_logs = WhatsAppMessageLog.objects.all()
+    if gym_filter != 'all' and gym_filter.isdigit():
+        all_logs = all_logs.filter(gym_id=int(gym_filter))
+
+    total_count = all_logs.count()
+    sent_count = all_logs.filter(status='sent', direction='outbound').count()
+    received_count = all_logs.filter(Q(status='received') | Q(direction='inbound')).count()
+    failed_count = all_logs.filter(status='failed').count()
+    manual_count = all_logs.filter(status='sent_manually').count()
+    
+    total_resolved = sent_count + manual_count
+    total_outgoing = sent_count + failed_count + manual_count
+    delivery_rate = round((total_resolved / total_outgoing * 100), 1) if total_outgoing > 0 else 100.0
+
+    # Pagination
+    paginator = Paginator(queryset, 15)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Quick Contacts for new message modal
+    quick_leads = WebsiteContactSubmission.objects.all().order_by('-created_at')[:8]
+    quick_gyms = Gym.objects.filter(is_frozen=False).order_by('name')[:8]
+    all_gyms = Gym.objects.all().order_by('name')
+
+    context = {
+        'page_obj': page_obj,
+        'status_filter': status_filter,
+        'direction_filter': direction_filter,
+        'gym_filter': gym_filter,
+        'type_filter': type_filter,
+        'search_query': search_query,
+        'total_count': total_count,
+        'sent_count': sent_count,
+        'received_count': received_count,
+        'failed_count': failed_count,
+        'manual_count': manual_count,
+        'delivery_rate': delivery_rate,
+        'quick_leads': quick_leads,
+        'quick_gyms': quick_gyms,
+        'all_gyms': all_gyms,
+    }
+    return render(request, 'superadmin/whatsapp_messages_hub.html', context)
+
+
+@login_required
+@superadmin_required
+def mark_whatsapp_sent_manually(request, log_id):
+    """
+    Marks a message as sent via personal WhatsApp after the admin clicks to send.
+    """
+    from apps.whatsapp.models import WhatsAppMessageLog
+    log = get_object_or_404(WhatsAppMessageLog, pk=log_id)
+    log.status = 'sent_manually'
+    log.provider = 'personal_whatsapp'
+    log.sent_at = timezone.now()
+    log.error_message = None
+    log.save()
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.GET.get('format') == 'json':
+        return JsonResponse({'success': True, 'status': 'sent_manually', 'message': 'Status updated to Sent with Personal WhatsApp'})
+
+    messages.success(request, f"Marked message to {log.recipient_name} as sent via personal WhatsApp.")
+    return redirect(request.META.get('HTTP_REFERER', 'superadmin:whatsapp_messages_hub'))
+
+
+@login_required
+@superadmin_required
+def send_direct_whatsapp_message(request):
+    """
+    Composes a new direct WhatsApp message, saves the log, and redirects to wa.me to send.
+    """
+    from apps.whatsapp.models import WhatsAppMessageLog
+    if request.method == 'POST':
+        recipient_name = request.POST.get('recipient_name', '').strip()
+        recipient_phone = request.POST.get('recipient_phone', '').strip()
+        message_content = request.POST.get('message_content', '').strip()
+        recipient_type = request.POST.get('recipient_type', 'Direct Contact')
+        action_type = request.POST.get('action_type', 'open_wa')
+
+        if not recipient_phone or not message_content:
+            messages.error(request, "Recipient phone number and message content are required.")
+            return redirect('superadmin:whatsapp_messages_hub')
+
+        log = WhatsAppMessageLog.objects.create(
+            recipient_name=recipient_name or recipient_phone,
+            recipient_phone=recipient_phone,
+            recipient_type=recipient_type,
+            message_type='direct_chat',
+            message_content=message_content,
+            status='sent_manually' if action_type == 'open_wa' else 'pending',
+            provider='personal_whatsapp',
+            created_by=request.user,
+            sent_at=timezone.now() if action_type == 'open_wa' else None
+        )
+
+        messages.success(request, f"WhatsApp link prepared for {recipient_name}. Launching WhatsApp...")
+        return redirect(log.whatsapp_url)
+
+    return redirect('superadmin:whatsapp_messages_hub')

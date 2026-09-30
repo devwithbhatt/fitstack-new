@@ -271,4 +271,54 @@ class SuperadminSecurityAndBillingTests(TestCase):
         self.assertContains(response_superadmin, 'Created by Superadmin')
         self.assertContains(response_superadmin, 'Superadmin')
 
+    def test_whatsapp_messages_hub_and_personal_sending(self):
+        from apps.whatsapp.models import WhatsAppMessageLog
+
+        self.client.login(username='superadmin_test', password='testpassword123')
+        session = self.client.session
+        session['role'] = 'superadmin'
+        session.save()
+
+        # 1. Access WhatsApp messages hub
+        url = reverse('superadmin:whatsapp_messages_hub')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'WhatsApp Message Logs & Direct Chat')
+
+        # Create a failed WhatsApp message log
+        failed_log = WhatsAppMessageLog.objects.create(
+            recipient_name='Test Lead Alex',
+            recipient_phone='9876543210',
+            recipient_type='Website Lead',
+            message_type='lead',
+            message_content='Hello Alex, welcome to FitStack!',
+            status='failed',
+            error_message='Twilio sandbox unreachable'
+        )
+
+        # 2. Access with status filter
+        response_failed = self.client.get(f"{url}?status=failed")
+        self.assertEqual(response_failed.status_code, 200)
+        self.assertContains(response_failed, 'Send with Personal No.')
+        self.assertContains(response_failed, 'Test Lead Alex')
+
+        # 3. Mark sent manually
+        mark_url = reverse('superadmin:mark_whatsapp_sent_manually', args=[failed_log.id])
+        resp_mark = self.client.get(f"{mark_url}?format=json", HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(resp_mark.status_code, 200)
+        failed_log.refresh_from_db()
+        self.assertEqual(failed_log.status, 'sent_manually')
+
+        # 4. Direct send endpoint creates log and redirects to wa.me
+        direct_url = reverse('superadmin:send_direct_whatsapp_message')
+        resp_direct = self.client.post(direct_url, {
+            'recipient_name': 'Direct Member Sara',
+            'recipient_phone': '9123456789',
+            'message_content': 'Hi Sara, checking in on your workout!',
+            'action_type': 'open_wa'
+        })
+        self.assertEqual(resp_direct.status_code, 302)
+        self.assertTrue('wa.me' in resp_direct.url)
+        self.assertTrue(WhatsAppMessageLog.objects.filter(recipient_name='Direct Member Sara').exists())
+
 

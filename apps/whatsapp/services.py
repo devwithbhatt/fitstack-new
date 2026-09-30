@@ -81,6 +81,43 @@ class WhatsAppService:
         self.twilio = TwilioWhatsAppService(gym_id=gym_id)
         self.gym_id = gym_id
         logger.info(f"🔧 WhatsApp Service Initialized with Twilio backend for gym: {gym_id}")
+
+    def _log_message(self, recipient_name, recipient_phone, message_content, message_type, result, gym=None, recipient_type="Contact", created_by=None):
+        """Records WhatsApp message status into WhatsAppMessageLog for tracking and personal WhatsApp actions"""
+        try:
+            from apps.whatsapp.models import WhatsAppMessageLog
+            from django.utils import timezone
+            
+            is_success = bool(result and result.get('success'))
+            status = 'sent' if is_success else 'failed'
+            error_msg = result.get('error') if (result and not is_success) else ''
+            msg_id = result.get('message_id') if result else None
+            
+            gym_obj = gym
+            if not gym_obj and self.gym_id:
+                try:
+                    from apps.superadmin.models import Gym
+                    gym_obj = Gym.objects.filter(pk=self.gym_id).first()
+                except Exception:
+                    pass
+
+            return WhatsAppMessageLog.objects.create(
+                gym=gym_obj,
+                recipient_name=recipient_name or 'Recipient',
+                recipient_phone=recipient_phone or '',
+                recipient_type=recipient_type,
+                message_type=message_type,
+                message_content=message_content or '',
+                status=status,
+                error_message=error_msg,
+                provider='twilio',
+                provider_message_id=msg_id,
+                sent_at=timezone.now() if status == 'sent' else None,
+                created_by=created_by
+            )
+        except Exception as e:
+            logger.error(f"Failed to log WhatsApp message: {e}")
+            return None
     
     def _get_absolute_media_url(self, request, media_url):
         """
@@ -209,7 +246,9 @@ class WhatsAppService:
         """
         if not self.twilio.client:
             logger.error("❌ Twilio client not initialized")
-            return {'success': False, 'error': 'Twilio client not initialized'}
+            res = {'success': False, 'error': 'Twilio client not initialized'}
+            self._log_message(recipient_name=to_number, recipient_phone=to_number, message_content=message, message_type='custom', result=res)
+            return res
 
         to_formatted = self.twilio.format_phone_number(to_number)
         try:
@@ -219,10 +258,14 @@ class WhatsAppService:
                 body=message
             )
             logger.info(f"✅ Direct message sent: {msg.sid}")
-            return {'success': True, 'message_id': msg.sid}
+            res = {'success': True, 'message_id': msg.sid}
+            self._log_message(recipient_name=to_number, recipient_phone=to_number, message_content=message, message_type='custom', result=res)
+            return res
         except Exception as e:
             logger.error(f"❌ Error sending direct message: {e}")
-            return {'success': False, 'error': str(e)}
+            res = {'success': False, 'error': str(e)}
+            self._log_message(recipient_name=to_number, recipient_phone=to_number, message_content=message, message_type='custom', result=res)
+            return res
 
     def send_enquiry_confirmation(self, request, to_number, name, gym_name, gym_contact_number, gym_logo_url=None):
         """
@@ -243,13 +286,23 @@ class WhatsAppService:
         if full_logo_url:
             logger.debug(f"🖼️ Using public logo URL for Twilio: {full_logo_url}")
             
-        return self.twilio.send_enquiry_confirmation(
+        res = self.twilio.send_enquiry_confirmation(
             to_number=to_number, 
             name=name,
             gym_name=gym_name,
             gym_contact_number=gym_contact_number,
             logo_url=full_logo_url
         )
+        msg_text = f"Hi {name}, thank you for your enquiry with {gym_name}! We look forward to assisting you on your fitness journey. Contact us anytime at {gym_contact_number or ''}."
+        self._log_message(
+            recipient_name=name,
+            recipient_phone=to_number,
+            message_content=msg_text,
+            message_type='enquiry',
+            result=res,
+            recipient_type='Lead/Enquiry'
+        )
+        return res
 
     def send_membership_plan_details(self, request, to_number, name, gym_name, plan_name, amount_paid, balance, expiry_date, gym_contact_number, gym_logo_url=None):
         """
@@ -296,31 +349,19 @@ class WhatsAppService:
         
         logger.info(f"📨 Sending membership plan details to {to_number} for {name}")
         
-        return self.twilio.send_template_message(
+        res = self.twilio.send_template_message(
             to_number=to_number,
             content_sid=membership_sid,
             content_variables=variables,
             media_url=full_logo_url
         )
+        msg_text = f"Hi {name}, your membership plan '{plan_name}' has been activated at {gym_name}. Paid: ₹{amount_paid}, Balance Due: ₹{balance}, Expiry: {expiry_date}."
+        self._log_message(recipient_name=name, recipient_phone=to_number, message_content=msg_text, message_type='welcome', result=res, recipient_type='Gym Member')
+        return res
 
     def send_due_payment_received(self, request, to_number, name, amount_received, payment_date, due_balance, gym_name, plan_name="Plan", gym_contact_number=None, gym_logo_url=None):
         """
         Maps existing payment received call to Twilio with 8-variable structure.
-        
-        Args:
-            request: Django request object
-            to_number (str): Recipient phone number
-            name (str): Customer name
-            amount_received (str): Amount received
-            payment_date (str): Payment date
-            due_balance (str): Remaining due balance
-            gym_name (str): Gym name
-            plan_name (str): Plan/Trainer name
-            gym_contact_number (str): Gym contact number
-            gym_logo_url (str): URL for gym logo (optional)
-            
-        Returns:
-            dict: Response from Twilio
         """
         payment_sid = getattr(settings, 'TWILIO_DUE_PAYMENT_SID', None)
         
@@ -336,8 +377,6 @@ class WhatsAppService:
         if full_logo_url:
             logger.debug(f"🖼️ Using public logo URL for Twilio: {full_logo_url}")
 
-        # Variables for SID: HX2647f92add9b39226998795a977a5da6
-        # 1:Name, 2:Plan, 3:Amount, 4:Date, 5:Balance, 6:Gym, 7:Contact, 8:Logo
         variables = {
             "1": name,
             "2": plan_name,
@@ -351,12 +390,15 @@ class WhatsAppService:
         
         logger.info(f"📨 Sending payment confirmation to {to_number} for {name}, amount: {amount_received}")
         
-        return self.twilio.send_template_message(
+        res = self.twilio.send_template_message(
             to_number=to_number,
             content_sid=payment_sid,
             content_variables=variables,
             media_url=full_logo_url
         )
+        msg_text = f"Dear {name}, received payment of ₹{amount_received} on {payment_date} for {gym_name} ({plan_name}). Pending Balance: ₹{due_balance}."
+        self._log_message(recipient_name=name, recipient_phone=to_number, message_content=msg_text, message_type='renewal', result=res, recipient_type='Gym Member')
+        return res
 
     def send_test_message(self, phone_number, message):
         """Alias for send_message to maintain compatibility"""
@@ -386,19 +428,19 @@ class WhatsAppService:
         
         logger.info(f"📨 Sending membership expiry notification to {to_number} for {name}")
         
-        return self.twilio.send_template_message(
+        res = self.twilio.send_template_message(
             to_number=to_number,
             content_sid=expiry_sid,
             content_variables=variables,
             media_url=full_logo_url
         )
+        msg_text = f"Dear {name}, your membership plan '{plan_name}' at {gym_name} expired on {expiry_date}."
+        self._log_message(recipient_name=name, recipient_phone=to_number, message_content=msg_text, message_type='reminder', result=res, recipient_type='Gym Member')
+        return res
 
     def send_membership_expiring_soon(self, request, to_number, name, plan_name, expiry_date, gym_name, gym_contact_number, gym_logo_url=None):
         """
         Sends a membership expiring soon notification via Twilio.
-        
-        Args:
-            1:name, 2:plan, 3:expiry_date, 4:gym_name, 5:contact, 6:media
         """
         soon_sid = getattr(settings, 'TWILIO_MEMBERSHIP_EXPIRING_SOON_SID', None)
         
@@ -419,19 +461,19 @@ class WhatsAppService:
         
         logger.info(f"📨 Sending membership expiring soon notice to {to_number} for {name}")
         
-        return self.twilio.send_template_message(
+        res = self.twilio.send_template_message(
             to_number=to_number,
             content_sid=soon_sid,
             content_variables=variables,
             media_url=full_logo_url
         )
+        msg_text = f"Dear {name}, your membership plan '{plan_name}' at {gym_name} is expiring soon on {expiry_date}."
+        self._log_message(recipient_name=name, recipient_phone=to_number, message_content=msg_text, message_type='reminder', result=res, recipient_type='Gym Member')
+        return res
 
     def send_birthday_wishes(self, request, to_number, name, gym_name, gym_contact_number=None, gym_logo_url=None):
         """
         Sends birthday wishes notification via Twilio.
-        
-        New Template (SID: HX0311a3e1b155aa9f1781951a71ee1b98):
-        1: name, 2: gym_name
         """
         birthday_sid = getattr(settings, 'TWILIO_BIRTHDAY_WISHES_SID', None)
         
@@ -439,7 +481,6 @@ class WhatsAppService:
             logger.error("❌ TWILIO_BIRTHDAY_WISHES_SID not configured in settings")
             return {'success': False, 'error': 'Birthday wishes template SID not configured'}
         
-        # Variables: 1:name, 2:gym_name
         variables = {
             "1": str(name),
             "2": str(gym_name)
@@ -447,11 +488,14 @@ class WhatsAppService:
         
         logger.info(f"📨 Sending birthday wishes to {to_number} for {name}")
         
-        return self.twilio.send_template_message(
+        res = self.twilio.send_template_message(
             to_number=to_number,
             content_sid=birthday_sid,
             content_variables=variables
         )
+        msg_text = f"Wishing you a very Happy Birthday {name}! From all of us at {gym_name}!"
+        self._log_message(recipient_name=name, recipient_phone=to_number, message_content=msg_text, message_type='custom', result=res, recipient_type='Gym Member')
+        return res
 
     def send_due_follow_up_reminder(self, request, to_number, name, plan_name, total_amount, last_payment_date, pending_due, gym_name, gym_contact_number, gym_logo_url=None):
         """

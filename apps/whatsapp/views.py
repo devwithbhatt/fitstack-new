@@ -16,26 +16,84 @@ logger = logging.getLogger('apps.whatsapp')
 class TwilioWebhook(View):
     """
     Handles incoming webhook events from Twilio WhatsApp.
+    Captures incoming messages from gym members/leads and records them as received messages.
     """
     def post(self, request):
-        # Twilio sends data as Form Data, not JSON
+        from django.utils import timezone
+        from apps.whatsapp.models import WhatsAppMessageLog
+        from apps.members.models import Member
+        from apps.enquiry.models import Enquiry
+        from apps.website.models import WebsiteContactSubmission
+        from apps.superadmin.models import Gym
+
         data = request.POST
-        from_number = data.get('From', '')
+        from_raw = data.get('From', '')  # e.g. whatsapp:+919876543210
         body = data.get('Body', '')
+        message_sid = data.get('MessageSid', '')
         
-        logger.info(f"📥 Twilio Message received from {from_number}: {body}")
-        
+        # Clean phone digits
+        phone_digits = ''.join(c for c in str(from_raw) if c.isdigit())
+        phone_10 = phone_digits[-10:] if len(phone_digits) >= 10 else phone_digits
+
+        sender_name = "Incoming WhatsApp Contact"
+        sender_type = "Inbound Lead/Member"
+        gym_obj = None
+
+        # 1. Lookup in Member
+        member = Member.objects.filter(mobile_number__icontains=phone_10).select_related('gym').first()
+        if member:
+            sender_name = member.name
+            sender_type = "Gym Member"
+            gym_obj = member.gym
+        else:
+            # 2. Lookup in Enquiry
+            enquiry = Enquiry.objects.filter(mobile_number__icontains=phone_10).select_related('gym').first()
+            if enquiry:
+                sender_name = enquiry.name
+                sender_type = "Gym Enquiry"
+                gym_obj = enquiry.gym
+            else:
+                # 3. Lookup in Website Leads
+                lead = WebsiteContactSubmission.objects.filter(phone__icontains=phone_10).first()
+                if lead:
+                    sender_name = f"{lead.first_name} {lead.last_name}"
+                    sender_type = "Website Lead"
+                else:
+                    # 4. Lookup in Gyms
+                    gym = Gym.objects.filter(phone__icontains=phone_10).first()
+                    if gym:
+                        sender_name = gym.name
+                        sender_type = "Gym Admin"
+                        gym_obj = gym
+
+        # Save received message to log
+        if body or from_raw:
+            WhatsAppMessageLog.objects.create(
+                gym=gym_obj,
+                direction='inbound',
+                status='received',
+                recipient_name=sender_name,
+                recipient_phone=phone_digits or from_raw,
+                recipient_type=sender_type,
+                message_type='inbound_reply',
+                message_content=body,
+                provider='twilio',
+                provider_message_id=message_sid,
+                sent_at=timezone.now()
+            )
+            logger.info(f"📥 Recorded Inbound WhatsApp Message from {sender_name} ({from_raw}): {body}")
+
         # Example auto-reply logic
         text = str(body).lower()
         if any(keyword in text for keyword in ['enquiry', 'interested', 'membership', 'hi', 'hello']):
-            logger.info(f"Auto-replying to {from_number} (Twilio) based on keywords.")
-            whatsapp_service = WhatsAppService()
+            logger.info(f"Auto-replying to {from_raw} (Twilio) based on keywords.")
+            whatsapp_service = WhatsAppService(gym_id=gym_obj.id if gym_obj else None)
             whatsapp_service.send_enquiry_confirmation(
                 request=request,
-                to_number=from_number,
-                name="Valued Customer",
-                gym_name="FitStack", # Fallback
-                gym_contact_number=None
+                to_number=from_raw,
+                name=sender_name,
+                gym_name=gym_obj.name if gym_obj else "FitStack",
+                gym_contact_number=gym_obj.phone if gym_obj else None
             )
             
         return HttpResponse('OK', status=200)

@@ -1,16 +1,97 @@
 {% load static %}
 <nav class="sidebar sidebar-offcanvas" id="sidebar">
-  <div class="text-center sidebar-brand-wrapper d-flex align-items-center">
-    <a class="sidebar-brand brand-logo" href="{% url 'superadmin:gym_list' %}">
-      <img src="{% static 'images/fitstack.png' %}" alt="FitStack Logo" style="max-height: 45px; width: auto; object-fit: contain;" />
+  <style>
+    /* Superadmin Sidebar Brand Modern Fix */
+    .sidebar .superadmin-brand-header {
+      background: transparent !important;
+      padding: 1.5rem 1rem 0.75rem 1rem !important;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 1px solid rgba(203, 213, 225, 0.4);
+      margin-bottom: 0.5rem;
+    }
+    .sidebar .superadmin-brand-header .brand-logo {
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+      padding: 0 !important;
+      margin: 0 !important;
+      text-decoration: none;
+    }
+    .sidebar .superadmin-brand-header .brand-logo img {
+      height: 48px !important;
+      max-height: 48px !important;
+      width: auto !important;
+      max-width: 175px !important;
+      object-fit: contain !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      transition: transform 0.2s ease;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.04));
+    }
+    .sidebar .superadmin-brand-header .brand-logo:hover img {
+      transform: scale(1.03);
+    }
+    .sidebar .superadmin-brand-header .brand-logo-mini {
+      display: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    .sidebar .superadmin-brand-header .brand-logo-mini img {
+      height: 38px !important;
+      width: 38px !important;
+      object-fit: contain !important;
+      margin: 0 auto !important;
+      padding: 0 !important;
+    }
+    .sidebar .superadmin-brand-header .brand-badge {
+      display: inline-block;
+      margin-top: 6px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: #64748b;
+      background: rgba(148, 163, 184, 0.15);
+      padding: 2px 10px;
+      border-radius: 9999px;
+    }
+    .sidebar .superadmin-brand-header .company-slogan {
+      font-size: 0.72rem;
+      color: #94a3b8;
+      margin-top: 4px;
+      margin-bottom: 0;
+    }
+
+    /* When sidebar is collapsed in icon-only mode */
+    .sidebar-icon-only .sidebar .superadmin-brand-header {
+      padding: 1rem 0.25rem !important;
+    }
+    .sidebar-icon-only .sidebar .superadmin-brand-header .brand-logo {
+      display: none !important;
+    }
+    .sidebar-icon-only .sidebar .superadmin-brand-header .brand-logo-mini {
+      display: inline-flex !important;
+    }
+    .sidebar-icon-only .sidebar .superadmin-brand-header .brand-badge,
+    .sidebar-icon-only .sidebar .superadmin-brand-header .company-slogan {
+      display: none !important;
+    }
+  </style>
+
+  <!-- Modern Superadmin Brand Header -->
+  <div class="superadmin-brand-header">
+    <a class="brand-logo" href="{% url 'superadmin:dashboard' %}" title="FitStack Superadmin">
+      <img src="{% static 'images/fitstack.png' %}" alt="FitStack Logo" />
     </a>
-    <a class="sidebar-brand brand-logo-mini pl-4 pt-3" href="{% url 'superadmin:gym_list' %}">
-      <img src="{% static 'images/logo.jpg' %}" alt="Logo" style="max-height: 35px; width: auto; object-fit: contain;" />
+    <a class="brand-logo-mini" href="{% url 'superadmin:dashboard' %}" title="FitStack">
+      <img src="{% static 'images/favicon.png' %}" alt="FitStack" />
     </a>
-  </div>
-  <div class="sidebar-company-info text-center py-0">
-    {% comment %} <p class="company-name">Superadmin</p> {% endcomment %}
-    <p class="company-slogan small text-muted py-2">Manage Smarter. Train Better.</p>
+    <span class="brand-badge">Superadmin</span>
+    <p class="company-slogan">Manage Smarter. Train Better.</p>
   </div>
   <ul class="nav">
     <li class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
@@ -95,6 +176,13 @@
       <a class="nav-link" href="{% url 'superadmin:website_contact_submissions' %}">
         <i class="mdi mdi-email-open-outline menu-icon"></i>
         <span class="menu-title">Website Inquiries</span>
+      </a>
+    </li>
+
+    <li class="nav-item {% if 'whatsapp' in request.resolver_match.url_name %}active{% endif %}">
+      <a class="nav-link" href="{% url 'superadmin:whatsapp_messages_hub' %}">
+        <i class="mdi mdi-whatsapp menu-icon" style="color: #25D366;"></i>
+        <span class="menu-title">WhatsApp Hub & Chat</span>
       </a>
     </li>
 
