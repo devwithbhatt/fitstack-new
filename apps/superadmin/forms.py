@@ -86,13 +86,54 @@ class GymAdminForm(forms.ModelForm):
 class SubscriptionPlanForm(forms.ModelForm):
     class Meta:
         model = SubscriptionPlan
-        fields = ['name', 'price', 'duration_months', 'features']
+        fields = [
+            'name', 'plan_tier', 'tagline', 'price', 'duration_months', 'color_theme',
+            'is_popular', 'is_active',
+            'max_members', 'max_trainers', 'max_admins',
+            'has_whatsapp_support', 'has_biometric_attendance', 'has_diet_workout',
+            'has_billing_invoicing', 'has_expense_management', 'has_inventory_management',
+            'has_reports_analytics', 'has_crm_leads', 'has_staff_salary',
+            'features'
+        ]
+        widgets = {
+            'features': forms.Textarea(attrs={
+                'rows': 4,
+                'placeholder': "Enter highlights (one per line):\n• Automated WhatsApp Invoicing & Dues Alerts\n• QR / Biometric Check-ins for Members\n• Unlimited Workout & Nutrition Diet Plans\n• Advanced Revenue & Growth Reports"
+            }),
+            'tagline': forms.TextInput(attrs={
+                'placeholder': 'e.g. Best for growing fitness clubs & studio gyms'
+            }),
+            'name': forms.TextInput(attrs={
+                'placeholder': 'e.g. Growth Pro Plan'
+            }),
+            'price': forms.NumberInput(attrs={
+                'placeholder': '0.00',
+                'step': '0.01'
+            }),
+            'duration_months': forms.NumberInput(attrs={
+                'placeholder': '1',
+                'min': '1'
+            }),
+            'max_members': forms.NumberInput(attrs={
+                'placeholder': '0 for Unlimited',
+                'min': '0'
+            }),
+            'max_trainers': forms.NumberInput(attrs={
+                'placeholder': '0 for Unlimited',
+                'min': '0'
+            }),
+            'max_admins': forms.NumberInput(attrs={
+                'placeholder': '0 for Unlimited',
+                'min': '0'
+            }),
+        }
 
     def __init__(self, *args, **kwargs):
         super(SubscriptionPlanForm, self).__init__(*args, **kwargs)
-        self.fields['name'].widget.attrs['placeholder'] = 'Enter the name of the plan'
-        self.fields['price'].widget.attrs['placeholder'] = 'Enter the price'
-        self.fields['duration_months'].widget.attrs['placeholder'] = 'Enter the duration in months'
-        self.fields['features'].widget.attrs['placeholder'] = 'Enter the features of the plan'
         for field_name, field in self.fields.items():
-            field.widget.attrs['class'] = 'form-control'
+            if isinstance(field.widget, forms.CheckboxInput):
+                field.widget.attrs['class'] = 'custom-control-input'
+            elif isinstance(field.widget, forms.Select):
+                field.widget.attrs['class'] = 'form-control custom-select'
+            else:
+                field.widget.attrs['class'] = 'form-control'

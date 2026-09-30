@@ -132,3 +132,96 @@ class SuperadminSecurityAndBillingTests(TestCase):
         self.sub.refresh_from_db()
         self.assertEqual(self.sub.paid_amount, Decimal('5000.00'))
         self.assertEqual(self.sub.due_amount, Decimal('5000.00'))
+
+    def test_gym_list_shows_registered_users_count(self):
+        """Gym list endpoint must provide total members, active members, and trainers."""
+        from apps.members.models import Member
+        from apps.trainers.models import Trainer
+
+        # Create members for the gym
+        Member.objects.create(
+            gym=self.gym,
+            first_name='John',
+            last_name='Doe',
+            mobile_number='9999911111'
+        )
+        Member.objects.create(
+            gym=self.gym,
+            first_name='Jane',
+            last_name='Smith',
+            mobile_number='9999922222'
+        )
+        # Create trainer for the gym
+        Trainer.objects.create(
+            gym=self.gym,
+            name='Coach Mike',
+            phone='9999933333'
+        )
+
+        self.client.login(username='superadmin_test', password='testpassword123')
+        session = self.client.session
+        session['role'] = 'superadmin'
+        session.save()
+
+        response = self.client.get(reverse('superadmin:gym_list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Registered Users')
+        # Check that member count (2) and trainer count (1) appear
+        self.assertContains(response, '2 Members')
+        self.assertContains(response, '1 Staff')
+
+    def test_create_and_update_subscription_plan_with_quotas(self):
+        """Superadmin can create a plan with tier, quotas (max_members, etc.), and feature toggles."""
+        self.client.login(username='superadmin_test', password='testpassword123')
+        session = self.client.session
+        session['role'] = 'superadmin'
+        session.save()
+
+        # Add plan with limits
+        add_url = reverse('superadmin:add_subscription_plan')
+        data = {
+            'name': 'Enterprise Growth Plan',
+            'plan_tier': 'growth',
+            'tagline': 'Engineered for scaling fitness clubs',
+            'price': '24999.00',
+            'duration_months': 12,
+            'color_theme': 'amber',
+            'is_popular': True,
+            'is_active': True,
+            'max_members': 500,
+            'max_trainers': 25,
+            'max_admins': 5,
+            'has_whatsapp_support': True,
+            'has_biometric_attendance': True,
+            'has_billing_invoicing': True,
+            'has_reports_analytics': True,
+            'has_crm_leads': True,
+            'has_expense_management': True,
+            'has_inventory_management': False,
+            'has_staff_salary': True,
+            'has_diet_workout': True,
+            'features': 'Full Access to Growth Modules'
+        }
+        response = self.client.post(add_url, data)
+        self.assertEqual(response.status_code, 302)
+
+        created_plan = SubscriptionPlan.objects.get(name='Enterprise Growth Plan')
+        self.assertEqual(created_plan.max_members, 500)
+        self.assertEqual(created_plan.max_trainers, 25)
+        self.assertEqual(created_plan.max_admins, 5)
+        self.assertEqual(created_plan.plan_tier, 'growth')
+        self.assertTrue(created_plan.has_whatsapp_support)
+        self.assertFalse(created_plan.has_inventory_management)
+
+        # Update the plan to Unlimited members (0)
+        update_url = reverse('superadmin:update_subscription_plan', kwargs={'plan_id': created_plan.id})
+        data['max_members'] = 0
+        data['name'] = 'Enterprise Unlimited Plan'
+        response = self.client.post(update_url, data)
+        self.assertEqual(response.status_code, 302)
+
+        created_plan.refresh_from_db()
+        self.assertEqual(created_plan.max_members, 0)
+        self.assertEqual(created_plan.max_members_display, 'Unlimited')
+        self.assertEqual(created_plan.name, 'Enterprise Unlimited Plan')
+

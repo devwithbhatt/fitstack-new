@@ -12,6 +12,7 @@ from .notifications import (
     estimate_audience,
 )
 from apps.members.models import Member, MembershipHistory
+from apps.trainers.models import Trainer
 from apps.billing.models import Payment
 from django.db import models, transaction
 from django.db.models import Q, Sum, F, Count, Value
@@ -214,6 +215,16 @@ def gym_list(request):
         gym.admin_name = f"{admin.user.first_name} {admin.user.last_name}".strip() or admin.user.username if admin else "N/A"
         gym.admin_username = admin.user.username if admin else "N/A"
 
+        # Calculate registered members and trainers for this gym
+        gym.total_members = Member.objects.filter(gym=gym, is_deleted=False).count()
+        gym.active_members = Member.objects.filter(
+            gym=gym,
+            is_deleted=False,
+            membership_history__status='active',
+            membership_history__is_deleted=False
+        ).distinct().count()
+        gym.total_trainers = Trainer.objects.filter(gym=gym).count()
+
         latest_subscription = GymSubscription.objects.filter(gym=gym, is_deleted=False).order_by('-end_date').first()
         if latest_subscription:
             gym.latest_subscription = latest_subscription
@@ -414,15 +425,32 @@ def reset_admin_password(request, admin_id):
 @superadmin_required
 def subscription_plan_list(request):
     query = request.GET.get('q')
+    tier_filter = request.GET.get('tier')
+    status_filter = request.GET.get('status')
+
+    plans = SubscriptionPlan.objects.all().order_by('-is_popular', 'price')
     if query:
-        plans = SubscriptionPlan.objects.filter(
+        plans = plans.filter(
             Q(name__icontains=query) |
-            Q(price__icontains=query) |
-            Q(duration_months__icontains=query)
+            Q(tagline__icontains=query) |
+            Q(features__icontains=query)
         ).distinct()
-    else:
-        plans = SubscriptionPlan.objects.all()
-    return render(request, 'superadmin/subscription_plan_list.html', {'plans': plans})
+
+    if tier_filter:
+        plans = plans.filter(plan_tier=tier_filter)
+
+    if status_filter == 'active':
+        plans = plans.filter(is_active=True)
+    elif status_filter == 'inactive':
+        plans = plans.filter(is_active=False)
+
+    return render(request, 'superadmin/subscription_plan_list.html', {
+        'plans': plans,
+        'query': query,
+        'tier_filter': tier_filter,
+        'status_filter': status_filter,
+        'tier_choices': SubscriptionPlan.TIER_CHOICES,
+    })
 
 @login_required
 @superadmin_required
@@ -430,9 +458,11 @@ def add_subscription_plan(request):
     if request.method == 'POST':
         form = SubscriptionPlanForm(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, "Subscription plan created successfully.")
+            plan = form.save()
+            messages.success(request, f"Subscription plan '{plan.name}' created successfully with configured limits.")
             return redirect('superadmin:subscription_plan_list')
+        else:
+            messages.error(request, "Please correct the errors in the form below.")
     else:
         form = SubscriptionPlanForm()
     return render(request, 'superadmin/add_subscription_plan.html', {'form': form})
@@ -445,10 +475,13 @@ def update_subscription_plan(request, plan_id):
         form = SubscriptionPlanForm(request.POST, instance=plan)
         if form.is_valid():
             form.save()
+            messages.success(request, f"Subscription plan '{plan.name}' updated successfully.")
             return redirect('superadmin:subscription_plan_list')
+        else:
+            messages.error(request, "Please correct the errors in the form below.")
     else:
         form = SubscriptionPlanForm(instance=plan)
-    return render(request, 'superadmin/update_subscription_plan.html', {'form': form})
+    return render(request, 'superadmin/update_subscription_plan.html', {'form': form, 'plan': plan})
 
 @login_required
 @superadmin_required

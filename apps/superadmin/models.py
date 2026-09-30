@@ -69,13 +69,79 @@ class GymAdmin(models.Model):
         return f'{self.user.username} - {self.gym.name}'
 
 class SubscriptionPlan(models.Model):
+    TIER_CHOICES = [
+        ('starter', 'Starter'),
+        ('growth', 'Growth'),
+        ('pro', 'Professional'),
+        ('enterprise', 'Enterprise'),
+        ('custom', 'Custom'),
+    ]
+
+    THEME_CHOICES = [
+        ('blue', 'Sapphire Blue'),
+        ('emerald', 'Emerald Green'),
+        ('purple', 'Royal Purple'),
+        ('amber', 'Sunset Gold'),
+        ('dark', 'Titanium Dark'),
+    ]
+
     name = models.CharField(max_length=100)
+    plan_tier = models.CharField(max_length=50, choices=TIER_CHOICES, default='growth')
+    tagline = models.CharField(max_length=255, blank=True, null=True, help_text="Short subtitle or value proposition")
     price = models.DecimalField(max_digits=10, decimal_places=2)
     duration_months = models.IntegerField(help_text="Duration in months", default=1)
-    features = models.TextField()
+    color_theme = models.CharField(max_length=20, choices=THEME_CHOICES, default='blue')
+    is_popular = models.BooleanField(default=False, help_text="Highlight as 'Most Popular' / Featured")
+    is_active = models.BooleanField(default=True, help_text="Available for gym assignment")
+
+    # Resource Limitations (0 = Unlimited)
+    max_members = models.PositiveIntegerField(default=100, help_text="Maximum members allowed (0 = Unlimited)")
+    max_trainers = models.PositiveIntegerField(default=5, help_text="Maximum trainers allowed (0 = Unlimited)")
+    max_admins = models.PositiveIntegerField(default=2, help_text="Maximum admin accounts allowed (0 = Unlimited)")
+
+    # SaaS Feature Modules
+    has_whatsapp_support = models.BooleanField(default=True, help_text="WhatsApp Automated Notifications & Reminders")
+    has_biometric_attendance = models.BooleanField(default=True, help_text="QR / Biometric Attendance System")
+    has_diet_workout = models.BooleanField(default=True, help_text="Diet & Workout Plan Generation")
+    has_billing_invoicing = models.BooleanField(default=True, help_text="Invoicing & Dues Tracker")
+    has_expense_management = models.BooleanField(default=True, help_text="Expense & Finance Management")
+    has_inventory_management = models.BooleanField(default=True, help_text="Equipment & Inventory Tracking")
+    has_reports_analytics = models.BooleanField(default=True, help_text="Business Reports & Analytics")
+    has_crm_leads = models.BooleanField(default=True, help_text="Lead CRM & Enquiry Tracking")
+    has_staff_salary = models.BooleanField(default=True, help_text="Trainer Salary & Payroll Tracking")
+
+    features = models.TextField(help_text="Key perks & marketing highlights (one per line)")
+
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.get_plan_tier_display()}) - ₹{self.price}"
+
+    @property
+    def max_members_display(self):
+        if self.max_members == 0:
+            return "Unlimited"
+        return f"{self.max_members} Members"
+
+    @property
+    def max_trainers_display(self):
+        if self.max_trainers == 0:
+            return "Unlimited"
+        return f"{self.max_trainers} Trainers"
+
+    @property
+    def max_admins_display(self):
+        if self.max_admins == 0:
+            return "Unlimited"
+        return f"{self.max_admins} Admins"
+
+    @property
+    def feature_list(self):
+        if not self.features:
+            return []
+        lines = [line.strip().lstrip('•-* ').strip() for line in self.features.replace('\r', '').split('\n') if line.strip()]
+        return lines
 
 class GymSubscription(models.Model):
     PAYMENT_MODE_CHOICES = [

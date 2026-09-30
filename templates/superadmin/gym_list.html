@@ -87,6 +87,7 @@
                                     <th class="font-weight-semibold py-2">Logo</th>
                                     <th class="font-weight-semibold py-2">GYM Name</th>
                                     <th class="font-weight-semibold py-2">SaaS Subscription</th>
+                                    <th class="font-weight-semibold py-2">Registered Users</th>
                                     <th class="font-weight-semibold py-2">Pending Due</th>
                                     <th class="font-weight-semibold py-2">Contact & Admin</th>
                                     <th class="font-weight-semibold text-center py-2">Actions</th>
@@ -150,6 +151,30 @@
                                             <a href="{% url 'superadmin:assign_subscription' %}?gym_id={{ gym.id }}" class="btn btn-xs btn-primary mt-1 py-0 px-2 font-weight-bold">Assign Plan</a>
                                         {% endif %}
                                     </td>
+                                    <td data-label="Registered Users">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <span class="badge badge-light border border-primary text-primary font-weight-bold px-2 py-1 shadow-xs" style="font-size: 0.85rem;">
+                                                <i class="mdi mdi-account-group mr-1"></i> {{ gym.total_members }} Member{{ gym.total_members|pluralize }}
+                                            </span>
+                                        </div>
+                                        <div class="d-flex flex-wrap align-items-center small text-muted">
+                                            <span class="mr-2 text-success" title="Active Members">
+                                                <i class="mdi mdi-check-circle-outline"></i> {{ gym.active_members }} Active
+                                            </span>
+                                            {% if gym.total_trainers > 0 %}
+                                            <span class="text-info" title="Trainers & Coaches">
+                                                <i class="mdi mdi-dumbbell"></i> {{ gym.total_trainers }} Staff
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        {% if gym.latest_subscription and gym.latest_subscription.subscription %}
+                                            {% with plan=gym.latest_subscription.subscription %}
+                                                <div class="small mt-1 text-muted" style="font-size: 0.72rem;">
+                                                    Quota: <span class="font-weight-bold {% if plan.max_members > 0 and gym.total_members >= plan.max_members %}text-danger{% else %}text-dark{% endif %}">{{ plan.max_members_display }}</span>
+                                                </div>
+                                            {% endwith %}
+                                        {% endif %}
+                                    </td>
                                     <td data-label="Pending Due">
                                         {% if gym.due_amount > 0 %}
                                             <span class="text-danger font-weight-bold">₹{{ gym.due_amount|floatformat:2 }}</span>
@@ -180,7 +205,7 @@
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="7" class="text-center py-5 text-muted">
+                                    <td colspan="8" class="text-center py-5 text-muted">
                                         <i class="mdi mdi-office-building-marker-outline mdi-36px"></i>
                                         <p class="mt-2 mb-0">No gyms found matching the criteria.</p>
                                     </td>
