@@ -549,3 +549,21 @@ class WhatsAppService:
             media_url=full_logo_url
         )
 
+    def send_direct_message(self, to_number, recipient_name, message_text, gym=None, recipient_type="Direct Contact", created_by=None):
+        """
+        Sends a freeform WhatsApp message via Twilio and logs it in WhatsAppMessageLog.
+        """
+        res = self.twilio.send_text_message(to_number, message_text)
+        log = self._log_message(
+            recipient_name=recipient_name,
+            recipient_phone=to_number,
+            message_content=message_text,
+            message_type='direct_chat',
+            result=res,
+            gym=gym,
+            recipient_type=recipient_type,
+            created_by=created_by
+        )
+        return res, log
+
+

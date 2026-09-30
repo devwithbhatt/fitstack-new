@@ -43,8 +43,11 @@ urlpatterns = [
     path('impersonate/<int:gym_id>/', views.impersonate_gym_admin, name='impersonate_gym_admin'),
     path('gyms/export/', views.export_gyms_csv, name='export_gyms_csv'),
     path('billing/export/', views.export_billing_csv, name='export_billing_csv'),
-    # WhatsApp Message Logs & Personal Chat
+    # WhatsApp Message Logs, Live Console & Personal Chat
     path('whatsapp-messages/', views.whatsapp_messages_hub, name='whatsapp_messages_hub'),
     path('whatsapp-messages/<int:log_id>/mark-sent/', views.mark_whatsapp_sent_manually, name='mark_whatsapp_sent_manually'),
     path('whatsapp-messages/direct-send/', views.send_direct_whatsapp_message, name='send_direct_whatsapp_message'),
+    path('whatsapp-messages/api/conversations/', views.whatsapp_conversations_api, name='whatsapp_conversations_api'),
+    path('whatsapp-messages/api/thread/<str:phone>/', views.whatsapp_thread_api, name='whatsapp_thread_api'),
+    path('whatsapp-messages/api/send/', views.whatsapp_send_api, name='whatsapp_send_api'),
 ]

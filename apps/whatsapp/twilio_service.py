@@ -93,6 +93,36 @@ class TwilioWhatsAppService:
         
         return {'success': False, 'error': 'Unknown failure after retries'}
 
+    def send_text_message(self, to_number, message_text):
+        """
+        Sends a standard freeform WhatsApp text message via Twilio API.
+        """
+        if not self.client:
+            return {'success': False, 'error': 'Twilio client not initialized or credentials missing'}
+        if not self.from_number:
+            return {'success': False, 'error': 'Twilio sender WhatsApp number not configured'}
+
+        to_formatted = self.format_phone_number(to_number)
+        try:
+            logger.info(f"📤 Sending freeform WhatsApp message: to={to_formatted}")
+            message = self.client.messages.create(
+                from_=self.from_number,
+                to=to_formatted,
+                body=message_text
+            )
+            logger.info(f"✅ WhatsApp message sent! SID: {message.sid}, status: {message.status}")
+            return {
+                'success': True,
+                'message_id': message.sid,
+                'status': message.status
+            }
+        except TwilioRestException as e:
+            logger.error(f"❌ Twilio API error: {e.msg} (Code: {e.code})")
+            return {'success': False, 'error': str(e.msg), 'code': e.code}
+        except Exception as e:
+            logger.error(f"❌ Error sending WhatsApp message: {e}")
+            return {'success': False, 'error': str(e)}
+
     def send_enquiry_confirmation(self, to_number, name, gym_name="FitStack", gym_contact_number=None, logo_url=None):
         """
         Convenience method for enquiry confirmation with optional logo.

@@ -1,15 +1,15 @@
 {% extends 'superadmin/base.html' %}
 {% load static %}
 
-{% block title %}WhatsApp Hub & Chat | FitStack Superadmin{% endblock title %}
+{% block title %}WhatsApp Console & Message Hub | FitStack Superadmin{% endblock title %}
 
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/customstyle.css' %}">
 <link rel="stylesheet" href="{% static 'css/dashboard_modern.css' %}">
 
 <style>
-    /* WhatsApp Hub Custom Refinements */
-    .wa-hub-root {
+    /* WhatsApp Console Professional Aesthetics */
+    .wa-console-root {
         font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
     .badge-soft-wa {
@@ -22,6 +22,411 @@
         color: #4338ca;
         border: 1px solid rgba(99, 102, 241, 0.25);
     }
+    .badge-soft-gateway {
+        background: #f1f5f9;
+        color: #334155;
+        border: 1px solid #cbd5e1;
+        font-size: 0.76rem;
+        padding: 4px 10px;
+        border-radius: 20px;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    /* Page Header Layout - Clean & Conflict-Free */
+    .wa-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 1.5rem;
+    }
+    .wa-header-left {
+        flex: 1 1 360px;
+    }
+    .wa-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        flex-shrink: 0;
+    }
+    .wa-nav-pills {
+        display: inline-flex;
+        align-items: center;
+        background: #f1f5f9;
+        padding: 4px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+    }
+    .wa-nav-pill-btn {
+        border: none;
+        background: transparent;
+        padding: 7px 16px;
+        border-radius: 6px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        line-height: 1.3;
+    }
+    .wa-nav-pill-btn.active {
+        background: #128c7e;
+        color: #ffffff;
+        box-shadow: 0 1px 4px rgba(18, 140, 126, 0.25);
+    }
+    .wa-nav-pill-btn:hover:not(.active) {
+        color: #0f172a;
+        background: #e2e8f0;
+    }
+    .btn-wa-action {
+        background: #128c7e;
+        color: #ffffff;
+        border: 1px solid #0f766e;
+        padding: 8px 18px;
+        border-radius: 6px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        transition: all 0.2s ease;
+    }
+    .btn-wa-action:hover {
+        background: #0d6e63;
+        color: #ffffff;
+    }
+
+    /* Live Chat Console 2-Pane Architecture */
+    .wa-chat-container {
+        display: flex;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        overflow: hidden;
+        height: 720px;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+    }
+    @media (max-width: 991px) {
+        .wa-chat-container {
+            flex-direction: column;
+            height: auto;
+            min-height: 800px;
+        }
+    }
+
+    /* Left Contact List Pane */
+    .wa-contacts-pane {
+        width: 380px;
+        min-width: 340px;
+        border-right: 1px solid #e2e8f0;
+        display: flex;
+        flex-direction: column;
+        background: #fafafa;
+    }
+    @media (max-width: 991px) {
+        .wa-contacts-pane {
+            width: 100%;
+            height: 380px;
+            border-right: none;
+            border-bottom: 1px solid #e2e8f0;
+        }
+    }
+    .wa-contacts-header {
+        padding: 14px 16px;
+        background: #ffffff;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .wa-contacts-filter-bar {
+        padding: 8px 16px;
+        background: #ffffff;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    .wa-contacts-filter-bar::-webkit-scrollbar {
+        display: none;
+        width: 0 !important;
+        height: 0 !important;
+    }
+    .wa-filter-chip {
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 14px;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        color: #64748b;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.15s ease;
+        flex-shrink: 0;
+    }
+    .wa-filter-chip:hover, .wa-filter-chip.active {
+        background: #128c7e;
+        color: #ffffff;
+        border-color: #128c7e;
+    }
+
+    .wa-contacts-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 6px 0;
+    }
+    .wa-contact-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        border-bottom: 1px solid #f1f5f9;
+        cursor: pointer;
+        transition: background 0.15s ease;
+        position: relative;
+    }
+    .wa-contact-item:hover {
+        background: #f1f5f9;
+    }
+    .wa-contact-item.active {
+        background: #e6f4f1;
+        border-left: 4px solid #128c7e;
+    }
+    .wa-avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #128c7e, #25d366);
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 1.05rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-right: 12px;
+        box-shadow: 0 2px 6px rgba(18, 140, 126, 0.2);
+    }
+    .wa-avatar-lead {
+        background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    }
+    .wa-avatar-gym {
+        background: linear-gradient(135deg, #0284c7, #06b6d4);
+    }
+    .wa-contact-info {
+        flex: 1;
+        min-width: 0;
+    }
+    .wa-contact-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 3px;
+    }
+    .wa-contact-name {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #1e293b;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .wa-contact-time {
+        font-size: 0.70rem;
+        color: #94a3b8;
+        font-weight: 500;
+    }
+    .wa-contact-snippet {
+        font-size: 0.78rem;
+        color: #64748b;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: flex;
+        align-items: center;
+    }
+    .wa-contact-meta {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 4px;
+    }
+
+    /* Right Chat Thread Pane */
+    .wa-thread-pane {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #ffffff;
+        min-width: 0;
+    }
+    .wa-thread-header {
+        padding: 12px 20px;
+        border-bottom: 1px solid #e2e8f0;
+        background: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 68px;
+    }
+    .wa-thread-user {
+        display: flex;
+        align-items: center;
+    }
+    .wa-messages-stream {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px 24px;
+        background: #f7f9fa;
+        background-image: radial-gradient(#e2e8f0 0.8px, transparent 0.8px);
+        background-size: 16px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    /* Message Bubbles */
+    .wa-bubble-wrap {
+        display: flex;
+        flex-direction: column;
+        max-width: 75%;
+    }
+    .wa-bubble-wrap.inbound {
+        align-self: flex-start;
+    }
+    .wa-bubble-wrap.outbound {
+        align-self: flex-end;
+    }
+    .wa-bubble {
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-size: 0.86rem;
+        line-height: 1.45;
+        position: relative;
+        word-break: break-word;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    .wa-bubble.inbound {
+        background: #ffffff;
+        color: #1e293b;
+        border: 1px solid #e2e8f0;
+        border-top-left-radius: 2px;
+    }
+    .wa-bubble.outbound {
+        background: #dcf8c6;
+        color: #064e3b;
+        border: 1px solid #c3e6b5;
+        border-top-right-radius: 2px;
+    }
+    .wa-bubble-meta {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 6px;
+        font-size: 0.68rem;
+        color: #64748b;
+        margin-top: 5px;
+    }
+    .wa-bubble-type-tag {
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 4px;
+        opacity: 0.8;
+    }
+    .wa-bubble-personal-retry {
+        background: #f59e0b;
+        color: #ffffff;
+        border: none;
+        font-size: 0.68rem;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 4px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        transition: all 0.15s ease;
+    }
+    .wa-bubble-personal-retry:hover {
+        background: #d97706;
+        color: #ffffff;
+        text-decoration: none;
+    }
+
+    /* Quick Reply Templates Bar - Clean Scroll-Free Look */
+    .wa-quick-replies-bar {
+        padding: 8px 16px;
+        background: #ffffff;
+        border-top: 1px solid #eef2f6;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    .wa-quick-replies-bar::-webkit-scrollbar {
+        display: none;
+        width: 0 !important;
+        height: 0 !important;
+    }
+    .wa-reply-chip {
+        font-size: 0.74rem;
+        font-weight: 600;
+        padding: 5px 12px;
+        border-radius: 16px;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        color: #334155;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.15s ease;
+        flex-shrink: 0;
+    }
+    .wa-reply-chip:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+        border-color: #cbd5e1;
+    }
+
+    /* Composer Box */
+    .wa-composer-area {
+        padding: 12px 16px;
+        background: #ffffff;
+        border-top: 1px solid #e2e8f0;
+    }
+    .wa-composer-input {
+        resize: none;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        font-size: 0.88rem;
+        padding: 10px 12px;
+        line-height: 1.4;
+    }
+    .wa-composer-input:focus {
+        border-color: #128c7e;
+        box-shadow: 0 0 0 3px rgba(18, 140, 126, 0.15);
+    }
+    .btn-wa-send {
+        background: #128c7e;
+        color: #ffffff;
+        border: 1px solid #0f766e;
+        transition: all 0.2s ease;
+    }
+    .btn-wa-send:hover {
+        background: #0d6e63;
+        color: #ffffff;
+    }
+
+    /* Table Styles */
     .modern-table thead th {
         font-size: 0.72rem;
         font-weight: 700;
@@ -49,8 +454,8 @@
     }
 </style>
 
-<div class="wa-hub-root">
-    <!-- Compact Breadcrumb Navigation -->
+<div class="container-fluid gym-dashboard-root px-3 px-md-4 py-2 wa-console-root">
+    <!-- Breadcrumb Navigation -->
     <nav aria-label="breadcrumb" class="custom-breadcrumb mb-3">
         <ol class="breadcrumb">
             <li class="breadcrumb-item">
@@ -59,24 +464,38 @@
                 </a>
             </li>
             <li class="breadcrumb-item active" aria-current="page">
-                <i class="mdi mdi-whatsapp mdi-18px text-success"></i> WhatsApp Hub & Chat
+                <i class="mdi mdi-whatsapp mdi-18px text-success"></i> WhatsApp Console
             </li>
         </ol>
     </nav>
 
-    <!-- Page Header (Matching Dashboard Hero Header) -->
-    <div class="dashboard-hero-header">
-        <div>
-            <h3 class="dashboard-hero-title">
-                <i class="mdi mdi-whatsapp text-success mr-1"></i> WhatsApp Message Logs & Direct Chat
-            </h3>
+    <!-- Page Header (Clean Row Layout) -->
+    <div class="wa-header-row">
+        <div class="wa-header-left">
+            <div class="d-flex align-items-center flex-wrap mb-1">
+                <h3 class="dashboard-hero-title mb-0 mr-3">
+                    <i class="mdi mdi-whatsapp text-success mr-1"></i> WhatsApp Message Logs & Direct Chat Console
+                </h3>
+                <span class="badge-soft-gateway" title="Twilio WhatsApp Webhook is active and recording in/out traffic">
+                    <i class="mdi mdi-check-network text-success mr-1"></i> Twilio API Gateway
+                </span>
+            </div>
             <p class="dashboard-hero-subtitle">
-                Track automatic Twilio/Meta API dispatches per gym, inspect incoming customer replies, re-send failed alerts via personal WhatsApp, and chat directly.
+                Inspect automatic gym triggers (memberships, dues, birthdays), converse in real-time, or instantly fall back to personal WhatsApp.
             </p>
         </div>
-        <div>
-            <button type="button" class="btn btn-primary btn-sm px-3 py-2 font-weight-bold shadow-sm" data-toggle="modal" data-target="#newChatModal">
-                <i class="mdi mdi-plus-circle mr-1"></i> New WhatsApp Message / Chat
+        <div class="wa-header-actions">
+            <!-- Modern View Switcher Toggle -->
+            <div class="wa-nav-pills shadow-xs">
+                <button type="button" class="wa-nav-pill-btn active" id="btnViewLive" onclick="switchView('live')">
+                    <i class="mdi mdi-forum-outline mr-1"></i> Live Chat Console
+                </button>
+                <button type="button" class="wa-nav-pill-btn" id="btnViewAudit" onclick="switchView('audit')">
+                    <i class="mdi mdi-table mr-1"></i> Message Audit Log ({{ total_count }})
+                </button>
+            </div>
+            <button type="button" class="btn btn-wa-action" data-toggle="modal" data-target="#newChatModal">
+                <i class="mdi mdi-plus-circle mr-1"></i> New Chat / Alert
             </button>
         </div>
     </div>
@@ -104,7 +523,7 @@
             </div>
         </div>
 
-        <!-- 2. Delivered via API (Sent) -->
+        <!-- 2. Delivered via Gateway (Sent) -->
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="kpi-card kpi-success">
                 <div>
@@ -125,7 +544,7 @@
             </div>
         </div>
 
-        <!-- 3. Received / Incoming Messages -->
+        <!-- 3. Received / Incoming Replies -->
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="kpi-card kpi-info">
                 <div>
@@ -141,12 +560,12 @@
                     <span class="kpi-meta-badge kpi-badge-info">
                         <i class="mdi mdi-account-arrow-left mr-1"></i> Customer Replies
                     </span>
-                    <span class="kpi-meta-desc">Inbound WhatsApp</span>
+                    <span class="kpi-meta-desc">Webhook Captured</span>
                 </div>
             </div>
         </div>
 
-        <!-- 4. Failed / Not Sent -->
+        <!-- 4. Failed / Action Needed -->
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="kpi-card kpi-danger">
                 <div>
@@ -168,8 +587,131 @@
         </div>
     </div>
 
-    <!-- Main Table Container Card -->
-    <div class="gym-card mb-4">
+    <!-- VIEW 1: Live Chat Console -->
+    <div id="liveConsoleView" class="mb-4">
+        <div class="wa-chat-container">
+            <!-- Left Pane: Conversations List -->
+            <div class="wa-contacts-pane">
+                <div class="wa-contacts-header">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="font-weight-bold text-dark" style="font-size: 0.92rem;">
+                            <i class="mdi mdi-chat-processing-outline mr-1 text-primary"></i> Conversations
+                        </span>
+                        <button class="btn btn-xs btn-link text-muted p-0" onclick="refreshConversations()" title="Refresh List">
+                            <i class="mdi mdi-refresh"></i>
+                        </button>
+                    </div>
+
+                    <!-- Search Input -->
+                    <div class="input-group input-group-sm mb-2">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text bg-white border-right-0"><i class="mdi mdi-magnify text-muted"></i></span>
+                        </div>
+                        <input type="text" id="conversationSearchInput" class="form-control border-left-0" placeholder="Search contact, number..." onkeyup="filterConversationsList()">
+                    </div>
+
+                    <!-- Gym Filter -->
+                    <select id="conversationGymFilter" class="form-control form-control-sm" onchange="refreshConversations()">
+                        <option value="all">All Gyms & Platform</option>
+                        {% for g in all_gyms %}
+                            <option value="{{ g.id }}" {% if gym_filter == g.id|stringformat:'s' %}selected{% endif %}>{{ g.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Filter Chips -->
+                <div class="wa-contacts-filter-bar">
+                    <span class="wa-filter-chip active" data-filter="all" onclick="setContactFilter(this, 'all')">All</span>
+                    <span class="wa-filter-chip" data-filter="inbound" onclick="setContactFilter(this, 'inbound')">
+                        <i class="mdi mdi-arrow-bottom-left mr-1"></i> Inbound
+                    </span>
+                    <span class="wa-filter-chip" data-filter="failed" onclick="setContactFilter(this, 'failed')">
+                        <i class="mdi mdi-alert-circle mr-1"></i> Failed
+                    </span>
+                    <span class="wa-filter-chip" data-filter="outbound" onclick="setContactFilter(this, 'outbound')">
+                        <i class="mdi mdi-arrow-top-right mr-1"></i> Outbound
+                    </span>
+                </div>
+
+                <!-- Contacts Scrollable List -->
+                <div class="wa-contacts-list" id="conversationsContainer">
+                    <div class="text-center py-5 text-muted">
+                        <i class="mdi mdi-loading mdi-spin mdi-24px d-block mb-2"></i>
+                        <span>Loading active conversations...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Pane: Active Thread & Composer -->
+            <div class="wa-thread-pane">
+                <!-- Thread Header -->
+                <div class="wa-thread-header" id="threadHeader">
+                    <div class="wa-thread-user">
+                        <div class="wa-avatar" id="activeContactAvatar">FS</div>
+                        <div>
+                            <div class="d-flex align-items-center">
+                                <h6 class="font-weight-bold text-dark mb-0 mr-2" id="activeContactName">Select a conversation</h6>
+                                <span class="badge-soft badge-soft-secondary font-weight-bold" id="activeContactType" style="font-size: 0.70rem;">Contact</span>
+                            </div>
+                            <div class="small text-muted" id="activeContactDetails">
+                                Click on any contact from the left list to view message stream
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center" id="threadActions" style="display: none !important;">
+                        <a href="#" id="activeContactCallBtn" class="btn btn-xs btn-outline-secondary font-weight-bold mr-1" title="Call Contact">
+                            <i class="mdi mdi-phone mr-1"></i> Call
+                        </a>
+                        <a href="#" id="activeContactDirectWaBtn" target="_blank" class="btn btn-xs btn-outline-success font-weight-bold mr-1" title="Open in Personal WhatsApp Web/App">
+                            <i class="mdi mdi-whatsapp mr-1"></i> Open WhatsApp
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Messages Stream -->
+                <div class="wa-messages-stream" id="messagesStream">
+                    <div class="text-center py-5 text-muted my-auto" id="noActiveThreadNotice">
+                        <i class="mdi mdi-whatsapp mdi-48px text-muted d-block mb-2" style="opacity: 0.4;"></i>
+                        <h6 class="font-weight-bold text-dark">No Conversation Selected</h6>
+                        <p class="small text-muted mb-0">Select any contact on the left to start live messaging or inspect the message thread.</p>
+                    </div>
+                </div>
+
+                <!-- Quick Reply Suggestions (No scrollbar look) -->
+                <div class="wa-quick-replies-bar" id="quickReplyBar" style="display: none;">
+                    <span class="small font-weight-bold text-muted mr-1 flex-shrink-0">Templates:</span>
+                    <button type="button" class="wa-reply-chip" onclick="applyChatTemplate('lead')">Lead Followup</button>
+                    <button type="button" class="wa-reply-chip" onclick="applyChatTemplate('due')">Payment Reminder</button>
+                    <button type="button" class="wa-reply-chip" onclick="applyChatTemplate('expiry')">Membership Renewal</button>
+                    <button type="button" class="wa-reply-chip" onclick="applyChatTemplate('demo')">FitStack Demo Walkthrough</button>
+                    <button type="button" class="wa-reply-chip" onclick="applyChatTemplate('support')">Support Greeting</button>
+                </div>
+
+                <!-- Composer Box -->
+                <div class="wa-composer-area" id="composerArea" style="display: none;">
+                    <div class="d-flex flex-column">
+                        <textarea id="composerInput" class="form-control wa-composer-input mb-2" rows="2" placeholder="Type your WhatsApp message or pick a template above..."></textarea>
+                        <div class="d-flex justify-content-between align-items-center flex-wrap" style="gap: 8px;">
+                            <div class="small text-muted">
+                                <span id="composerCharCount">0</span> characters
+                            </div>
+                            <div class="d-flex align-items-center" style="gap: 8px;">
+                                <button type="button" class="btn btn-sm btn-outline-dark font-weight-bold shadow-xs" onclick="sendChatMessage('personal_whatsapp')" title="Open prefilled WhatsApp message to send from your personal number">
+                                    <i class="mdi mdi-whatsapp text-success mr-1"></i> Send via Personal WA
+                                </button>
+                                <button type="button" class="btn btn-sm btn-wa-send font-weight-bold px-3 shadow-xs" id="btnSendTwilio" onclick="sendChatMessage('twilio')" title="Send directly via Twilio Cloud WhatsApp API">
+                                    <i class="mdi mdi-send mr-1"></i> Send via Twilio API
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW 2: Message Audit Log Table -->
+    <div id="auditTableView" class="gym-card mb-4" style="display: none;">
         <!-- Card Header with Filters & Search -->
         <div class="gym-card-header flex-wrap py-3 px-3">
             <!-- Filter Action Buttons -->
@@ -324,27 +866,18 @@
                                 <span class="text-muted small">{{ log.created_at|date:"H:i A" }}</span>
                             </td>
                             <td class="text-right pr-3" style="white-space: nowrap;">
-                                <!-- If received, show direct Reply action -->
-                                {% if log.is_inbound %}
-                                    <a href="{{ log.direct_chat_url }}" target="_blank" 
-                                       class="btn btn-xs btn-primary font-weight-bold mr-1"
-                                       title="Reply to {{ log.recipient_name }} on WhatsApp">
-                                        <i class="mdi mdi-reply mr-1"></i> Reply
-                                    </a>
-                                {% elif log.status == 'failed' or log.status == 'pending' %}
-                                    <!-- Send via Personal WhatsApp Action (for Unsent/Failed/Pending) -->
+                                <!-- Open in Live Chat Console -->
+                                <button type="button" class="btn btn-xs btn-outline-primary font-weight-bold mr-1" onclick="openContactInLiveChat('{{ log.clean_phone }}')">
+                                    <i class="mdi mdi-forum mr-1"></i> Chat
+                                </button>
+
+                                {% if log.status == 'failed' or log.status == 'pending' %}
+                                    <!-- Send via Personal WhatsApp Action -->
                                     <a href="{{ log.whatsapp_url }}" target="_blank" 
                                        onclick="markLogSentManually({{ log.id }})" 
                                        class="btn btn-xs btn-success font-weight-bold mr-1 shadow-xs"
                                        title="Open WhatsApp with prefilled text to send from your personal number">
                                         <i class="mdi mdi-whatsapp mr-1"></i> Personal Send
-                                    </a>
-                                {% else %}
-                                    <!-- Direct Chat Action Button -->
-                                    <a href="{{ log.direct_chat_url }}" target="_blank" 
-                                       class="btn btn-xs btn-outline-success font-weight-bold mr-1"
-                                       title="Chat with {{ log.recipient_name }} on WhatsApp">
-                                        <i class="mdi mdi-chat-outline mr-1"></i> Chat
                                     </a>
                                 {% endif %}
 
@@ -530,9 +1063,9 @@
                     <div class="form-group mb-2">
                         <label class="font-weight-bold small text-muted text-uppercase">Template Shortcuts</label>
                         <div class="d-flex flex-wrap">
-                            <button type="button" class="btn btn-xs btn-outline-secondary mr-1 mb-1" onclick="insertTemplate('lead')">Lead Inquiry Followup</button>
-                            <button type="button" class="btn btn-xs btn-outline-secondary mr-1 mb-1" onclick="insertTemplate('renewal')">Subscription Renewal</button>
-                            <button type="button" class="btn btn-xs btn-outline-secondary mr-1 mb-1" onclick="insertTemplate('demo')">FitStack Demo Link</button>
+                            <button type="button" class="btn btn-xs btn-outline-secondary mr-1 mb-1" onclick="insertModalTemplate('lead')">Lead Inquiry Followup</button>
+                            <button type="button" class="btn btn-xs btn-outline-secondary mr-1 mb-1" onclick="insertModalTemplate('renewal')">Subscription Renewal</button>
+                            <button type="button" class="btn btn-xs btn-outline-secondary mr-1 mb-1" onclick="insertModalTemplate('demo')">FitStack Demo Link</button>
                         </div>
                     </div>
 
@@ -555,12 +1088,496 @@
 
 {% block scripts %}
 <script>
+    // State management for live console
+    var currentFilter = 'all';
+    var activePhone = null;
+    var activeContactData = null;
+    var conversationsData = [];
+
+    // Initialize Console on Load
+    document.addEventListener('DOMContentLoaded', function() {
+        refreshConversations();
+
+        var composerInput = document.getElementById('composerInput');
+        if (composerInput) {
+            composerInput.addEventListener('input', function() {
+                var len = this.value.length;
+                document.getElementById('composerCharCount').innerText = len;
+            });
+            composerInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendChatMessage('twilio');
+                }
+            });
+        }
+    });
+
+    // Switch between Live Chat Console and Message Audit Log Table
+    function switchView(mode) {
+        var liveView = document.getElementById('liveConsoleView');
+        var auditView = document.getElementById('auditTableView');
+        var btnLive = document.getElementById('btnViewLive');
+        var btnAudit = document.getElementById('btnViewAudit');
+
+        if (mode === 'live') {
+            liveView.style.display = 'block';
+            auditView.style.display = 'none';
+            btnLive.classList.add('active');
+            btnAudit.classList.remove('active');
+        } else {
+            liveView.style.display = 'none';
+            auditView.style.display = 'block';
+            btnLive.classList.remove('active');
+            btnAudit.classList.add('active');
+        }
+    }
+
+    function openContactInLiveChat(cleanPhone) {
+        switchView('live');
+        loadThread(cleanPhone);
+    }
+
+    // Contact List Filtering (All / Inbound / Failed / Outbound)
+    function setContactFilter(chipElem, filterType) {
+        document.querySelectorAll('.wa-filter-chip').forEach(function(el) {
+            el.classList.remove('active');
+        });
+        chipElem.classList.add('active');
+        currentFilter = filterType;
+        renderConversations();
+    }
+
+    // Fetch conversation summaries via API
+    function refreshConversations() {
+        var gymId = document.getElementById('conversationGymFilter').value;
+        var searchQ = document.getElementById('conversationSearchInput').value.trim();
+        var url = `/superadmin/whatsapp-messages/api/conversations/?gym_id=${encodeURIComponent(gymId)}&q=${encodeURIComponent(searchQ)}`;
+
+        fetch(url, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                conversationsData = data.conversations || [];
+                renderConversations();
+
+                // If an active phone is already selected, maintain it; else select first
+                if (activePhone) {
+                    highlightActiveContact(activePhone);
+                } else if (conversationsData.length > 0) {
+                    loadThread(conversationsData[0].phone);
+                }
+            }
+        })
+        .catch(err => {
+            console.error('Failed to load conversations:', err);
+        });
+    }
+
+    function filterConversationsList() {
+        var query = document.getElementById('conversationSearchInput').value.toLowerCase();
+        var items = document.querySelectorAll('.wa-contact-item');
+        items.forEach(function(item) {
+            var text = item.innerText.toLowerCase();
+            item.style.display = text.indexOf(query) !== -1 ? 'flex' : 'none';
+        });
+    }
+
+    function renderConversations() {
+        var container = document.getElementById('conversationsContainer');
+        var filtered = conversationsData;
+
+        if (currentFilter === 'inbound') {
+            filtered = conversationsData.filter(c => c.inbound_count > 0 || c.last_direction === 'inbound');
+        } else if (currentFilter === 'failed') {
+            filtered = conversationsData.filter(c => c.has_failed || c.last_status === 'failed');
+        } else if (currentFilter === 'outbound') {
+            filtered = conversationsData.filter(c => c.last_direction === 'outbound');
+        }
+
+        if (filtered.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-5 text-muted px-3">
+                    <i class="mdi mdi-account-search-outline mdi-36px d-block mb-2 text-muted"></i>
+                    <p class="small mb-0">No conversations matching this filter.</p>
+                </div>
+            `;
+            return;
+        }
+
+        var html = '';
+        filtered.forEach(function(c) {
+            var initials = getInitials(c.name);
+            var avatarClass = 'wa-avatar';
+            if (c.recipient_type && c.recipient_type.toLowerCase().indexOf('lead') !== -1) {
+                avatarClass += ' wa-avatar-lead';
+            } else if (c.gym_name && c.gym_name !== 'FitStack Platform') {
+                avatarClass += ' wa-avatar-gym';
+            }
+
+            var statusIcon = '';
+            if (c.last_direction === 'inbound' || c.last_status === 'received') {
+                statusIcon = '<i class="mdi mdi-arrow-bottom-left text-primary mr-1" title="Inbound reply"></i>';
+            } else if (c.last_status === 'sent') {
+                statusIcon = '<i class="mdi mdi-check-all text-success mr-1" title="Delivered via API"></i>';
+            } else if (c.last_status === 'sent_manually') {
+                statusIcon = '<i class="mdi mdi-whatsapp text-success mr-1" title="Sent with Personal WhatsApp"></i>';
+            } else if (c.last_status === 'failed') {
+                statusIcon = '<i class="mdi mdi-alert-circle text-danger mr-1" title="Delivery failed"></i>';
+            } else {
+                statusIcon = '<i class="mdi mdi-clock-outline text-muted mr-1"></i>';
+            }
+
+            var isActive = (activePhone && (c.phone === activePhone || c.clean_digits === activePhone)) ? 'active' : '';
+
+            html += `
+                <div class="wa-contact-item ${isActive}" data-phone="${c.phone}" data-digits="${c.clean_digits}" onclick="loadThread('${c.phone}')">
+                    <div class="${avatarClass}">${initials}</div>
+                    <div class="wa-contact-info">
+                        <div class="wa-contact-top">
+                            <span class="wa-contact-name">${escapeHtml(c.name)}</span>
+                            <span class="wa-contact-time">${c.last_time || ''}</span>
+                        </div>
+                        <div class="wa-contact-snippet">
+                            ${statusIcon}
+                            <span class="text-truncate">${escapeHtml(c.last_message || 'No messages')}</span>
+                        </div>
+                        <div class="wa-contact-meta">
+                            <span class="badge-soft badge-soft-secondary" style="font-size: 0.65rem; padding: 1px 5px;">${escapeHtml(c.recipient_type)}</span>
+                            ${c.gym_name ? `<span class="badge-soft badge-soft-info" style="font-size: 0.65rem; padding: 1px 5px;"><i class="mdi mdi-domain mr-1"></i>${escapeHtml(c.gym_name)}</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    function highlightActiveContact(phone) {
+        document.querySelectorAll('.wa-contact-item').forEach(function(item) {
+            var itemPhone = item.getAttribute('data-phone');
+            var itemDigits = item.getAttribute('data-digits');
+            if (itemPhone === phone || itemDigits === phone) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
+    }
+
+    // Load full message thread for selected contact
+    function loadThread(phone) {
+        activePhone = phone;
+        highlightActiveContact(phone);
+
+        var stream = document.getElementById('messagesStream');
+        stream.innerHTML = `
+            <div class="text-center py-5 text-muted my-auto">
+                <i class="mdi mdi-loading mdi-spin mdi-24px d-block mb-2"></i>
+                <span>Loading conversation thread...</span>
+            </div>
+        `;
+
+        fetch(`/superadmin/whatsapp-messages/api/thread/${encodeURIComponent(phone)}/`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                activeContactData = data.contact;
+                renderThreadHeader(data.contact);
+                renderThreadMessages(data.messages);
+                document.getElementById('quickReplyBar').style.display = 'flex';
+                document.getElementById('composerArea').style.display = 'block';
+                document.getElementById('threadActions').style.display = 'flex';
+            } else {
+                stream.innerHTML = `<div class="alert alert-danger my-auto">${data.error || 'Failed to load thread'}</div>`;
+            }
+        })
+        .catch(err => {
+            console.error('Error loading thread:', err);
+            stream.innerHTML = `<div class="alert alert-danger my-auto">Failed to load conversation messages.</div>`;
+        });
+    }
+
+    function renderThreadHeader(contact) {
+        document.getElementById('activeContactName').innerText = contact.name;
+        document.getElementById('activeContactAvatar').innerText = getInitials(contact.name);
+        document.getElementById('activeContactType').innerText = contact.recipient_type || 'Contact';
+
+        var detailsText = `${contact.phone}`;
+        if (contact.gym_name && contact.gym_name !== 'FitStack Platform') {
+            detailsText += ` • ${contact.gym_name}`;
+        }
+        document.getElementById('activeContactDetails').innerText = detailsText;
+
+        document.getElementById('activeContactCallBtn').href = `tel:${contact.phone}`;
+        document.getElementById('activeContactDirectWaBtn').href = contact.direct_chat_url || `https://wa.me/${contact.clean_phone}`;
+    }
+
+    function renderThreadMessages(messages) {
+        var stream = document.getElementById('messagesStream');
+        if (!messages || messages.length === 0) {
+            stream.innerHTML = `
+                <div class="text-center py-5 text-muted my-auto">
+                    <i class="mdi mdi-chat-outline mdi-36px d-block mb-2 text-muted"></i>
+                    <p class="small">No messages recorded in this conversation yet. Send a message below.</p>
+                </div>
+            `;
+            return;
+        }
+
+        var html = '';
+        var lastDate = '';
+
+        messages.forEach(function(m) {
+            if (m.date !== lastDate) {
+                lastDate = m.date;
+                html += `
+                    <div class="text-center my-2">
+                        <span class="badge badge-light border text-muted px-2 py-1 font-weight-normal" style="font-size: 0.70rem;">
+                            ${m.date}
+                        </span>
+                    </div>
+                `;
+            }
+
+            var isInbound = m.is_inbound || m.direction === 'inbound';
+            var wrapClass = isInbound ? 'inbound' : 'outbound';
+            var bubbleClass = isInbound ? 'inbound' : 'outbound';
+
+            var statusMeta = '';
+            if (isInbound) {
+                statusMeta = `
+                    <span class="badge-soft badge-soft-inbound" style="font-size: 0.65rem; padding: 1px 5px;">
+                        <i class="mdi mdi-arrow-bottom-left mr-1"></i> Inbound Webhook
+                    </span>
+                `;
+            } else if (m.status === 'sent') {
+                statusMeta = `
+                    <span class="text-success font-weight-bold" title="Delivered via Twilio API">
+                        <i class="mdi mdi-check-all"></i> Delivered
+                    </span>
+                `;
+            } else if (m.status === 'sent_manually') {
+                statusMeta = `
+                    <span class="text-success font-weight-bold" title="Sent via Personal WhatsApp">
+                        <i class="mdi mdi-whatsapp"></i> Personal WA
+                    </span>
+                `;
+            } else if (m.status === 'failed') {
+                statusMeta = `
+                    <span class="text-danger font-weight-bold" title="${escapeHtml(m.error_message)}">
+                        <i class="mdi mdi-alert-circle"></i> Failed
+                    </span>
+                    <a href="${m.whatsapp_url}" target="_blank" onclick="markLogSentManually(${m.id})" class="wa-bubble-personal-retry ml-1">
+                        <i class="mdi mdi-whatsapp mr-1"></i> Personal Send
+                    </a>
+                `;
+            } else {
+                statusMeta = `<span class="text-muted"><i class="mdi mdi-clock-outline"></i> Pending</span>`;
+            }
+
+            html += `
+                <div class="wa-bubble-wrap ${wrapClass}">
+                    <div class="wa-bubble ${bubbleClass}">
+                        <div class="wa-bubble-type-tag text-muted">
+                            ${isInbound ? 'Customer Reply' : escapeHtml(m.message_type || 'Message')}
+                        </div>
+                        <div>${escapeHtml(m.message_content)}</div>
+                        <div class="wa-bubble-meta">
+                            <span>${m.time}</span>
+                            ${statusMeta}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        stream.innerHTML = html;
+        stream.scrollTop = stream.scrollHeight;
+    }
+
+    // Dispatch message via Twilio API or Personal WhatsApp
+    function sendChatMessage(sendMethod) {
+        if (!activeContactData || !activePhone) {
+            alert('Please select a contact thread first.');
+            return;
+        }
+
+        var input = document.getElementById('composerInput');
+        var content = input.value.trim();
+        if (!content) {
+            input.focus();
+            return;
+        }
+
+        var btnTwilio = document.getElementById('btnSendTwilio');
+        btnTwilio.disabled = true;
+        btnTwilio.innerHTML = '<i class="mdi mdi-loading mdi-spin mr-1"></i> Sending...';
+
+        var formData = new FormData();
+        formData.append('recipient_phone', activeContactData.phone);
+        formData.append('recipient_name', activeContactData.name);
+        formData.append('message_content', content);
+        formData.append('send_method', sendMethod);
+        if (activeContactData.gym_id) {
+            formData.append('gym_id', activeContactData.gym_id);
+        }
+
+        fetch('/superadmin/whatsapp-messages/api/send/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            btnTwilio.disabled = false;
+            btnTwilio.innerHTML = '<i class="mdi mdi-send mr-1"></i> Send via Twilio API';
+
+            if (data.success || data.whatsapp_url) {
+                input.value = '';
+                document.getElementById('composerCharCount').innerText = '0';
+
+                // If sent via personal whatsapp, open wa.me in new tab
+                if (sendMethod === 'personal_whatsapp' && data.whatsapp_url) {
+                    window.open(data.whatsapp_url, '_blank');
+                }
+
+                // If Twilio failed, offer 1-click fallback notification
+                if (!data.success && data.error) {
+                    showFallbackAlert(data.error, data.whatsapp_url);
+                }
+
+                // Append message to stream immediately
+                if (data.message) {
+                    appendMessageToStream(data.message);
+                } else {
+                    loadThread(activePhone);
+                }
+
+                // Refresh conversation snippets
+                refreshConversations();
+            } else {
+                alert('Error sending message: ' + (data.error || 'Unknown error occurred.'));
+            }
+        })
+        .catch(err => {
+            btnTwilio.disabled = false;
+            btnTwilio.innerHTML = '<i class="mdi mdi-send mr-1"></i> Send via Twilio API';
+            console.error('Error sending message:', err);
+            alert('Server error when dispatching message.');
+        });
+    }
+
+    function appendMessageToStream(msg) {
+        var stream = document.getElementById('messagesStream');
+        var notice = document.getElementById('noActiveThreadNotice');
+        if (notice) notice.remove();
+
+        var statusMeta = '';
+        if (msg.status === 'sent') {
+            statusMeta = '<span class="text-success font-weight-bold"><i class="mdi mdi-check-all"></i> Delivered</span>';
+        } else if (msg.status === 'sent_manually') {
+            statusMeta = '<span class="text-success font-weight-bold"><i class="mdi mdi-whatsapp"></i> Personal WA</span>';
+        } else if (msg.status === 'failed') {
+            statusMeta = `
+                <span class="text-danger font-weight-bold"><i class="mdi mdi-alert-circle"></i> Failed</span>
+                <a href="${msg.whatsapp_url}" target="_blank" class="wa-bubble-personal-retry ml-1">
+                    <i class="mdi mdi-whatsapp mr-1"></i> Personal Send
+                </a>
+            `;
+        }
+
+        var bubbleHtml = `
+            <div class="wa-bubble-wrap outbound">
+                <div class="wa-bubble outbound">
+                    <div class="wa-bubble-type-tag text-muted">Direct Chat</div>
+                    <div>${escapeHtml(msg.message_content)}</div>
+                    <div class="wa-bubble-meta">
+                        <span>${msg.time}</span>
+                        ${statusMeta}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        stream.insertAdjacentHTML('beforeend', bubbleHtml);
+        stream.scrollTop = stream.scrollHeight;
+    }
+
+    function showFallbackAlert(errorMsg, fallbackUrl) {
+        var stream = document.getElementById('messagesStream');
+        var alertHtml = `
+            <div class="alert alert-warning alert-dismissible fade show my-2 small p-2 shadow-xs" role="alert">
+                <i class="mdi mdi-alert mr-1"></i>
+                <strong>Twilio Notice:</strong> ${escapeHtml(errorMsg)}
+                <div class="mt-1">
+                    <a href="${fallbackUrl}" target="_blank" class="btn btn-xs btn-success font-weight-bold text-white">
+                        <i class="mdi mdi-whatsapp mr-1"></i> Send via Personal WhatsApp Now
+                    </a>
+                </div>
+                <button type="button" class="close p-1" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        `;
+        stream.insertAdjacentHTML('beforeend', alertHtml);
+        stream.scrollTop = stream.scrollHeight;
+    }
+
+    // Quick Reply Template Inserts for Live Chat
+    function applyChatTemplate(type) {
+        var name = (activeContactData && activeContactData.name) ? activeContactData.name : 'Customer';
+        var input = document.getElementById('composerInput');
+
+        if (type === 'lead') {
+            input.value = `Hello ${name}, thank you for reaching out to FitStack! When is a good time for a quick 5-minute walkthrough of our gym management system?`;
+        } else if (type === 'due') {
+            input.value = `Dear ${name}, this is a gentle payment reminder regarding your pending membership balance. Kindly clear the dues or reach out to us if you need any assistance.`;
+        } else if (type === 'expiry') {
+            input.value = `Hello ${name}, your fitness membership plan is due for renewal soon. Renew today to enjoy uninterrupted access to workouts and personalized training!`;
+        } else if (type === 'demo') {
+            input.value = `Hi ${name}! Check out the FitStack live software demo at https://fitstack.com - discover automatic billing, member attendance, and WhatsApp automation.`;
+        } else if (type === 'support') {
+            input.value = `Hello ${name}, FitStack Support here! How may we assist you today?`;
+        }
+
+        input.focus();
+        document.getElementById('composerCharCount').innerText = input.value.length;
+    }
+
+    // Modal Helpers
+    function applyQuickContact(selectElem) {
+        var opt = selectElem.options[selectElem.selectedIndex];
+        if (opt.value) {
+            document.getElementById('modalRecipientPhone').value = opt.value;
+            document.getElementById('modalRecipientName').value = opt.getAttribute('data-name') || '';
+            document.getElementById('modalRecipientType').value = opt.getAttribute('data-type') || 'Contact';
+        }
+    }
+
+    function insertModalTemplate(type) {
+        var name = document.getElementById('modalRecipientName').value || 'Customer';
+        var textarea = document.getElementById('modalMessageContent');
+        if (type === 'lead') {
+            textarea.value = `Hello ${name}, thank you for contacting FitStack! We noticed your inquiry regarding our gym software platform. When would be a good time for a quick walkthrough demo?`;
+        } else if (type === 'renewal') {
+            textarea.value = `Hello ${name}, greetings from FitStack! This is a friendly reminder regarding your platform subscription plan renewal. Please let us know if you need assistance with payment or upgrades.`;
+        } else if (type === 'demo') {
+            textarea.value = `Hi ${name}! Check out FitStack live demo at: https://fitstack.com. Discover automated billing, WhatsApp reminders, and member portal tools!`;
+        }
+    }
+
     function markLogSentManually(logId) {
         fetch(`/superadmin/whatsapp-messages/${logId}/mark-sent/?format=json`, {
             method: 'GET',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
         .then(response => response.json())
         .then(data => {
@@ -576,25 +1593,39 @@
         });
     }
 
-    function applyQuickContact(selectElem) {
-        var opt = selectElem.options[selectElem.selectedIndex];
-        if (opt.value) {
-            document.getElementById('modalRecipientPhone').value = opt.value;
-            document.getElementById('modalRecipientName').value = opt.getAttribute('data-name') || '';
-            document.getElementById('modalRecipientType').value = opt.getAttribute('data-type') || 'Contact';
+    // Utility Helpers
+    function getInitials(name) {
+        if (!name) return 'FS';
+        var parts = name.trim().split(' ');
+        if (parts.length >= 2) {
+            return (parts[0][0] + parts[1][0]).toUpperCase();
         }
+        return name.slice(0, 2).toUpperCase();
     }
 
-    function insertTemplate(type) {
-        var name = document.getElementById('modalRecipientName').value || 'Customer';
-        var textarea = document.getElementById('modalMessageContent');
-        if (type === 'lead') {
-            textarea.value = `Hello ${name}, thank you for contacting FitStack! We noticed your inquiry regarding our gym software platform. When would be a good time for a quick 5-minute walkthrough demo?`;
-        } else if (type === 'renewal') {
-            textarea.value = `Hello ${name}, greetings from FitStack! This is a friendly reminder regarding your platform subscription plan renewal. Please let us know if you need assistance with payment or upgrades.`;
-        } else if (type === 'demo') {
-            textarea.value = `Hi ${name}! Check out FitStack live demo at: https://fitstack.com. Discover automated billing, WhatsApp reminders, and member portal tools!`;
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
         }
+        return cookieValue;
     }
 </script>
 {% endblock scripts %}

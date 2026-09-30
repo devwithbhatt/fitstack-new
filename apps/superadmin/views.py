@@ -1573,4 +1573,220 @@ def send_direct_whatsapp_message(request):
         messages.success(request, f"WhatsApp link prepared for {recipient_name}. Launching WhatsApp...")
         return redirect(log.whatsapp_url)
 
-    return redirect('superadmin:whatsapp_messages_hub')
+    return redirect('superadmin:whatsapp_messages_hub')
+
+
+@login_required
+@superadmin_required
+def whatsapp_conversations_api(request):
+    """
+    Returns list of distinct WhatsApp conversation threads grouped by contact phone number.
+    Includes last message snippet, status, time, unread indicator, and contact metadata.
+    """
+    from apps.whatsapp.models import WhatsAppMessageLog
+    search_q = request.GET.get('q', '').strip()
+    gym_id = request.GET.get('gym_id', 'all')
+    filter_type = request.GET.get('filter', 'all')
+
+    qs = WhatsAppMessageLog.objects.select_related('gym').all().order_by('-created_at')
+    if gym_id != 'all' and gym_id.isdigit():
+        qs = qs.filter(gym_id=int(gym_id))
+
+    if search_q:
+        qs = qs.filter(
+            Q(recipient_name__icontains=search_q) |
+            Q(recipient_phone__icontains=search_q) |
+            Q(message_content__icontains=search_q)
+        )
+
+    # Grouping by normalized 10-digit phone
+    threads_map = {}
+    for log in qs:
+        raw_phone = log.recipient_phone or ''
+        digits = ''.join(c for c in raw_phone if c.isdigit())
+        key = digits[-10:] if len(digits) >= 10 else (digits or raw_phone)
+        if not key:
+            continue
+
+        if key not in threads_map:
+            threads_map[key] = {
+                'phone': raw_phone,
+                'clean_digits': key,
+                'name': log.recipient_name or raw_phone,
+                'recipient_type': log.recipient_type or 'Contact',
+                'gym_name': log.gym.name if log.gym else 'FitStack Platform',
+                'gym_id': log.gym.id if log.gym else None,
+                'last_message': log.message_content or '',
+                'last_time': log.created_at.strftime('%I:%M %p'),
+                'last_date': log.created_at.strftime('%d %b'),
+                'last_timestamp': log.created_at.isoformat(),
+                'last_status': log.status,
+                'last_direction': log.direction,
+                'is_inbound': log.is_inbound,
+                'inbound_count': 0,
+                'total_count': 0,
+                'has_failed': False,
+            }
+        thread = threads_map[key]
+        thread['total_count'] += 1
+        if log.is_inbound:
+            thread['inbound_count'] += 1
+        if log.status == 'failed':
+            thread['has_failed'] = True
+
+    conversations = list(threads_map.values())
+
+    if filter_type == 'inbound':
+        conversations = [c for c in conversations if c['inbound_count'] > 0]
+    elif filter_type == 'failed':
+        conversations = [c for c in conversations if c['has_failed']]
+    elif filter_type == 'outbound':
+        conversations = [c for c in conversations if c['last_direction'] == 'outbound']
+
+    return JsonResponse({'success': True, 'conversations': conversations})
+
+
+@login_required
+@superadmin_required
+def whatsapp_thread_api(request, phone):
+    """
+    Returns the complete chronological message history for a phone number.
+    """
+    from apps.whatsapp.models import WhatsAppMessageLog
+    digits = ''.join(c for c in phone if c.isdigit())
+    search_key = digits[-10:] if len(digits) >= 10 else digits
+
+    if not search_key:
+        return JsonResponse({'success': False, 'error': 'Invalid phone number'}, status=400)
+
+    logs = WhatsAppMessageLog.objects.select_related('gym', 'created_by').filter(
+        recipient_phone__icontains=search_key
+    ).order_by('created_at')
+
+    latest_log = logs.last()
+    contact_data = {
+        'name': latest_log.recipient_name if latest_log else phone,
+        'phone': phone,
+        'clean_phone': latest_log.clean_phone if latest_log else digits,
+        'recipient_type': latest_log.recipient_type if latest_log else 'Contact',
+        'gym_name': latest_log.gym.name if (latest_log and latest_log.gym) else 'FitStack Platform',
+        'gym_id': latest_log.gym.id if (latest_log and latest_log.gym) else None,
+        'direct_chat_url': latest_log.direct_chat_url if latest_log else f"https://wa.me/{digits}",
+    }
+
+    message_list = []
+    for m in logs:
+        message_list.append({
+            'id': m.id,
+            'direction': m.direction,
+            'is_inbound': m.is_inbound,
+            'status': m.status,
+            'status_display': m.get_status_display(),
+            'message_type': m.get_message_type_display(),
+            'message_content': m.message_content,
+            'error_message': m.error_message or '',
+            'provider': m.provider,
+            'time': m.created_at.strftime('%I:%M %p'),
+            'date': m.created_at.strftime('%d %b, %Y'),
+            'timestamp': m.created_at.isoformat(),
+            'whatsapp_url': m.whatsapp_url,
+        })
+
+    return JsonResponse({
+        'success': True,
+        'contact': contact_data,
+        'messages': message_list
+    })
+
+
+@login_required
+@superadmin_required
+def whatsapp_send_api(request):
+    """
+    Sends or logs an outbound WhatsApp message from the live console.
+    Supports Twilio Cloud API dispatch or 1-click personal WhatsApp generation.
+    """
+    from apps.whatsapp.models import WhatsAppMessageLog
+    from apps.whatsapp.services import WhatsAppService
+
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'POST method required'}, status=405)
+
+    recipient_phone = request.POST.get('recipient_phone', '').strip()
+    recipient_name = request.POST.get('recipient_name', '').strip() or recipient_phone
+    message_content = request.POST.get('message_content', '').strip()
+    send_method = request.POST.get('send_method', 'twilio')
+    gym_id = request.POST.get('gym_id')
+
+    if not recipient_phone or not message_content:
+        return JsonResponse({'success': False, 'error': 'Phone number and message content are required'}, status=400)
+
+    gym = None
+    if gym_id and str(gym_id).isdigit():
+        gym = Gym.objects.filter(pk=int(gym_id)).first()
+
+    if send_method == 'twilio':
+        svc = WhatsAppService(gym_id=gym.id if gym else None)
+        res, log = svc.send_direct_message(
+            to_number=recipient_phone,
+            recipient_name=recipient_name,
+            message_text=message_content,
+            gym=gym,
+            recipient_type='Direct Contact',
+            created_by=request.user
+        )
+        is_success = bool(res and res.get('success'))
+        return JsonResponse({
+            'success': is_success,
+            'status': log.status if log else ('sent' if is_success else 'failed'),
+            'error': res.get('error') if (res and not is_success) else None,
+            'log_id': log.id if log else None,
+            'whatsapp_url': log.whatsapp_url if log else f"https://wa.me/{recipient_phone}",
+            'message': {
+                'id': log.id if log else None,
+                'direction': 'outbound',
+                'is_inbound': False,
+                'status': log.status if log else 'sent',
+                'status_display': log.get_status_display() if log else 'Delivered',
+                'message_content': message_content,
+                'error_message': log.error_message if log else '',
+                'provider': 'twilio',
+                'time': timezone.now().strftime('%I:%M %p'),
+                'date': timezone.now().strftime('%d %b, %Y'),
+                'whatsapp_url': log.whatsapp_url if log else f"https://wa.me/{recipient_phone}",
+            }
+        })
+    else:
+        # Personal WhatsApp dispatch
+        log = WhatsAppMessageLog.objects.create(
+            gym=gym,
+            recipient_name=recipient_name,
+            recipient_phone=recipient_phone,
+            recipient_type='Direct Contact',
+            message_type='direct_chat',
+            message_content=message_content,
+            status='sent_manually',
+            provider='personal_whatsapp',
+            created_by=request.user,
+            sent_at=timezone.now()
+        )
+        return JsonResponse({
+            'success': True,
+            'status': 'sent_manually',
+            'log_id': log.id,
+            'whatsapp_url': log.whatsapp_url,
+            'message': {
+                'id': log.id,
+                'direction': 'outbound',
+                'is_inbound': False,
+                'status': 'sent_manually',
+                'status_display': 'Sent via Personal WA',
+                'message_content': message_content,
+                'error_message': '',
+                'provider': 'personal_whatsapp',
+                'time': log.created_at.strftime('%I:%M %p'),
+                'date': log.created_at.strftime('%d %b, %Y'),
+                'whatsapp_url': log.whatsapp_url,
+            }
+        })
+

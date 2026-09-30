@@ -321,4 +321,36 @@ class SuperadminSecurityAndBillingTests(TestCase):
         self.assertTrue('wa.me' in resp_direct.url)
         self.assertTrue(WhatsAppMessageLog.objects.filter(recipient_name='Direct Member Sara').exists())
 
+        # 5. WhatsApp Conversations API (JSON)
+        conv_url = reverse('superadmin:whatsapp_conversations_api')
+        resp_conv = self.client.get(conv_url)
+        self.assertEqual(resp_conv.status_code, 200)
+        conv_data = resp_conv.json()
+        self.assertTrue(conv_data['success'])
+        self.assertGreater(len(conv_data['conversations']), 0)
+
+        # 6. WhatsApp Thread History API (JSON)
+        thread_url = reverse('superadmin:whatsapp_thread_api', args=['9876543210'])
+        resp_thread = self.client.get(thread_url)
+        self.assertEqual(resp_thread.status_code, 200)
+        thread_data = resp_thread.json()
+        self.assertTrue(thread_data['success'])
+        self.assertIn('contact', thread_data)
+        self.assertIn('messages', thread_data)
+
+        # 7. WhatsApp Live Console Send API (Personal WA)
+        send_url = reverse('superadmin:whatsapp_send_api')
+        resp_send = self.client.post(send_url, {
+            'recipient_phone': '9876543210',
+            'recipient_name': 'Test Lead Alex',
+            'message_content': 'Live console test message',
+            'send_method': 'personal_whatsapp'
+        })
+        self.assertEqual(resp_send.status_code, 200)
+        send_data = resp_send.json()
+        self.assertTrue(send_data['success'])
+        self.assertEqual(send_data['status'], 'sent_manually')
+        self.assertIn('wa.me', send_data['whatsapp_url'])
+
+
 
