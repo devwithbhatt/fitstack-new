@@ -263,24 +263,12 @@ class SuperadminSecurityAndBillingTests(TestCase):
         self.assertContains(response, 'admin_coach_bob')
         self.assertContains(response, 'Created By')
 
-        # 2. Filter by created_by = self.admin_user.id
-        response_filtered = self.client.get(f"{url}?created_by={self.admin_user.id}")
-        self.assertEqual(response_filtered.status_code, 200)
-        self.assertIn(n1, response_filtered.context['notifications'])
-        self.assertNotIn(n2, response_filtered.context['notifications'])
-
-        # 3. Filter by created_by = 'me' (Self-created notifications)
-        response_me = self.client.get(f"{url}?created_by=me")
-        self.assertEqual(response_me.status_code, 200)
-        self.assertIn(n1, response_me.context['notifications'])
-        self.assertNotIn(n2, response_me.context['notifications'])
-        self.assertContains(response_me, 'Created by Me')
-        self.assertContains(response_me, 'You (Self)')
-
-        # 4. Filter by created_by = other_admin
-        response_filtered2 = self.client.get(f"{url}?created_by={other_admin.id}")
-        self.assertEqual(response_filtered2.status_code, 200)
-        self.assertNotIn(n1, response_filtered2.context['notifications'])
-        self.assertIn(n2, response_filtered2.context['notifications'])
+        # 2. Filter by created_by = 'superadmin' (Unified Superadmin notifications)
+        response_superadmin = self.client.get(f"{url}?created_by=superadmin")
+        self.assertEqual(response_superadmin.status_code, 200)
+        self.assertIn(n1, response_superadmin.context['notifications'])
+        self.assertIn(n2, response_superadmin.context['notifications'])
+        self.assertContains(response_superadmin, 'Created by Superadmin')
+        self.assertContains(response_superadmin, 'Superadmin')
 
 

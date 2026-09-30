@@ -891,8 +891,8 @@ def notification_list(request):
     # Creator / Author filter
     created_by_filter = request.GET.get('created_by', '').strip()
     if created_by_filter:
-        if created_by_filter in ('me', 'self'):
-            notifications = notifications.filter(created_by=request.user)
+        if created_by_filter in ('superadmin', 'me', 'self'):
+            notifications = notifications.filter(created_by__isnull=False)
         elif created_by_filter == 'system':
             notifications = notifications.filter(created_by__isnull=True)
         elif created_by_filter.isdigit():
@@ -909,10 +909,8 @@ def notification_list(request):
             Q(created_by__last_name__icontains=q)
         )
 
-    # Fetch distinct creators for the filter dropdown
-    creator_ids = PlatformNotification.objects.exclude(created_by__isnull=True).values_list('created_by_id', flat=True).distinct()
-    creators = User.objects.filter(id__in=creator_ids).order_by('username')
-    my_notifications_count = PlatformNotification.objects.filter(created_by=request.user).count()
+    # Counts for creators
+    superadmin_notifications_count = PlatformNotification.objects.filter(created_by__isnull=False).count()
     system_notifications_count = PlatformNotification.objects.filter(created_by__isnull=True).count()
 
     paginator = Paginator(notifications, 15)
@@ -923,8 +921,7 @@ def notification_list(request):
         'notifications': notifications_page,
         'status_filter': status_filter,
         'created_by_filter': created_by_filter,
-        'creators': creators,
-        'my_notifications_count': my_notifications_count,
+        'superadmin_notifications_count': superadmin_notifications_count,
         'system_notifications_count': system_notifications_count,
         'q': q,
         'now': now,

@@ -38,11 +38,11 @@
                         <a href="?status=inactive{% if q %}&q={{ q }}{% endif %}{% if created_by_filter %}&created_by={{ created_by_filter }}{% endif %}" class="btn btn-sm mr-2 mb-1 {% if status_filter == 'inactive' %}btn-dark font-weight-bold shadow-sm{% else %}btn-outline-dark{% endif %}">
                             Inactive / Expired
                         </a>
-                        <!-- Quick Filter: Created by Me (Self) -->
-                        <a href="?status={{ status_filter }}{% if created_by_filter != 'me' and created_by_filter != request.user.id|stringformat:'s' %}&created_by=me{% endif %}{% if q %}&q={{ q }}{% endif %}" 
-                           class="btn btn-sm mb-1 {% if created_by_filter == 'me' or created_by_filter == request.user.id|stringformat:'s' %}btn-dark font-weight-bold shadow-sm text-white{% else %}btn-outline-dark{% endif %}"
-                           title="Show only notifications created by yourself (Superadmin)">
-                            <i class="mdi mdi-account-check mr-1 text-warning"></i> Created by Me ({{ my_notifications_count }})
+                        <!-- Quick Filter: Created by Superadmin -->
+                        <a href="?status={{ status_filter }}{% if created_by_filter != 'superadmin' and created_by_filter != 'me' %}&created_by=superadmin{% endif %}{% if q %}&q={{ q }}{% endif %}" 
+                           class="btn btn-sm mb-1 {% if created_by_filter == 'superadmin' or created_by_filter == 'me' %}btn-dark font-weight-bold shadow-sm text-white{% else %}btn-outline-dark{% endif %}"
+                           title="Show all notifications created by Superadmin">
+                            <i class="mdi mdi-shield-crown mr-1 text-warning"></i> Created by Superadmin ({{ superadmin_notifications_count }})
                         </a>
                     </div>
                 </div>
@@ -51,33 +51,22 @@
                         <input type="hidden" name="status" value="{{ status_filter }}">
 
                         <!-- Created By / Author Filter Dropdown -->
-                        <div class="mr-sm-2 mb-2 mb-sm-0" style="min-width: 200px;">
+                        <div class="mr-sm-2 mb-2 mb-sm-0" style="min-width: 220px;">
                             <div class="input-group input-group-sm">
                                 <div class="input-group-prepend">
                                     <span class="input-group-text bg-white border-right-0 text-muted">
                                         <i class="mdi mdi-account-filter"></i>
                                     </span>
                                 </div>
-                                <select name="created_by" class="form-control form-control-sm custom-select border-left-0" onchange="this.form.submit()" title="Filter by creator admin">
-                                    <option value="">All Creators (Everyone)</option>
-                                    <option value="me" {% if created_by_filter == 'me' or created_by_filter == request.user.id|stringformat:"s" %}selected{% endif %}>
-                                        Created by Me (You) ({{ my_notifications_count }})
+                                <select name="created_by" class="form-control form-control-sm custom-select border-left-0" onchange="this.form.submit()" title="Filter by creator">
+                                    <option value="">All Notifications (All Sources)</option>
+                                    <option value="superadmin" {% if created_by_filter == 'superadmin' or created_by_filter == 'me' %}selected{% endif %}>
+                                        Created by Superadmin ({{ superadmin_notifications_count }})
                                     </option>
                                     {% if system_notifications_count > 0 %}
                                     <option value="system" {% if created_by_filter == 'system' %}selected{% endif %}>
                                         System Generated ({{ system_notifications_count }})
                                     </option>
-                                    {% endif %}
-                                    {% if creators %}
-                                        <optgroup label="Other Admin Creators">
-                                            {% for creator in creators %}
-                                                {% if creator.id != request.user.id %}
-                                                    <option value="{{ creator.id }}" {% if created_by_filter == creator.id|stringformat:"s" %}selected{% endif %}>
-                                                        {{ creator.get_full_name|default:creator.username }} {% if creator.is_superuser %}(Superadmin){% endif %}
-                                                    </option>
-                                                {% endif %}
-                                            {% endfor %}
-                                        </optgroup>
                                     {% endif %}
                                 </select>
                             </div>
@@ -100,10 +89,10 @@
             </div>
             {% if created_by_filter %}
                 <div class="mt-2 pt-2 border-top d-flex align-items-center small">
-                    <span class="text-muted mr-2">Active Creator Filter:</span>
-                    {% if created_by_filter == 'me' or created_by_filter == request.user.id|stringformat:"s" %}
+                    <span class="text-muted mr-2">Active Filter:</span>
+                    {% if created_by_filter == 'superadmin' or created_by_filter == 'me' %}
                         <span class="badge badge-dark px-2 py-1 font-weight-bold d-inline-flex align-items-center">
-                            <i class="mdi mdi-account-star text-warning mr-1"></i> Created by Me ({{ request.user.get_full_name|default:request.user.username }})
+                            <i class="mdi mdi-shield-crown text-warning mr-1"></i> Created by Superadmin
                             <a href="?status={{ status_filter }}{% if q %}&q={{ q }}{% endif %}" class="text-white ml-2 text-decoration-none" title="Remove filter">&times;</a>
                         </span>
                     {% elif created_by_filter == 'system' %}
@@ -111,15 +100,6 @@
                             <i class="mdi mdi-robot mr-1"></i> System Generated
                             <a href="?status={{ status_filter }}{% if q %}&q={{ q }}{% endif %}" class="text-white ml-2 text-decoration-none" title="Remove filter">&times;</a>
                         </span>
-                    {% else %}
-                        {% for creator in creators %}
-                            {% if created_by_filter == creator.id|stringformat:"s" %}
-                                <span class="badge badge-primary px-2 py-1 font-weight-bold d-inline-flex align-items-center">
-                                    <i class="mdi mdi-account mr-1"></i> {{ creator.get_full_name|default:creator.username }}
-                                    <a href="?status={{ status_filter }}{% if q %}&q={{ q }}{% endif %}" class="text-white ml-2 text-decoration-none" title="Remove filter">&times;</a>
-                                </span>
-                            {% endif %}
-                        {% endfor %}
                     {% endif %}
                 </div>
             {% endif %}
@@ -196,39 +176,21 @@
                             <!-- Created By Column -->
                             <td>
                                 {% if n.created_by %}
-                                    {% if n.created_by == request.user %}
-                                        <div class="d-flex align-items-center">
-                                            <div class="rounded-circle text-white font-weight-bold d-inline-flex align-items-center justify-content-center mr-2 shadow-sm" 
-                                                 style="width: 28px; height: 28px; min-width: 28px; font-size: 13px; background: linear-gradient(135deg, #059669 0%, #10b981 100%);"
-                                                 title="Created by You">
-                                                <i class="mdi mdi-account-star"></i>
-                                            </div>
-                                            <div>
-                                                <span class="font-weight-bold text-dark d-block" style="font-size: 0.82rem; line-height: 1.2;">
-                                                    {{ n.created_by.get_full_name|default:n.created_by.username }}
-                                                </span>
-                                                <span class="badge badge-success px-1 py-0 text-white font-weight-bold" style="font-size: 0.65rem;">
-                                                    <i class="mdi mdi-check-circle mr-1"></i>You (Self)
-                                                </span>
-                                            </div>
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded-circle text-white font-weight-bold d-inline-flex align-items-center justify-content-center mr-2 shadow-xs" 
+                                             style="width: 28px; height: 28px; min-width: 28px; font-size: 13px; background: linear-gradient(135deg, #1e293b 0%, #334155 100%);"
+                                             title="Created by Superadmin">
+                                            <i class="mdi mdi-shield-crown text-warning"></i>
                                         </div>
-                                    {% else %}
-                                        <div class="d-flex align-items-center">
-                                            <div class="rounded-circle text-white font-weight-bold d-inline-flex align-items-center justify-content-center mr-2 shadow-xs" 
-                                                 style="width: 28px; height: 28px; min-width: 28px; font-size: 11px; background: linear-gradient(135deg, #2563eb 0%, #38bdf8 100%);"
-                                                 title="{{ n.created_by.get_full_name|default:n.created_by.username }}">
-                                                {{ n.created_by.username|slice:":2"|upper }}
-                                            </div>
-                                            <div>
-                                                <span class="font-weight-bold text-dark d-block" style="font-size: 0.82rem; line-height: 1.2;">
-                                                    {{ n.created_by.get_full_name|default:n.created_by.username }}
-                                                </span>
-                                                <span class="badge badge-light border text-muted" style="font-size: 0.65rem; padding: 1px 4px;">
-                                                    {% if n.created_by.is_superuser %}Super Admin{% else %}Admin{% endif %}
-                                                </span>
-                                            </div>
+                                        <div>
+                                            <span class="font-weight-bold text-dark d-block" style="font-size: 0.82rem; line-height: 1.2;">
+                                                Superadmin
+                                            </span>
+                                            <span class="text-muted" style="font-size: 0.70rem;">
+                                                {{ n.created_by.get_full_name|default:n.created_by.username }}
+                                            </span>
                                         </div>
-                                    {% endif %}
+                                    </div>
                                 {% else %}
                                     <span class="badge badge-light text-muted border px-2 py-1" style="font-size: 0.72rem;">
                                         <i class="mdi mdi-robot mr-1"></i>System
