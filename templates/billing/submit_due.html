@@ -171,24 +171,29 @@
                                 {% endif %}
                             </td>
                             <td data-label="Follow Up Date">
-                                {% with membership_follow_up=member.membershiphistory_set.first.follow_up_date pt_follow_up=member.personaltrainer_set.first.follow_up_date %}
-                                    {% if membership_follow_up %}
-                                        {{ membership_follow_up|date:"d-m-Y" }}
-                                    {% elif pt_follow_up %}
-                                        {{ pt_follow_up|date:"d-m-Y" }}
-                                    {% else %}
-                                        N/A
-                                    {% endif %}
-                                {% endwith %}
+                                {% if member.latest_follow_up_date %}
+                                    <span class="badge badge-light border text-dark font-weight-normal px-2 py-1">
+                                        <i class="mdi mdi-calendar-clock text-warning mr-1"></i>
+                                        {{ member.latest_follow_up_date|date:"d-m-Y" }}
+                                    </span>
+                                {% elif member.membership_history.first.follow_up_date %}
+                                    <span class="badge badge-light border text-dark font-weight-normal px-2 py-1">
+                                        <i class="mdi mdi-calendar-clock text-warning mr-1"></i>
+                                        {{ member.membership_history.first.follow_up_date|date:"d-m-Y" }}
+                                    </span>
+                                {% elif member.personal_trainer.first.follow_up_date %}
+                                    <span class="badge badge-light border text-dark font-weight-normal px-2 py-1">
+                                        <i class="mdi mdi-calendar-clock text-warning mr-1"></i>
+                                        {{ member.personal_trainer.first.follow_up_date|date:"d-m-Y" }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">N/A</span>
+                                {% endif %}
                             </td>
                             <td data-label="Action" class="text-center">
-                                {% with membership_history=member.membershiphistory_set.first pt_history=member.personaltrainer_set.first %}
-                                    {% if membership_history or pt_history %}
-                                        <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#followUpModal-{{ member.id }}" title="Update Follow-up">
-                                            <i class="mdi mdi-calendar-clock"></i>
-                                        </button>
-                                    {% endif %}
-                                {% endwith %}
+                                <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#followUpModal-{{ member.id }}" title="Update Follow-up">
+                                    <i class="mdi mdi-calendar-clock"></i>
+                                </button>
                                 <a href="tel:{{ member.mobile_number }}" class="btn btn-secondary btn-sm" title="Call">
                                     <i class="mdi mdi-phone"></i>
                                 </a>
@@ -220,6 +225,7 @@
     </div>
 </div>
 
+<div id="duePaymentModalsContainer">
 {% for member in members %}
 <!-- Follow-up Modal -->
 <div class="modal fade" id="followUpModal-{{ member.id }}" tabindex="-1" role="dialog" aria-labelledby="followUpModalLabel-{{ member.id }}" aria-hidden="true">
@@ -236,7 +242,7 @@
                     {% csrf_token %}
                     <div class="form-group">
                         <label for="follow_up_date-{{ member.id }}">New Follow Up Date</label>
-                        <input type="date" class="form-control" name="follow_up_date" id="follow_up_date-{{ member.id }}" required>
+                        <input type="date" class="form-control" name="follow_up_date" id="follow_up_date-{{ member.id }}" value="{% if member.latest_follow_up_date %}{{ member.latest_follow_up_date|date:'Y-m-d' }}{% elif member.membership_history.first.follow_up_date %}{{ member.membership_history.first.follow_up_date|date:'Y-m-d' }}{% elif member.personal_trainer.first.follow_up_date %}{{ member.personal_trainer.first.follow_up_date|date:'Y-m-d' }}{% endif %}" required>
                     </div>
                     <button type="submit" class="btn btn-primary">Save changes</button>
                 </form>
@@ -245,6 +251,7 @@
     </div>
 </div>
 {% endfor %}
+</div>
     
 </div>
 
@@ -254,15 +261,18 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const today = new Date().toISOString().split('T')[0];
-    const followUpForms = document.querySelectorAll('.follow-up-form');
+    function initFollowUpMinDates() {
+        const today = new Date().toISOString().split('T')[0];
+        const followUpForms = document.querySelectorAll('.follow-up-form');
 
-    followUpForms.forEach(form => {
-        const dateInput = form.querySelector('input[type="date"]');
-        if (dateInput) {
-            dateInput.setAttribute('min', today);
-        }
-    });
+        followUpForms.forEach(form => {
+            const dateInput = form.querySelector('input[type="date"]');
+            if (dateInput) {
+                dateInput.setAttribute('min', today);
+            }
+        });
+    }
+    initFollowUpMinDates();
 
     const filterForm = document.getElementById("duePaymentFilterForm");
     const searchInput = document.getElementById("due_search");
@@ -330,6 +340,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const newPagination = doc.querySelector("#duePaymentPaginationContainer");
             if (newPagination && paginationContainer) {
                 paginationContainer.innerHTML = newPagination.innerHTML;
+            }
+            const newModals = doc.querySelector("#duePaymentModalsContainer");
+            const modalsContainer = document.getElementById("duePaymentModalsContainer");
+            if (newModals && modalsContainer) {
+                modalsContainer.innerHTML = newModals.innerHTML;
+                initFollowUpMinDates();
             }
             window.history.replaceState(null, "", url);
         })

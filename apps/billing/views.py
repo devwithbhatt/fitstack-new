@@ -53,14 +53,16 @@ def submit_due(request):
     latest_membership_follow_up = MembershipHistory.objects.filter(
         member=models.OuterRef('pk'),
         follow_up_date__isnull=False,
-        is_deleted=False
-    ).order_by('-follow_up_date').values('follow_up_date')[:1]
+        is_deleted=False,
+        gym=gym
+    ).order_by('-follow_up_date', '-id').values('follow_up_date')[:1]
 
     latest_pt_follow_up = PersonalTrainer.objects.filter(
         member=models.OuterRef('pk'),
         follow_up_date__isnull=False,
-        is_deleted=False
-    ).order_by('-follow_up_date').values('follow_up_date')[:1]
+        is_deleted=False,
+        gym=gym
+    ).order_by('-follow_up_date', '-id').values('follow_up_date')[:1]
 
     members_with_due = Member.objects.filter(gym=gym, is_deleted=False).annotate(
         membership_due=Coalesce(models.Subquery(membership_due_subquery, output_field=DecimalField()), Value(0, output_field=DecimalField())),
