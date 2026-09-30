@@ -225,3 +225,62 @@ class SuperadminSecurityAndBillingTests(TestCase):
         self.assertEqual(created_plan.max_members_display, 'Unlimited')
         self.assertEqual(created_plan.name, 'Enterprise Unlimited Plan')
 
+    def test_notification_list_creator_filter_and_display(self):
+        """Notification list allows filtering by created_by and displays author info."""
+        from apps.superadmin.models import PlatformNotification
+
+        other_admin = User.objects.create_user(
+            username='admin_coach_bob',
+            email='bob@gym.com',
+            password='bobpassword123'
+        )
+
+        n1 = PlatformNotification.objects.create(
+            title='Alpha System Maintenance',
+            message='Server update at midnight',
+            notification_type='warning',
+            created_by=self.admin_user
+        )
+        n2 = PlatformNotification.objects.create(
+            title='Special Holiday Discount',
+            message='Holiday discount for all members',
+            notification_type='info',
+            created_by=other_admin
+        )
+
+        self.client.login(username='superadmin_test', password='testpassword123')
+        session = self.client.session
+        session['role'] = 'superadmin'
+        session.save()
+
+        # 1. Unfiltered request should list both notifications and creator names
+        url = reverse('superadmin:notification_list')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(n1, response.context['notifications'])
+        self.assertIn(n2, response.context['notifications'])
+        self.assertContains(response, 'superadmin_test')
+        self.assertContains(response, 'admin_coach_bob')
+        self.assertContains(response, 'Created By')
+
+        # 2. Filter by created_by = self.admin_user.id
+        response_filtered = self.client.get(f"{url}?created_by={self.admin_user.id}")
+        self.assertEqual(response_filtered.status_code, 200)
+        self.assertIn(n1, response_filtered.context['notifications'])
+        self.assertNotIn(n2, response_filtered.context['notifications'])
+
+        # 3. Filter by created_by = 'me' (Self-created notifications)
+        response_me = self.client.get(f"{url}?created_by=me")
+        self.assertEqual(response_me.status_code, 200)
+        self.assertIn(n1, response_me.context['notifications'])
+        self.assertNotIn(n2, response_me.context['notifications'])
+        self.assertContains(response_me, 'Created by Me')
+        self.assertContains(response_me, 'You (Self)')
+
+        # 4. Filter by created_by = other_admin
+        response_filtered2 = self.client.get(f"{url}?created_by={other_admin.id}")
+        self.assertEqual(response_filtered2.status_code, 200)
+        self.assertNotIn(n1, response_filtered2.context['notifications'])
+        self.assertIn(n2, response_filtered2.context['notifications'])
+
+
