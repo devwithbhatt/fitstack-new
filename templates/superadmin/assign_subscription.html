@@ -68,6 +68,28 @@
                     </div>
                 </div>
 
+                <!-- Live Plan Quota & Modules Preview Card -->
+                <div id="planPreviewCard" class="card border mb-4 rounded-lg d-none" style="background: #f8fafc; border-left: 4px solid #2563eb !important;">
+                    <div class="card-body p-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap">
+                            <div>
+                                <span class="badge badge-primary px-2 py-1 font-weight-bold mr-2" id="previewTierBadge">Plan</span>
+                                <span class="font-weight-bold text-dark" id="previewPlanName">Select a Plan</span>
+                            </div>
+                            <div class="font-weight-bold text-primary" style="font-size: 16px;" id="previewPriceTag">₹0</div>
+                        </div>
+                        <div class="row small text-muted mb-2">
+                            <div class="col-sm-4 mb-1"><i class="mdi mdi-account-group text-primary mr-1"></i>Members Limit: <strong class="text-dark" id="previewMaxMembers">Unlimited</strong></div>
+                            <div class="col-sm-4 mb-1"><i class="mdi mdi-dumbbell text-success mr-1"></i>Trainers Limit: <strong class="text-dark" id="previewMaxTrainers">Unlimited</strong></div>
+                            <div class="col-sm-4 mb-1"><i class="mdi mdi-shield-account text-info mr-1"></i>Admins Limit: <strong class="text-dark" id="previewMaxAdmins">Unlimited</strong></div>
+                        </div>
+                        <div class="border-top pt-2">
+                            <span class="small font-weight-bold text-muted mr-2">Modules Included:</span>
+                            <div class="d-inline-flex flex-wrap gap-1" id="previewModulesWrap"></div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="row">
                     <div class="col-md-4">
                         <div class="form-group mb-4">
@@ -153,13 +175,60 @@ document.addEventListener('DOMContentLoaded', function () {
     const totalAmountInput = document.getElementById('total_amount');
     const paidAmountInput = document.getElementById('paid_amount');
 
+    const planPreviewCard = document.getElementById('planPreviewCard');
+    const previewTierBadge = document.getElementById('previewTierBadge');
+    const previewPlanName = document.getElementById('previewPlanName');
+    const previewPriceTag = document.getElementById('previewPriceTag');
+    const previewMaxMembers = document.getElementById('previewMaxMembers');
+    const previewMaxTrainers = document.getElementById('previewMaxTrainers');
+    const previewMaxAdmins = document.getElementById('previewMaxAdmins');
+    const previewModulesWrap = document.getElementById('previewModulesWrap');
+
+    const plansData = {{ subscriptions_data_json|default:'[]'|safe }};
+    const plansMap = {};
+    plansData.forEach(p => { plansMap[p.id] = p; });
+
+    function updatePlanPreview() {
+        const planId = parseInt(subscriptionSelect.value);
+        const plan = plansMap[planId];
+        if (!plan) {
+            if (planPreviewCard) planPreviewCard.classList.add('d-none');
+            return;
+        }
+
+        if (planPreviewCard) {
+            planPreviewCard.classList.remove('d-none');
+            planPreviewCard.style.borderLeftColor = plan.color_theme || '#2563eb';
+        }
+        if (previewTierBadge) {
+            previewTierBadge.textContent = plan.plan_tier || 'Plan';
+            previewTierBadge.style.backgroundColor = plan.color_theme || '#2563eb';
+            previewTierBadge.style.color = '#ffffff';
+        }
+        if (previewPlanName) previewPlanName.textContent = plan.name;
+        if (previewPriceTag) previewPriceTag.textContent = `₹${parseFloat(plan.price).toLocaleString()} / ${plan.duration_months} mo`;
+        if (previewMaxMembers) previewMaxMembers.textContent = plan.max_members;
+        if (previewMaxTrainers) previewMaxTrainers.textContent = plan.max_trainers;
+        if (previewMaxAdmins) previewMaxAdmins.textContent = plan.max_admins;
+
+        if (previewModulesWrap && plan.modules) {
+            previewModulesWrap.innerHTML = plan.modules.map(m => {
+                if (m.enabled) {
+                    return `<span class="badge badge-light text-dark border px-2 py-1 mr-1 mb-1" style="font-size: 10.5px;"><i class="mdi mdi-check text-success mr-1"></i>${m.name}</span>`;
+                } else {
+                    return `<span class="badge badge-light text-muted border px-2 py-1 mr-1 mb-1 text-decoration-line-through opacity-50" style="font-size: 10.5px;"><i class="mdi mdi-close text-muted mr-1"></i>${m.name}</span>`;
+                }
+            }).join('');
+        }
+    }
+
     function updateTotalAmount() {
         const selectedOption = subscriptionSelect.options[subscriptionSelect.selectedIndex];
         if (!selectedOption || selectedOption.value === "") return;
         
         const price = parseFloat(selectedOption.dataset.price) || 0;
         const discount = parseFloat(discountInput.value) || 0;
-        const totalAmount = price - discount;
+        const totalAmount = Math.max(0, price - discount);
         totalAmountInput.value = totalAmount.toFixed(2);
         
         // Auto-fill paid amount if empty
@@ -177,6 +246,7 @@ document.addEventListener('DOMContentLoaded', function () {
     subscriptionSelect.addEventListener('change', function() {
         updateDuration();
         updateTotalAmount();
+        updatePlanPreview();
     });
     
     discountInput.addEventListener('input', updateTotalAmount);
@@ -185,6 +255,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (subscriptionSelect.value !== "") {
         updateDuration();
         updateTotalAmount();
+        updatePlanPreview();
     }
     
     // Set today's date if empty

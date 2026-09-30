@@ -32,6 +32,9 @@
 
                 <!-- Desktop Action Bar (Icons Only - No text labels) -->
                 <div class="d-none d-md-flex">
+                    <a href="{% url 'superadmin:impersonate_gym_admin' gym.id %}" target="_blank" class="btn btn-sm btn-dark mr-2" data-toggle="tooltip" title="Open / Login as Gym Admin">
+                        <i class="mdi mdi-account-switch"></i>
+                    </a>
                     <a href="{% url 'superadmin:update_gym' gym.id %}" class="btn btn-sm btn-secondary mr-2" data-toggle="tooltip" title="Edit Gym">
                         <i class="mdi mdi-pencil"></i>
                     </a>
@@ -63,6 +66,9 @@
                         </button>
                         <div class="dropdown-menu dropdown-menu-right shadow-lg border-0 rounded-lg" aria-labelledby="gymActionsDropdown">
                             <h6 class="dropdown-header text-uppercase font-weight-bold text-muted">Manage Gym</h6>
+                            <a class="dropdown-item py-2 d-flex align-items-center" href="{% url 'superadmin:impersonate_gym_admin' gym.id %}" target="_blank">
+                                <div class="bg-light rounded p-1 mr-3"><i class="mdi mdi-account-switch text-dark"></i></div> Open Gym Dashboard
+                            </a>
                             <a class="dropdown-item py-2 d-flex align-items-center" href="{% url 'superadmin:update_gym' gym.id %}">
                                 <div class="bg-light rounded p-1 mr-3"><i class="mdi mdi-pencil text-secondary"></i></div> Edit Gym
                             </a>
@@ -170,25 +176,104 @@
                             </div>
                         </div>
 
-                        <!-- Current Platform Plan Section (Matches Current Membership Plan in Member Profile) -->
+                        <!-- Current Platform Plan Section with Live Quotas & Modules -->
                         <div class="py-4 border-top">
-                            <h5 class="mb-3">Current Platform Plan</h5>
-                            <div class="d-flex justify-content-end mb-2">
-                                <a href="{% url 'superadmin:assign_subscription' %}?gym_id={{ gym.id }}" class="btn btn-sm btn-primary mr-1" title="Assign Plan">
-                                    <i class="mdi mdi-tag-plus"></i> Assign Plan
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0 font-weight-bold">Current Platform Plan</h5>
+                                <a href="{% url 'superadmin:assign_subscription' %}?gym_id={{ gym.id }}" class="btn btn-sm btn-primary" title="Assign / Renew Plan">
+                                    <i class="mdi mdi-tag-plus"></i> Renew / Change
                                 </a>
                             </div>
                             {% if active_subscription %}
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span><i class="mdi mdi-trophy-award mr-2 text-primary"></i>Plan</span>
-                                    <span class="text-muted">{{ active_subscription.subscription.name }}</span>
+                                <div class="p-3 rounded-lg mb-3" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="font-weight-bold text-dark">{{ active_subscription.subscription.name }}</span>
+                                        <span class="badge badge-primary px-2 py-1 font-weight-bold">{{ active_subscription.subscription.get_plan_tier_display }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between text-muted small">
+                                        <span><i class="mdi mdi-calendar-clock mr-1 text-primary"></i>Expires:</span>
+                                        <span class="font-weight-bold text-dark">{{ active_subscription.end_date|date:"d M Y" }}</span>
+                                    </div>
                                 </div>
-                                <div class="d-flex justify-content-between">
-                                    <span><i class="mdi mdi-calendar-clock mr-2 text-primary"></i>End Date</span>
-                                    <span class="text-muted">{{ active_subscription.end_date|date:"d-m-Y" }}</span>
+
+                                <!-- Quota Utilization Bars -->
+                                <div class="mb-3">
+                                    <h6 class="font-weight-bold text-dark small text-uppercase mb-2" style="letter-spacing: 0.5px;">Resource Quota Limits</h6>
+                                    
+                                    <!-- Members Quota -->
+                                    <div class="mb-2">
+                                        <div class="d-flex justify-content-between align-items-center small mb-1">
+                                            <span class="text-muted"><i class="mdi mdi-account-group mr-1 text-primary"></i>Members:</span>
+                                            <span class="font-weight-bold text-dark">
+                                                {{ registered_members_count }} / {% if max_members %}{{ max_members }}{% else %}&infin;{% endif %}
+                                                {% if max_members %}<span class="text-muted">({{ members_pct }}%)</span>{% endif %}
+                                            </span>
+                                        </div>
+                                        {% if max_members %}
+                                        <div class="progress" style="height: 6px; background-color: #e2e8f0;">
+                                            <div class="progress-bar {% if members_pct > 90 %}bg-danger{% elif members_pct > 75 %}bg-warning{% else %}bg-primary{% endif %}" style="width: {{ members_pct }}%"></div>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Trainers Quota -->
+                                    <div class="mb-2">
+                                        <div class="d-flex justify-content-between align-items-center small mb-1">
+                                            <span class="text-muted"><i class="mdi mdi-dumbbell mr-1 text-success"></i>Trainers:</span>
+                                            <span class="font-weight-bold text-dark">
+                                                {{ trainers_count }} / {% if max_trainers %}{{ max_trainers }}{% else %}&infin;{% endif %}
+                                                {% if max_trainers %}<span class="text-muted">({{ trainers_pct }}%)</span>{% endif %}
+                                            </span>
+                                        </div>
+                                        {% if max_trainers %}
+                                        <div class="progress" style="height: 6px; background-color: #e2e8f0;">
+                                            <div class="progress-bar {% if trainers_pct > 90 %}bg-danger{% elif trainers_pct > 75 %}bg-warning{% else %}bg-success{% endif %}" style="width: {{ trainers_pct }}%"></div>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Admins Quota -->
+                                    <div>
+                                        <div class="d-flex justify-content-between align-items-center small mb-1">
+                                            <span class="text-muted"><i class="mdi mdi-shield-account mr-1 text-info"></i>Admin Accounts:</span>
+                                            <span class="font-weight-bold text-dark">
+                                                {{ admins_count }} / {% if max_admins %}{{ max_admins }}{% else %}&infin;{% endif %}
+                                                {% if max_admins %}<span class="text-muted">({{ admins_pct }}%)</span>{% endif %}
+                                            </span>
+                                        </div>
+                                        {% if max_admins %}
+                                        <div class="progress" style="height: 6px; background-color: #e2e8f0;">
+                                            <div class="progress-bar {% if admins_pct > 90 %}bg-danger{% elif admins_pct > 75 %}bg-warning{% else %}bg-info{% endif %}" style="width: {{ admins_pct }}%"></div>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Included SaaS Modules -->
+                                <div>
+                                    <h6 class="font-weight-bold text-dark small text-uppercase mb-2" style="letter-spacing: 0.5px;">SaaS Modules Enabled</h6>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        {% for mod in plan_modules %}
+                                            <span class="badge {% if mod.enabled %}badge-light text-dark border{% else %}badge-light text-muted border text-decoration-line-through opacity-50{% endif %} px-2 py-1 mr-1 mb-1 font-weight-normal" style="font-size: 11px;">
+                                                <i class="mdi {{ mod.icon }} mr-1 {% if mod.enabled %}text-success{% else %}text-muted{% endif %}"></i>
+                                                {{ mod.name }}
+                                                {% if mod.enabled %}
+                                                    <i class="mdi mdi-check text-success ml-1"></i>
+                                                {% else %}
+                                                    <i class="mdi mdi-close text-muted ml-1"></i>
+                                                {% endif %}
+                                            </span>
+                                        {% endfor %}
+                                    </div>
                                 </div>
                             {% else %}
-                                <p class="text-muted">No active platform subscription plan.</p>
+                                <div class="text-center py-3 bg-light rounded">
+                                    <i class="mdi mdi-alert-circle-outline text-warning mdi-24px d-block mb-1"></i>
+                                    <p class="text-muted small mb-2">No active platform subscription plan.</p>
+                                    <a href="{% url 'superadmin:assign_subscription' %}?gym_id={{ gym.id }}" class="btn btn-sm btn-primary">
+                                        <i class="mdi mdi-plus-circle mr-1"></i> Assign Subscription Plan
+                                    </a>
+                                </div>
                             {% endif %}
                         </div>
 

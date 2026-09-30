@@ -39,4 +39,8 @@ urlpatterns = [
     path('notifications/<int:notification_id>/toggle/', views.toggle_notification_status, name='toggle_notification_status'),
     path('notifications/<int:notification_id>/delete/', views.delete_notification, name='delete_notification'),
     path('notifications/estimate-audience/', views.estimate_audience_api, name='estimate_audience_api'),
+    # Impersonation & Data Exports
+    path('impersonate/<int:gym_id>/', views.impersonate_gym_admin, name='impersonate_gym_admin'),
+    path('gyms/export/', views.export_gyms_csv, name='export_gyms_csv'),
+    path('billing/export/', views.export_billing_csv, name='export_billing_csv'),
 ]

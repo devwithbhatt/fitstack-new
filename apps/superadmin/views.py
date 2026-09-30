@@ -1,8 +1,23 @@
+import csv
+import json
+from decimal import Decimal
+from datetime import date, datetime, timedelta
+
 from django.utils import timezone
-from django.shortcuts import render,get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.db import models, transaction
+from django.db.models import Q, Sum, F, Count, Value
+from django.db.models.functions import Concat
+from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.http import require_POST
+from django.contrib import messages
+from apps.website.models import WebsiteContactSubmission
 from .forms import GymForm, GymAdminForm, SubscriptionPlanForm
 from .models import Gym, GymAdmin, SubscriptionPlan, GymSubscription, PlatformNotification, NotificationUserStatus
+from .decorators import superadmin_required
 from .notifications import (
     get_user_applicable_notifications_qs,
     get_active_popup_for_user,
@@ -14,18 +29,6 @@ from .notifications import (
 from apps.members.models import Member, MembershipHistory
 from apps.trainers.models import Trainer
 from apps.billing.models import Payment
-from django.db import models, transaction
-from django.db.models import Q, Sum, F, Count, Value
-from django.db.models.functions import Concat
-from django.contrib.auth.models import User
-from django.contrib.auth.decorators import login_required
-from .decorators import superadmin_required
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from decimal import Decimal
-from datetime import date, datetime, timedelta
-from django.contrib import messages
-from apps.website.models import WebsiteContactSubmission
 
 @login_required
 @superadmin_required
@@ -103,6 +106,52 @@ def dashboard(request):
     recent_inquiries = WebsiteContactSubmission.objects.order_by('-created_at')[:5]
     unread_inquiries_count = WebsiteContactSubmission.objects.filter(is_read=False).count()
 
+    # 6-Month Monthly Revenue Analytics for Chart.js
+    months_labels = []
+    revenue_chart_data = []
+    current_date = today.replace(day=1)
+    for i in range(5, -1, -1):
+        m_year = current_date.year
+        m_month = current_date.month - i
+        while m_month <= 0:
+            m_month += 12
+            m_year -= 1
+        m_start = date(m_year, m_month, 1)
+        if m_month == 12:
+            m_end = date(m_year + 1, 1, 1) - timedelta(days=1)
+        else:
+            m_end = date(m_year, m_month + 1, 1) - timedelta(days=1)
+        months_labels.append(m_start.strftime("%b %Y"))
+
+        m_sub = GymSubscription.objects.filter(
+            start_date__gte=m_start, 
+            start_date__lte=m_end,
+            is_deleted=False
+        ).aggregate(s=Sum('paid_amount'))['s'] or Decimal('0.00')
+
+        m_due = Payment.objects.filter(
+            member__isnull=True, 
+            is_deleted=False, 
+            payment_date__gte=m_start, 
+            payment_date__lte=m_end
+        ).aggregate(s=Sum('amount'))['s'] or Decimal('0.00')
+
+        revenue_chart_data.append(float(m_sub + m_due))
+
+    # Plan Tier Distribution for Doughnut Chart
+    active_subs_by_plan = GymSubscription.objects.filter(
+        start_date__lte=today,
+        end_date__gte=today,
+        is_deleted=False
+    ).values('subscription__name').annotate(count=Count('id')).order_by('-count')
+
+    plan_dist_labels = [item['subscription__name'] or 'Custom Plan' for item in active_subs_by_plan]
+    plan_dist_counts = [item['count'] for item in active_subs_by_plan]
+
+    if not plan_dist_labels:
+        plan_dist_labels = ['No Active Subscriptions']
+        plan_dist_counts = [0]
+
     context = {
         'total_gyms': total_gyms,
         'active_gyms': active_gyms,
@@ -116,6 +165,10 @@ def dashboard(request):
         'recent_transactions': recent_transactions,
         'recent_inquiries': recent_inquiries,
         'unread_inquiries_count': unread_inquiries_count,
+        'months_labels_json': json.dumps(months_labels),
+        'revenue_chart_data_json': json.dumps(revenue_chart_data),
+        'plan_dist_labels_json': json.dumps(plan_dist_labels),
+        'plan_dist_counts_json': json.dumps(plan_dist_counts),
     }
     return render(request, 'superadmin/dashboard.html', context)
 
@@ -367,6 +420,34 @@ def gym_profile(request, gym_id):
 
     payment_modes = GymSubscription.PAYMENT_MODE_CHOICES
 
+    # Calculate Quota usage percentages and resource counts
+    registered_members_count = Member.objects.filter(gym=gym).count()
+    active_members_count = Member.objects.filter(gym=gym, is_active=True).count()
+    trainers_count = Trainer.objects.filter(gym=gym).count()
+    admins_count = gym_admins.count()
+
+    plan = active_subscription.subscription if active_subscription else None
+    
+    max_members = plan.max_members if plan else None
+    max_trainers = plan.max_trainers if plan else None
+    max_admins = plan.max_admins if plan else None
+
+    members_pct = min(100, round((registered_members_count / max_members * 100), 1)) if max_members else 0
+    trainers_pct = min(100, round((trainers_count / max_trainers * 100), 1)) if max_trainers else 0
+    admins_pct = min(100, round((admins_count / max_admins * 100), 1)) if max_admins else 0
+
+    plan_modules = [
+        {'name': 'Attendance Tracking', 'enabled': plan.enable_attendance if plan else True, 'icon': 'mdi-calendar-check'},
+        {'name': 'Billing & Invoicing', 'enabled': plan.enable_billing if plan else True, 'icon': 'mdi-receipt'},
+        {'name': 'Diet Plans', 'enabled': plan.enable_diet_plans if plan else True, 'icon': 'mdi-food-apple'},
+        {'name': 'Workout Plans', 'enabled': plan.enable_workout_plans if plan else True, 'icon': 'mdi-dumbbell'},
+        {'name': 'WhatsApp Reminders', 'enabled': plan.enable_whatsapp_reminders if plan else gym.whatsapp_enabled, 'icon': 'mdi-whatsapp'},
+        {'name': 'Reports & Analytics', 'enabled': plan.enable_reports if plan else True, 'icon': 'mdi-chart-bar'},
+        {'name': 'Expense Management', 'enabled': plan.enable_expenses if plan else True, 'icon': 'mdi-cash-multiple'},
+        {'name': 'Custom Branding', 'enabled': plan.enable_custom_branding if plan else True, 'icon': 'mdi-palette'},
+        {'name': 'Public Landing Page', 'enabled': plan.enable_landing_page if plan else True, 'icon': 'mdi-web'},
+    ]
+
     return render(request, 'superadmin/gym_profile.html', {
         'gym': gym,
         'form': form,
@@ -379,6 +460,17 @@ def gym_profile(request, gym_id):
         'total_paid': total_paid,
         'due_amount': due_amount,
         'payment_modes': payment_modes,
+        'registered_members_count': registered_members_count,
+        'active_members_count': active_members_count,
+        'trainers_count': trainers_count,
+        'admins_count': admins_count,
+        'max_members': max_members,
+        'max_trainers': max_trainers,
+        'max_admins': max_admins,
+        'members_pct': members_pct,
+        'trainers_pct': trainers_pct,
+        'admins_pct': admins_pct,
+        'plan_modules': plan_modules,
     })
 
 
@@ -533,18 +625,46 @@ def assign_subscription(request):
         return redirect('superadmin:gym_list')
 
     else:
-        gyms = Gym.objects.all()
-        subscriptions = SubscriptionPlan.objects.all()
+        gyms = Gym.objects.all().order_by('name')
+        subscriptions = SubscriptionPlan.objects.all().order_by('price')
         payment_modes = GymSubscription.PAYMENT_MODE_CHOICES
         selected_gym_id = request.GET.get('gym_id')
         selected_plan_id = request.GET.get('plan_id')
-        
+
+        subscriptions_data = [
+            {
+                'id': s.id,
+                'name': s.name,
+                'price': str(s.price),
+                'duration_months': s.duration_months,
+                'plan_tier': s.get_plan_tier_display(),
+                'color_theme': s.color_theme,
+                'badge_text': s.badge_text or '',
+                'max_members': s.max_members if s.max_members else 'Unlimited',
+                'max_trainers': s.max_trainers if s.max_trainers else 'Unlimited',
+                'max_admins': s.max_admins if s.max_admins else 'Unlimited',
+                'modules': [
+                    {'name': 'Attendance', 'enabled': s.enable_attendance},
+                    {'name': 'Billing', 'enabled': s.enable_billing},
+                    {'name': 'Diet Plans', 'enabled': s.enable_diet_plans},
+                    {'name': 'Workout Plans', 'enabled': s.enable_workout_plans},
+                    {'name': 'WhatsApp Reminders', 'enabled': s.enable_whatsapp_reminders},
+                    {'name': 'Reports & Analytics', 'enabled': s.enable_reports},
+                    {'name': 'Expenses', 'enabled': s.enable_expenses},
+                    {'name': 'Custom Branding', 'enabled': s.enable_custom_branding},
+                    {'name': 'Landing Page', 'enabled': s.enable_landing_page},
+                ]
+            }
+            for s in subscriptions
+        ]
+
         return render(request, 'superadmin/assign_subscription.html', {
             'gyms': gyms,
             'subscriptions': subscriptions,
             'payment_modes': payment_modes,
             'selected_plan_id': selected_plan_id,
             'selected_gym_id': selected_gym_id,
+            'subscriptions_data_json': json.dumps(subscriptions_data),
         })
 
 
@@ -1133,3 +1253,135 @@ def user_notifications_inbox(request):
 
     template_name = 'superadmin/notifications_inbox.html' if request.user.is_superuser else 'notifications/inbox.html'
     return render(request, template_name, context)
+
+
+@login_required
+@superadmin_required
+def impersonate_gym_admin(request, gym_id):
+    """
+    Allows superadmin to securely switch into a gym's dashboard view for testing/support.
+    """
+    gym = get_object_or_404(Gym, pk=gym_id)
+    
+    # Store superadmin restore session
+    request.session['impersonator_superadmin_id'] = request.user.id
+    request.session['gym_id'] = gym.id
+    request.session['gym_name'] = gym.name
+    request.session['gym_logo'] = gym.logo.url if gym.logo else None
+    request.session['gym_phone'] = gym.phone
+    request.session['role'] = 'gym_admin'
+    
+    messages.info(request, f"You are now accessing {gym.name} portal as Gym Admin.")
+    return redirect('dashboard')
+
+
+@login_required
+@superadmin_required
+def export_gyms_csv(request):
+    """
+    Exports registered gyms directory to CSV with subscription status and member counts.
+    """
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="gyms_export_{timezone.now().strftime("%Y%m%d_%H%M")}.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow([
+        'Gym ID', 'Gym Name', 'Phone', 'Email', 'City', 'State', 
+        'Status', 'Active Plan', 'Plan End Date', 'Registered Members', 
+        'Active Members', 'Staff Count', 'Pending Due (INR)', 'Created At'
+    ])
+    
+    today = timezone.now().date()
+    gyms = Gym.objects.annotate(
+        reg_count=Count('members', distinct=True),
+        act_count=Count('members', filter=Q(members__is_active=True), distinct=True),
+        trainer_count=Count('trainers', distinct=True),
+        admin_count=Count('gymadmin', distinct=True),
+    ).order_by('-id')
+    
+    for g in gyms:
+        active_sub = GymSubscription.objects.filter(
+            gym=g, start_date__lte=today, end_date__gte=today, is_deleted=False
+        ).select_related('subscription').first()
+        
+        plan_name = active_sub.subscription.name if (active_sub and active_sub.subscription) else 'No Active Plan'
+        end_date = active_sub.end_date.strftime('%Y-%m-%d') if active_sub else 'N/A'
+        status = 'Frozen' if g.is_frozen else 'Active'
+        
+        total_sub_amount = GymSubscription.objects.filter(gym=g, is_deleted=False).aggregate(s=Sum('total_amount'))['s'] or Decimal('0.00')
+        paid_sub_amount = GymSubscription.objects.filter(gym=g, is_deleted=False).aggregate(s=Sum('paid_amount'))['s'] or Decimal('0.00')
+        due = total_sub_amount - paid_sub_amount
+        
+        writer.writerow([
+            g.gym_id,
+            g.name,
+            g.phone or '',
+            g.email or '',
+            g.city or '',
+            g.state or '',
+            status,
+            plan_name,
+            end_date,
+            g.reg_count,
+            g.act_count,
+            (g.trainer_count + g.admin_count),
+            float(due),
+            g.created_at.strftime('%Y-%m-%d %H:%M') if g.created_at else ''
+        ])
+        
+    return response
+
+
+@login_required
+@superadmin_required
+def export_billing_csv(request):
+    """
+    Exports platform billing & payment transactions to CSV.
+    """
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="billing_export_{timezone.now().strftime("%Y%m%d_%H%M")}.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow([
+        'Record ID', 'Type', 'Gym Name', 'Gym ID', 'Plan / Description', 
+        'Start / Payment Date', 'End Date', 'Total Amount (INR)', 'Paid Amount (INR)', 
+        'Due Amount (INR)', 'Payment Mode', 'Status'
+    ])
+    
+    subs = GymSubscription.objects.filter(is_deleted=False).select_related('gym', 'subscription').order_by('-start_date')
+    for s in subs:
+        due = s.total_amount - s.paid_amount
+        status = 'Paid' if due <= 0 else 'Pending'
+        writer.writerow([
+            f"SUB-{s.id}",
+            'Subscription Plan',
+            s.gym.name,
+            s.gym.gym_id,
+            s.subscription.name if s.subscription else 'Custom Plan',
+            s.start_date.strftime('%Y-%m-%d'),
+            s.end_date.strftime('%Y-%m-%d'),
+            float(s.total_amount),
+            float(s.paid_amount),
+            float(due),
+            s.payment_mode or 'N/A',
+            status
+        ])
+        
+    payments = Payment.objects.filter(member__isnull=True, is_deleted=False).select_related('gym').order_by('-payment_date')
+    for p in payments:
+        writer.writerow([
+            f"PAY-{p.id}",
+            'Due Payment',
+            p.gym.name,
+            p.gym.gym_id,
+            'Platform Due Submission',
+            p.payment_date.strftime('%Y-%m-%d'),
+            '-',
+            float(p.amount),
+            float(p.amount),
+            0.0,
+            p.payment_method or 'N/A',
+            'Completed'
+        ])
+        
+    return response

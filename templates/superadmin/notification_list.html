@@ -176,24 +176,12 @@
                             <!-- Created By Column -->
                             <td>
                                 {% if n.created_by %}
-                                    <div class="d-flex align-items-center">
-                                        <div class="rounded-circle text-white font-weight-bold d-inline-flex align-items-center justify-content-center mr-2 shadow-xs" 
-                                             style="width: 28px; height: 28px; min-width: 28px; font-size: 13px; background: linear-gradient(135deg, #1e293b 0%, #334155 100%);"
-                                             title="Created by Superadmin">
-                                            <i class="mdi mdi-shield-crown text-warning"></i>
-                                        </div>
-                                        <div>
-                                            <span class="font-weight-bold text-dark d-block" style="font-size: 0.82rem; line-height: 1.2;">
-                                                Superadmin
-                                            </span>
-                                            <span class="text-muted" style="font-size: 0.70rem;">
-                                                {{ n.created_by.get_full_name|default:n.created_by.username }}
-                                            </span>
-                                        </div>
-                                    </div>
+                                    <span class="font-weight-bold text-dark d-block" style="font-size: 0.85rem;" title="Superadmin account: {{ n.created_by.get_full_name|default:n.created_by.username }}">
+                                        Superadmin
+                                    </span>
                                 {% else %}
                                     <span class="badge badge-light text-muted border px-2 py-1" style="font-size: 0.72rem;">
-                                        <i class="mdi mdi-robot mr-1"></i>System
+                                        System
                                     </span>
                                 {% endif %}
                             </td>
