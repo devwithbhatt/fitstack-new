@@ -421,8 +421,13 @@ def gym_profile(request, gym_id):
     payment_modes = GymSubscription.PAYMENT_MODE_CHOICES
 
     # Calculate Quota usage percentages and resource counts
-    registered_members_count = Member.objects.filter(gym=gym).count()
-    active_members_count = Member.objects.filter(gym=gym, is_active=True).count()
+    registered_members_count = Member.objects.filter(gym=gym, is_deleted=False).count()
+    active_members_count = Member.objects.filter(
+        gym=gym,
+        is_deleted=False,
+        membership_history__status='active',
+        membership_history__is_deleted=False
+    ).distinct().count()
     trainers_count = Trainer.objects.filter(gym=gym).count()
     admins_count = gym_admins.count()
 
@@ -437,15 +442,15 @@ def gym_profile(request, gym_id):
     admins_pct = min(100, round((admins_count / max_admins * 100), 1)) if max_admins else 0
 
     plan_modules = [
-        {'name': 'Attendance Tracking', 'enabled': plan.enable_attendance if plan else True, 'icon': 'mdi-calendar-check'},
-        {'name': 'Billing & Invoicing', 'enabled': plan.enable_billing if plan else True, 'icon': 'mdi-receipt'},
-        {'name': 'Diet Plans', 'enabled': plan.enable_diet_plans if plan else True, 'icon': 'mdi-food-apple'},
-        {'name': 'Workout Plans', 'enabled': plan.enable_workout_plans if plan else True, 'icon': 'mdi-dumbbell'},
-        {'name': 'WhatsApp Reminders', 'enabled': plan.enable_whatsapp_reminders if plan else gym.whatsapp_enabled, 'icon': 'mdi-whatsapp'},
-        {'name': 'Reports & Analytics', 'enabled': plan.enable_reports if plan else True, 'icon': 'mdi-chart-bar'},
-        {'name': 'Expense Management', 'enabled': plan.enable_expenses if plan else True, 'icon': 'mdi-cash-multiple'},
-        {'name': 'Custom Branding', 'enabled': plan.enable_custom_branding if plan else True, 'icon': 'mdi-palette'},
-        {'name': 'Public Landing Page', 'enabled': plan.enable_landing_page if plan else True, 'icon': 'mdi-web'},
+        {'name': 'Attendance Tracking', 'enabled': getattr(plan, 'has_biometric_attendance', getattr(plan, 'enable_attendance', True)) if plan else True, 'icon': 'mdi-calendar-check'},
+        {'name': 'Billing & Invoicing', 'enabled': getattr(plan, 'has_billing_invoicing', getattr(plan, 'enable_billing', True)) if plan else True, 'icon': 'mdi-receipt'},
+        {'name': 'Diet Plans', 'enabled': getattr(plan, 'has_diet_workout', getattr(plan, 'enable_diet_plans', True)) if plan else True, 'icon': 'mdi-food-apple'},
+        {'name': 'Workout Plans', 'enabled': getattr(plan, 'has_diet_workout', getattr(plan, 'enable_workout_plans', True)) if plan else True, 'icon': 'mdi-dumbbell'},
+        {'name': 'WhatsApp Reminders', 'enabled': getattr(plan, 'has_whatsapp_support', getattr(plan, 'enable_whatsapp_reminders', gym.whatsapp_enabled)) if plan else gym.whatsapp_enabled, 'icon': 'mdi-whatsapp'},
+        {'name': 'Reports & Analytics', 'enabled': getattr(plan, 'has_reports_analytics', getattr(plan, 'enable_reports', True)) if plan else True, 'icon': 'mdi-chart-bar'},
+        {'name': 'Expense Management', 'enabled': getattr(plan, 'has_expense_management', getattr(plan, 'enable_expenses', True)) if plan else True, 'icon': 'mdi-cash-multiple'},
+        {'name': 'Custom Branding', 'enabled': getattr(plan, 'enable_custom_branding', True) if plan else True, 'icon': 'mdi-palette'},
+        {'name': 'Public Landing Page', 'enabled': getattr(plan, 'enable_landing_page', True) if plan else True, 'icon': 'mdi-web'},
     ]
 
     return render(request, 'superadmin/gym_profile.html', {
@@ -637,22 +642,22 @@ def assign_subscription(request):
                 'name': s.name,
                 'price': str(s.price),
                 'duration_months': s.duration_months,
-                'plan_tier': s.get_plan_tier_display(),
-                'color_theme': s.color_theme,
-                'badge_text': s.badge_text or '',
+                'plan_tier': s.get_plan_tier_display() if hasattr(s, 'get_plan_tier_display') else getattr(s, 'plan_tier', ''),
+                'color_theme': getattr(s, 'color_theme', 'blue'),
+                'badge_text': getattr(s, 'tagline', '') or ('Most Popular' if getattr(s, 'is_popular', False) else ''),
                 'max_members': s.max_members if s.max_members else 'Unlimited',
                 'max_trainers': s.max_trainers if s.max_trainers else 'Unlimited',
                 'max_admins': s.max_admins if s.max_admins else 'Unlimited',
                 'modules': [
-                    {'name': 'Attendance', 'enabled': s.enable_attendance},
-                    {'name': 'Billing', 'enabled': s.enable_billing},
-                    {'name': 'Diet Plans', 'enabled': s.enable_diet_plans},
-                    {'name': 'Workout Plans', 'enabled': s.enable_workout_plans},
-                    {'name': 'WhatsApp Reminders', 'enabled': s.enable_whatsapp_reminders},
-                    {'name': 'Reports & Analytics', 'enabled': s.enable_reports},
-                    {'name': 'Expenses', 'enabled': s.enable_expenses},
-                    {'name': 'Custom Branding', 'enabled': s.enable_custom_branding},
-                    {'name': 'Landing Page', 'enabled': s.enable_landing_page},
+                    {'name': 'Attendance', 'enabled': getattr(s, 'has_biometric_attendance', getattr(s, 'enable_attendance', True))},
+                    {'name': 'Billing', 'enabled': getattr(s, 'has_billing_invoicing', getattr(s, 'enable_billing', True))},
+                    {'name': 'Diet Plans', 'enabled': getattr(s, 'has_diet_workout', getattr(s, 'enable_diet_plans', True))},
+                    {'name': 'Workout Plans', 'enabled': getattr(s, 'has_diet_workout', getattr(s, 'enable_workout_plans', True))},
+                    {'name': 'WhatsApp Reminders', 'enabled': getattr(s, 'has_whatsapp_support', getattr(s, 'enable_whatsapp_reminders', True))},
+                    {'name': 'Reports & Analytics', 'enabled': getattr(s, 'has_reports_analytics', getattr(s, 'enable_reports', True))},
+                    {'name': 'Expenses', 'enabled': getattr(s, 'has_expense_management', getattr(s, 'enable_expenses', True))},
+                    {'name': 'Custom Branding', 'enabled': getattr(s, 'enable_custom_branding', True)},
+                    {'name': 'Landing Page', 'enabled': getattr(s, 'enable_landing_page', True)},
                 ]
             }
             for s in subscriptions
@@ -1293,9 +1298,9 @@ def export_gyms_csv(request):
     
     today = timezone.now().date()
     gyms = Gym.objects.annotate(
-        reg_count=Count('members', distinct=True),
-        act_count=Count('members', filter=Q(members__is_active=True), distinct=True),
-        trainer_count=Count('trainers', distinct=True),
+        reg_count=Count('member', filter=Q(member__is_deleted=False), distinct=True),
+        act_count=Count('member', filter=Q(member__is_deleted=False, member__membership_history__status='active', member__membership_history__is_deleted=False), distinct=True),
+        trainer_count=Count('trainer', filter=Q(trainer__is_active=True), distinct=True),
         admin_count=Count('gymadmin', distinct=True),
     ).order_by('-id')
     
@@ -1380,7 +1385,7 @@ def export_billing_csv(request):
             float(p.amount),
             float(p.amount),
             0.0,
-            p.payment_method or 'N/A',
+            getattr(p, 'payment_mode', getattr(p, 'payment_method', 'N/A')) or 'N/A',
             'Completed'
         ])
         
@@ -1789,4 +1794,4 @@ def whatsapp_send_api(request):
                 'whatsapp_url': log.whatsapp_url,
             }
         })
-
+
