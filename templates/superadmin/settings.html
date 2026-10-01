@@ -373,47 +373,104 @@
             <!-- 4. SMTP Configuration -->
             <div class="tab-pane fade" id="tab-smtp" role="tabpanel">
                 <div class="gym-card mb-4">
-                    <div class="gym-card-header">
-                        <div class="gym-card-title">
+                    <div class="gym-card-header d-flex flex-wrap justify-content-between align-items-center">
+                        <div class="gym-card-title mb-2 mb-sm-0">
                             <i class="fas fa-envelope text-warning"></i>
-                            <span>Outbound Email & SMTP Gateway</span>
+                            <span>Outbound Email &amp; SMTP Gateway</span>
                         </div>
-                        <button type="button" class="btn btn-outline-primary btn-sm font-weight-bold shadow-sm" onclick="openTestEmailModal()">
-                            <i class="fas fa-paper-plane mr-1"></i> Send Test Email
-                        </button>
+                        <div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
+                            <button type="button" class="btn btn-outline-info btn-sm font-weight-bold shadow-sm" onclick="openSmtpGuideModal()">
+                                <i class="fas fa-book-reader mr-1"></i> Setup Guide &amp; Docs
+                            </button>
+                            <button type="button" class="btn btn-outline-primary btn-sm font-weight-bold shadow-sm" onclick="openTestEmailModal()">
+                                <i class="fas fa-paper-plane mr-1"></i> Send Test Email
+                            </button>
+                        </div>
                     </div>
                     <div class="gym-card-body">
-                        <p class="settings-section-subtitle">Configure custom mail relay for billing receipts, password reset notifications, and superadmin alerts.</p>
+                        <p class="settings-section-subtitle mb-3">Configure custom mail relay for billing receipts, password reset notifications, and superadmin alerts.</p>
+
+                        <!-- Quick Presets Bar (Clean, Non-overlapping Layout) -->
+                        <div class="card border mb-4 p-3 shadow-none" style="border-left: 4px solid #0284c7 !important; background: #f8fafc; border-radius: 10px; border-color: #e2e8f0;">
+                            <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+                                <div class="d-flex align-items-center mb-1 mb-md-0">
+                                    <span class="badge badge-primary px-2 py-1 mr-2" style="font-size: 0.78rem;">
+                                        <i class="fas fa-magic mr-1"></i> 1-Click Presets
+                                    </span>
+                                    <span class="text-dark small font-weight-bold">
+                                        Select your email provider to auto-fill recommended host, port &amp; security:
+                                    </span>
+                                </div>
+                                <a href="javascript:void(0)" onclick="openSmtpGuideModal()" class="small font-weight-bold text-primary">
+                                    <i class="fas fa-book-reader mr-1"></i> Need help? Open Setup Guide &rarr;
+                                </a>
+                            </div>
+
+                            <div class="d-flex flex-wrap align-items-center" style="gap: 10px;">
+                                <button type="button" class="btn btn-sm shadow-xs font-weight-bold" onclick="applySmtpPreset('gmail')" style="background: #ffffff; border: 1px solid #cbd5e1; color: #1e293b; border-radius: 8px; padding: 5px 12px; white-space: nowrap;">
+                                    <i class="fab fa-google text-danger mr-1"></i> Gmail / Workspace
+                                </button>
+                                <button type="button" class="btn btn-sm shadow-xs font-weight-bold" onclick="applySmtpPreset('brevo')" style="background: #ffffff; border: 1px solid #cbd5e1; color: #1e293b; border-radius: 8px; padding: 5px 12px; white-space: nowrap;">
+                                    <i class="fas fa-paper-plane text-info mr-1"></i> Brevo (300 Free/Day)
+                                </button>
+                                <button type="button" class="btn btn-sm shadow-xs font-weight-bold" onclick="applySmtpPreset('sendgrid')" style="background: #ffffff; border: 1px solid #cbd5e1; color: #1e293b; border-radius: 8px; padding: 5px 12px; white-space: nowrap;">
+                                    <i class="fas fa-cloud text-primary mr-1"></i> SendGrid
+                                </button>
+                                <button type="button" class="btn btn-sm shadow-xs font-weight-bold" onclick="applySmtpPreset('cpanel')" style="background: #ffffff; border: 1px solid #cbd5e1; color: #1e293b; border-radius: 8px; padding: 5px 12px; white-space: nowrap;">
+                                    <i class="fas fa-server text-success mr-1"></i> cPanel / Hostinger
+                                </button>
+                                <button type="button" class="btn btn-sm btn-primary font-weight-bold shadow-xs" onclick="openSmtpGuideModal()" style="border-radius: 8px; padding: 5px 14px; white-space: nowrap;">
+                                    <i class="fas fa-book-open mr-1"></i> Full Guide &amp; Docs
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Preset Applied Notification -->
+                        <div id="smtpPresetNotification" class="alert alert-info alert-dismissible fade show d-none small py-2 px-3 mb-3" role="alert">
+                            <i class="fas fa-info-circle mr-1"></i> <span id="smtpPresetNotificationText"></span>
+                            <button type="button" class="close py-2" onclick="$('#smtpPresetNotification').addClass('d-none')">
+                                <span>&times;</span>
+                            </button>
+                        </div>
 
                         <div class="row">
                             <div class="col-md-8 form-group">
-                                <label>SMTP Host Server</label>
+                                <label class="font-weight-bold text-dark">SMTP Host Server</label>
                                 <input type="text" name="smtp_host" id="smtp_host" class="form-control" value="{{ setting.smtp_host|default:'' }}" placeholder="e.g. smtp.gmail.com or smtp.sendgrid.net">
+                                <small class="text-muted">Outgoing relay server address provided by your email host.</small>
                             </div>
                             <div class="col-md-4 form-group">
-                                <label>Port</label>
+                                <label class="font-weight-bold text-dark">Port</label>
                                 <input type="number" name="smtp_port" id="smtp_port" class="form-control" value="{{ setting.smtp_port|default:587 }}">
+                                <small class="text-muted">Common: <strong>587</strong> (TLS) or <strong>465</strong> (SSL)</small>
                             </div>
                             <div class="col-md-6 form-group">
-                                <label>SMTP Username / User Email</label>
+                                <label class="font-weight-bold text-dark">SMTP Username / User Email</label>
                                 <input type="text" name="smtp_user" id="smtp_user" class="form-control" value="{{ setting.smtp_user|default:'' }}" placeholder="user@domain.com">
+                                <small class="text-muted">Full email or API user identifier.</small>
                             </div>
                             <div class="col-md-6 form-group">
-                                <label>SMTP Password / App Password</label>
+                                <label class="font-weight-bold text-dark">SMTP Password / App Password</label>
                                 <input type="password" name="smtp_password" id="smtp_password" class="form-control" placeholder="••••••••••••••" autocomplete="new-password">
-                                <small class="text-muted">Leave empty to keep existing password.</small>
+                                <div class="d-flex justify-content-between align-items-center mt-1 flex-wrap">
+                                    <small class="text-muted">Leave empty to keep existing password.</small>
+                                    <a href="javascript:void(0)" onclick="openSmtpGuideModal('gmail')" class="small font-weight-bold text-primary">
+                                        <i class="fas fa-key mr-1"></i> How to get Gmail App Password?
+                                    </a>
+                                </div>
                             </div>
                             <div class="col-md-6 form-group">
-                                <label>Sender 'From' Email Address</label>
+                                <label class="font-weight-bold text-dark">Sender 'From' Email Address</label>
                                 <input type="email" name="smtp_from_email" id="smtp_from_email" class="form-control" value="{{ setting.smtp_from_email|default:'' }}" placeholder="no-reply@fitstack.com">
+                                <small class="text-muted">Must be authorized/verified by your email relay provider.</small>
                             </div>
                             <div class="col-md-6 d-flex align-items-center mt-3">
                                 <div class="custom-control custom-checkbox mr-4">
-                                    <input type="checkbox" class="custom-control-input" id="smtp_use_tls" name="smtp_use_tls" {% if setting.smtp_use_tls %}checked{% endif %}>
+                                    <input type="checkbox" class="custom-control-input" id="smtp_use_tls" name="smtp_use_tls" {% if setting.smtp_use_tls %}checked{% endif %} onchange="toggleSecurityMode('tls')">
                                     <label class="custom-control-label font-weight-bold" for="smtp_use_tls">Enable TLS (Port 587)</label>
                                 </div>
                                 <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" class="custom-control-input" id="smtp_use_ssl" name="smtp_use_ssl" {% if setting.smtp_use_ssl %}checked{% endif %}>
+                                    <input type="checkbox" class="custom-control-input" id="smtp_use_ssl" name="smtp_use_ssl" {% if setting.smtp_use_ssl %}checked{% endif %} onchange="toggleSecurityMode('ssl')">
                                     <label class="custom-control-label font-weight-bold" for="smtp_use_ssl">Enable SSL (Port 465)</label>
                                 </div>
                             </div>
@@ -523,7 +580,9 @@
                 <h5 class="modal-title font-weight-bold">
                     <i class="fas fa-paper-plane mr-2"></i> Verify SMTP Gateway
                 </h5>
-                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                <button type="button" class="close text-white" data-dismiss="modal" data-bs-dismiss="modal" onclick="closeTestEmailModal()" aria-label="Close" style="background: transparent; border: none; font-size: 1.5rem; opacity: 0.9; cursor: pointer;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body p-4">
                 <p class="text-muted small mb-3">Send a test email to confirm that your SMTP credentials, port, and TLS handshake are functioning properly.</p>
@@ -534,10 +593,270 @@
                 <div id="testEmailAlert" class="alert d-none small mb-0"></div>
             </div>
             <div class="modal-footer bg-light" style="border-bottom-left-radius: 14px; border-bottom-right-radius: 14px;">
-                <button type="button" class="btn btn-secondary btn-sm font-weight-bold" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary btn-sm font-weight-bold" data-dismiss="modal" data-bs-dismiss="modal" onclick="closeTestEmailModal()">Close</button>
                 <button type="button" class="btn btn-primary btn-sm font-weight-bold" id="btnDispatchTestEmail" onclick="sendTestEmailAjax()">
                     <span id="testEmailBtnText"><i class="fas fa-paper-plane mr-1"></i> Dispatch Test</span>
                     <span id="testEmailSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Comprehensive SMTP Setup Guide -->
+<div class="modal fade" id="smtpGuideModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="modal-header text-white" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); border-top-left-radius: 16px; border-top-right-radius: 16px;">
+                <div>
+                    <h5 class="modal-title font-weight-bold mb-1">
+                        <i class="fas fa-book-reader mr-2"></i> Outbound SMTP Gateway Setup Guide
+                    </h5>
+                    <p class="small text-white-50 mb-0">Follow our step-by-step instructions to configure reliable email delivery for FitStack.</p>
+                </div>
+                <button type="button" class="close text-white" data-dismiss="modal" data-bs-dismiss="modal" onclick="closeSmtpGuideModal()" aria-label="Close" style="background: transparent; border: none; font-size: 1.5rem; opacity: 0.9; cursor: pointer;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            
+            <div class="modal-body p-4 bg-light">
+                <!-- Provider Selection Tabs -->
+                <ul class="nav nav-pills nav-fill mb-4 bg-white p-2 rounded shadow-sm border" id="smtpGuideTabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active font-weight-bold" id="guide-tab-gmail" data-toggle="pill" data-bs-toggle="pill" href="#guide-pane-gmail" role="tab">
+                            <i class="fab fa-google text-danger mr-1"></i> Gmail / Workspace
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link font-weight-bold" id="guide-tab-brevo" data-toggle="pill" data-bs-toggle="pill" href="#guide-pane-brevo" role="tab">
+                            <i class="fas fa-paper-plane text-info mr-1"></i> Brevo <span class="badge badge-success small ml-1">Free 300/day</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link font-weight-bold" id="guide-tab-sendgrid" data-toggle="pill" data-bs-toggle="pill" href="#guide-pane-sendgrid" role="tab">
+                            <i class="fas fa-cloud text-primary mr-1"></i> SendGrid
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link font-weight-bold" id="guide-tab-cpanel" data-toggle="pill" data-bs-toggle="pill" href="#guide-pane-cpanel" role="tab">
+                            <i class="fas fa-server text-success mr-1"></i> cPanel / Webmail
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="tab-content bg-white p-4 rounded shadow-sm border" id="smtpGuideContent">
+                    
+                    <!-- 1. GMAIL / GOOGLE WORKSPACE -->
+                    <div class="tab-pane fade show active" id="guide-pane-gmail" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="font-weight-bold text-dark mb-0">
+                                <i class="fab fa-google text-danger mr-2"></i> Setting Up Gmail / Google Workspace (SMTP)
+                            </h6>
+                            <button type="button" class="btn btn-sm btn-outline-primary font-weight-bold" onclick="applySmtpPreset('gmail', true)">
+                                <i class="fas fa-magic mr-1"></i> Apply Gmail Settings
+                            </button>
+                        </div>
+                        
+                        <div class="alert alert-warning small border-warning">
+                            <strong><i class="fas fa-exclamation-triangle mr-1"></i> Crucial Requirement:</strong>
+                            Google blocks standard account passwords for SMTP. You <strong>MUST</strong> enable 2-Step Verification and generate a dedicated <strong>16-character App Password</strong>.
+                        </div>
+
+                        <ol class="pl-3 mb-4" style="line-height: 1.8;">
+                            <li class="mb-2">
+                                <strong>Enable 2-Step Verification:</strong> Go to your 
+                                <a href="https://myaccount.google.com/security" target="_blank" rel="noopener noreferrer" class="font-weight-bold text-primary">Google Account Security Settings &nearr;</a>
+                                and ensure <strong>2-Step Verification</strong> is switched <strong>ON</strong>.
+                            </li>
+                            <li class="mb-2">
+                                <strong>Generate an App Password:</strong> Direct link to
+                                <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" class="font-weight-bold text-primary">Google App Passwords &nearr;</a>.
+                                <em>(Or search "App passwords" in the top Google search bar)</em>.
+                            </li>
+                            <li class="mb-2">
+                                <strong>Create Password:</strong> Name your app (e.g. <code>FitStack Gym Platform</code>) and click <strong>Create</strong>.
+                            </li>
+                            <li class="mb-2">
+                                <strong>Copy 16-Character Password:</strong> Google displays a 16-letter code in a yellow box (e.g. <code>abcd efgh ijkl mnop</code>). Copy it without spaces.
+                            </li>
+                            <li class="mb-2">
+                                <strong>Configure in FitStack:</strong>
+                                <table class="table table-sm table-bordered mt-2 mb-0 small">
+                                    <thead class="thead-light">
+                                        <tr><th>Field</th><th>Required Value</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td><strong>SMTP Host</strong></td><td><code>smtp.gmail.com</code></td></tr>
+                                        <tr><td><strong>Port</strong></td><td><code>587</code></td></tr>
+                                        <tr><td><strong>SMTP Username</strong></td><td>Your full Gmail address (e.g. <code>fitstackgym@gmail.com</code>)</td></tr>
+                                        <tr><td><strong>SMTP Password</strong></td><td>Your 16-character Google App Password</td></tr>
+                                        <tr><td><strong>Sender 'From' Email</strong></td><td>Same as your Gmail address</td></tr>
+                                        <tr><td><strong>Encryption</strong></td><td>Check <strong>Enable TLS (Port 587)</strong></td></tr>
+                                    </tbody>
+                                </table>
+                            </li>
+                        </ol>
+                    </div>
+
+                    <!-- 2. BREVO (SENDINBLUE) -->
+                    <div class="tab-pane fade" id="guide-pane-brevo" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="font-weight-bold text-dark mb-0">
+                                <i class="fas fa-paper-plane text-info mr-2"></i> Setting Up Brevo / Sendinblue (Recommended Free Tier)
+                            </h6>
+                            <button type="button" class="btn btn-sm btn-outline-info font-weight-bold" onclick="applySmtpPreset('brevo', true)">
+                                <i class="fas fa-magic mr-1"></i> Apply Brevo Settings
+                            </button>
+                        </div>
+                        
+                        <div class="alert alert-info small border-info">
+                            <strong><i class="fas fa-thumbs-up mr-1"></i> Why Brevo?</strong> Brevo offers <strong>300 free emails per day forever</strong> with near-zero spam flagging and doesn't require complex 2FA app passwords.
+                        </div>
+
+                        <ol class="pl-3 mb-4" style="line-height: 1.8;">
+                            <li class="mb-2">
+                                <strong>Create Account:</strong> Sign up at 
+                                <a href="https://www.brevo.com" target="_blank" rel="noopener noreferrer" class="font-weight-bold text-info">Brevo.com &nearr;</a> (Free plan).
+                            </li>
+                            <li class="mb-2">
+                                <strong>Find SMTP Credentials:</strong> In Brevo dashboard, click your account name at top-right &rarr; select <strong>SMTP &amp; API</strong> &rarr; open the <strong>SMTP</strong> tab.
+                            </li>
+                            <li class="mb-2">
+                                <strong>Generate SMTP Key:</strong> Click <strong>Generate a new SMTP key</strong>, name it <code>FitStack Gym</code>, and copy your master key.
+                            </li>
+                            <li class="mb-2">
+                                <strong>Verify Sender:</strong> Go to <strong>Senders, Domains &amp; Dedicated IPs</strong> in Brevo to verify the email address you will send from.
+                            </li>
+                            <li class="mb-2">
+                                <strong>Configure in FitStack:</strong>
+                                <table class="table table-sm table-bordered mt-2 mb-0 small">
+                                    <thead class="thead-light">
+                                        <tr><th>Field</th><th>Required Value</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td><strong>SMTP Host</strong></td><td><code>smtp-relay.brevo.com</code></td></tr>
+                                        <tr><td><strong>Port</strong></td><td><code>587</code></td></tr>
+                                        <tr><td><strong>SMTP Username</strong></td><td>Your Brevo login email address</td></tr>
+                                        <tr><td><strong>SMTP Password</strong></td><td>Your Brevo SMTP Key (starts with <code>xsmtpsib-...</code>)</td></tr>
+                                        <tr><td><strong>Sender 'From' Email</strong></td><td>Your verified sender address in Brevo</td></tr>
+                                        <tr><td><strong>Encryption</strong></td><td>Check <strong>Enable TLS (Port 587)</strong></td></tr>
+                                    </tbody>
+                                </table>
+                            </li>
+                        </ol>
+                    </div>
+
+                    <!-- 3. SENDGRID -->
+                    <div class="tab-pane fade" id="guide-pane-sendgrid" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="font-weight-bold text-dark mb-0">
+                                <i class="fas fa-cloud text-primary mr-2"></i> Setting Up Twilio SendGrid
+                            </h6>
+                            <button type="button" class="btn btn-sm btn-outline-primary font-weight-bold" onclick="applySmtpPreset('sendgrid', true)">
+                                <i class="fas fa-magic mr-1"></i> Apply SendGrid Settings
+                            </button>
+                        </div>
+
+                        <ol class="pl-3 mb-4" style="line-height: 1.8;">
+                            <li class="mb-2">
+                                <strong>Sender Authentication:</strong> Sign in at 
+                                <a href="https://app.sendgrid.com" target="_blank" rel="noopener noreferrer" class="font-weight-bold text-primary">SendGrid Dashboard &nearr;</a> and complete <strong>Sender Authentication</strong> (Single Sender or Domain).
+                            </li>
+                            <li class="mb-2">
+                                <strong>Generate API Key:</strong> Navigate to <strong>Settings</strong> &rarr; <strong>API Keys</strong> &rarr; click <strong>Create API Key</strong>.
+                            </li>
+                            <li class="mb-2">
+                                <strong>Set Permissions:</strong> Name it <code>FitStack SMTP</code>, select <strong>Full Access</strong> (or Restricted: <em>Mail Send</em>), and click <strong>Create &amp; View</strong>. Copy the key (starts with <code>SG.</code>).
+                            </li>
+                            <li class="mb-2">
+                                <strong>Configure in FitStack:</strong>
+                                <table class="table table-sm table-bordered mt-2 mb-0 small">
+                                    <thead class="thead-light">
+                                        <tr><th>Field</th><th>Required Value</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td><strong>SMTP Host</strong></td><td><code>smtp.sendgrid.net</code></td></tr>
+                                        <tr><td><strong>Port</strong></td><td><code>587</code></td></tr>
+                                        <tr><td><strong>SMTP Username</strong></td><td><code>apikey</code> <em>(Exact literal string)</em></td></tr>
+                                        <tr><td><strong>SMTP Password</strong></td><td>Your SendGrid API Key (<code>SG.xxxx...</code>)</td></tr>
+                                        <tr><td><strong>Sender 'From' Email</strong></td><td>Your verified Single Sender or Domain address</td></tr>
+                                        <tr><td><strong>Encryption</strong></td><td>Check <strong>Enable TLS (Port 587)</strong></td></tr>
+                                    </tbody>
+                                </table>
+                            </li>
+                        </ol>
+                    </div>
+
+                    <!-- 4. CPANEL / HOSTINGER / CUSTOM WEBMAIL -->
+                    <div class="tab-pane fade" id="guide-pane-cpanel" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="font-weight-bold text-dark mb-0">
+                                <i class="fas fa-server text-success mr-2"></i> Setting Up Custom Domain / cPanel / Hostinger Webmail
+                            </h6>
+                            <button type="button" class="btn btn-sm btn-outline-success font-weight-bold" onclick="applySmtpPreset('cpanel', true)">
+                                <i class="fas fa-magic mr-1"></i> Apply cPanel Settings
+                            </button>
+                        </div>
+
+                        <ol class="pl-3 mb-4" style="line-height: 1.8;">
+                            <li class="mb-2">
+                                <strong>Access Hosting Webmail:</strong> In cPanel, Plesk, Hostinger, or Namecheap, go to <strong>Email Accounts</strong> &rarr; click <strong>Connect Devices</strong> or <strong>Mail Client Manual Settings</strong>.
+                            </li>
+                            <li class="mb-2">
+                                <strong>Outgoing Server Details:</strong>
+                                Notice your Outgoing Server name (often <code>mail.yourdomain.com</code> or <code>smtp.hostinger.com</code>).
+                            </li>
+                            <li class="mb-2">
+                                <strong>Configure in FitStack:</strong>
+                                <table class="table table-sm table-bordered mt-2 mb-0 small">
+                                    <thead class="thead-light">
+                                        <tr><th>Field</th><th>SSL Option (Port 465)</th><th>TLS Option (Port 587)</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td><strong>SMTP Host</strong></td><td><code>mail.yourdomain.com</code></td><td><code>mail.yourdomain.com</code></td></tr>
+                                        <tr><td><strong>Port</strong></td><td><code>465</code></td><td><code>587</code></td></tr>
+                                        <tr><td><strong>Encryption</strong></td><td>Check <strong>Enable SSL (Port 465)</strong></td><td>Check <strong>Enable TLS (Port 587)</strong></td></tr>
+                                        <tr><td><strong>SMTP Username</strong></td><td colspan="2">Your complete email address (e.g. <code>info@fitstack.com</code>)</td></tr>
+                                        <tr><td><strong>SMTP Password</strong></td><td colspan="2">Your mailbox password</td></tr>
+                                        <tr><td><strong>Sender 'From' Email</strong></td><td colspan="2">Same mailbox email address</td></tr>
+                                    </tbody>
+                                </table>
+                            </li>
+                        </ol>
+                    </div>
+
+                </div>
+
+                <!-- Troubleshooting Tips -->
+                <div class="mt-4 p-3 bg-white rounded border shadow-sm">
+                    <h6 class="font-weight-bold text-dark mb-2">
+                        <i class="fas fa-tools text-secondary mr-2"></i> Common SMTP Issues &amp; How to Fix Them
+                    </h6>
+                    <div class="row small">
+                        <div class="col-md-6 mb-2">
+                            <strong><i class="fas fa-times-circle text-danger mr-1"></i> 535 Authentication Failed:</strong>
+                            <p class="text-muted mb-0">For Gmail, you entered your normal Google password instead of a 16-character App Password, or entered an invalid SendGrid API Key.</p>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <strong><i class="fas fa-times-circle text-danger mr-1"></i> Connection Timed Out:</strong>
+                            <p class="text-muted mb-0">Many hosting providers block port 25 or port 465. Switch to <strong>Port 587 with TLS enabled</strong> to bypass outbound firewalls.</p>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <strong><i class="fas fa-times-circle text-danger mr-1"></i> Sender Address Rejected:</strong>
+                            <p class="text-muted mb-0">Ensure the <em>Sender 'From' Email Address</em> matches your authenticated email or authorized domain in Brevo/SendGrid/Gmail.</p>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <strong><i class="fas fa-check-circle text-success mr-1"></i> Instant Verification:</strong>
+                            <p class="text-muted mb-0">Click the <strong>"Send Test Email"</strong> button on the settings card to dispatch a live verification email to your inbox.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer bg-light" style="border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;">
+                <button type="button" class="btn btn-secondary btn-sm font-weight-bold px-3" data-dismiss="modal" data-bs-dismiss="modal" onclick="closeSmtpGuideModal()">Close Guide</button>
+                <button type="button" class="btn btn-primary btn-sm font-weight-bold px-3" onclick="closeSmtpGuideModal(); openTestEmailModal();">
+                    <i class="fas fa-paper-plane mr-1"></i> Test Email Dispatch
                 </button>
             </div>
         </div>
@@ -557,7 +876,166 @@
 
     function openTestEmailModal() {
         $('#testEmailAlert').addClass('d-none').removeClass('alert-success alert-danger').text('');
-        $('#testEmailModal').modal('show');
+        const modalEl = document.getElementById('testEmailModal');
+        if (modalEl) {
+            if (window.bootstrap && bootstrap.Modal) {
+                const modalInstance = bootstrap.Modal.getOrCreateInstance ? bootstrap.Modal.getOrCreateInstance(modalEl) : new bootstrap.Modal(modalEl);
+                modalInstance.show();
+            } else if (typeof $ !== 'undefined' && $.fn.modal) {
+                $('#testEmailModal').modal('show');
+            } else {
+                modalEl.classList.add('show');
+                modalEl.style.display = 'block';
+                document.body.classList.add('modal-open');
+            }
+        }
+    }
+
+    function closeTestEmailModal() {
+        const modalEl = document.getElementById('testEmailModal');
+        if (modalEl) {
+            if (window.bootstrap && bootstrap.Modal) {
+                const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+            }
+            if (typeof $ !== 'undefined' && $.fn.modal) {
+                $('#testEmailModal').modal('hide');
+            }
+            setTimeout(() => {
+                modalEl.classList.remove('show');
+                modalEl.style.display = 'none';
+                document.body.classList.remove('modal-open');
+                document.body.style.removeProperty('padding-right');
+                document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+            }, 100);
+        }
+    }
+
+    function openSmtpGuideModal(tabName) {
+        if (tabName) {
+            const tabEl = document.querySelector('#smtpGuideTabs a[href="#guide-pane-' + tabName + '"]');
+            if (tabEl) {
+                if (window.bootstrap && bootstrap.Tab) {
+                    const tabInstance = bootstrap.Tab.getOrCreateInstance ? bootstrap.Tab.getOrCreateInstance(tabEl) : new bootstrap.Tab(tabEl);
+                    tabInstance.show();
+                } else if (typeof $ !== 'undefined' && $.fn.tab) {
+                    $(tabEl).tab('show');
+                }
+            }
+        }
+        const modalEl = document.getElementById('smtpGuideModal');
+        if (modalEl) {
+            if (window.bootstrap && bootstrap.Modal) {
+                const modalInstance = bootstrap.Modal.getOrCreateInstance ? bootstrap.Modal.getOrCreateInstance(modalEl) : new bootstrap.Modal(modalEl);
+                modalInstance.show();
+            } else if (typeof $ !== 'undefined' && $.fn.modal) {
+                $('#smtpGuideModal').modal('show');
+            } else {
+                modalEl.classList.add('show');
+                modalEl.style.display = 'block';
+                document.body.classList.add('modal-open');
+            }
+        }
+    }
+
+    function closeSmtpGuideModal() {
+        const modalEl = document.getElementById('smtpGuideModal');
+        if (modalEl) {
+            if (window.bootstrap && bootstrap.Modal) {
+                const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+            }
+            if (typeof $ !== 'undefined' && $.fn.modal) {
+                $('#smtpGuideModal').modal('hide');
+            }
+            setTimeout(() => {
+                modalEl.classList.remove('show');
+                modalEl.style.display = 'none';
+                document.body.classList.remove('modal-open');
+                document.body.style.removeProperty('padding-right');
+                document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+            }, 100);
+        }
+    }
+
+    function toggleSecurityMode(mode) {
+        if (mode === 'tls' && $('#smtp_use_tls').is(':checked')) {
+            $('#smtp_use_ssl').prop('checked', false);
+            if ($('#smtp_port').val() == '465') {
+                $('#smtp_port').val('587');
+            }
+        } else if (mode === 'ssl' && $('#smtp_use_ssl').is(':checked')) {
+            $('#smtp_use_tls').prop('checked', false);
+            if ($('#smtp_port').val() == '587') {
+                $('#smtp_port').val('465');
+            }
+        }
+    }
+
+    function applySmtpPreset(provider, fromModal = false) {
+        let msg = '';
+        if (provider === 'gmail') {
+            $('#smtp_host').val('smtp.gmail.com');
+            $('#smtp_port').val('587');
+            $('#smtp_use_tls').prop('checked', true);
+            $('#smtp_use_ssl').prop('checked', false);
+            if (!$('#smtp_user').val()) {
+                $('#smtp_user').attr('placeholder', 'yourgym@gmail.com');
+            }
+            if (!$('#smtp_from_email').val()) {
+                $('#smtp_from_email').attr('placeholder', 'yourgym@gmail.com');
+            }
+            msg = 'Applied Gmail configuration (smtp.gmail.com:587 TLS). Please enter your Gmail address and 16-character App Password.';
+        } else if (provider === 'brevo') {
+            $('#smtp_host').val('smtp-relay.brevo.com');
+            $('#smtp_port').val('587');
+            $('#smtp_use_tls').prop('checked', true);
+            $('#smtp_use_ssl').prop('checked', false);
+            if (!$('#smtp_user').val()) {
+                $('#smtp_user').attr('placeholder', 'your-login@domain.com');
+            }
+            if (!$('#smtp_from_email').val()) {
+                $('#smtp_from_email').attr('placeholder', 'verified-sender@domain.com');
+            }
+            msg = 'Applied Brevo configuration (smtp-relay.brevo.com:587 TLS). Enter your Brevo account email and SMTP Key.';
+        } else if (provider === 'sendgrid') {
+            $('#smtp_host').val('smtp.sendgrid.net');
+            $('#smtp_port').val('587');
+            $('#smtp_user').val('apikey');
+            $('#smtp_use_tls').prop('checked', true);
+            $('#smtp_use_ssl').prop('checked', false);
+            if (!$('#smtp_from_email').val()) {
+                $('#smtp_from_email').attr('placeholder', 'verified-sender@domain.com');
+            }
+            msg = 'Applied SendGrid configuration (smtp.sendgrid.net:587 TLS). Username set to "apikey". Enter your SG.xxx API key as password.';
+        } else if (provider === 'cpanel') {
+            if (!$('#smtp_host').val() || $('#smtp_host').val() === 'smtp.gmail.com' || $('#smtp_host').val() === 'smtp-relay.brevo.com' || $('#smtp_host').val() === 'smtp.sendgrid.net') {
+                $('#smtp_host').val('mail.yourdomain.com');
+            }
+            $('#smtp_port').val('465');
+            $('#smtp_use_tls').prop('checked', false);
+            $('#smtp_use_ssl').prop('checked', true);
+            if (!$('#smtp_user').val()) {
+                $('#smtp_user').attr('placeholder', 'info@yourdomain.com');
+            }
+            if (!$('#smtp_from_email').val()) {
+                $('#smtp_from_email').attr('placeholder', 'info@yourdomain.com');
+            }
+            msg = 'Applied cPanel SSL configuration (Port 465 SSL). Replace "mail.yourdomain.com" with your server host.';
+        }
+
+        if (msg) {
+            $('#smtpPresetNotificationText').text(msg);
+            $('#smtpPresetNotification').removeClass('d-none');
+        }
+
+        if (fromModal) {
+            closeSmtpGuideModal();
+        }
     }
 
     function sendTestEmailAjax() {

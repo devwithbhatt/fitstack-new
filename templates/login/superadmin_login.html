@@ -126,7 +126,7 @@
                   Keep me signed in
                 </label>
               </div>
-              <a href="#" class="auth-link text-decoration-none text-muted small">Forgot password?</a>
+              <a href="#" class="auth-link text-decoration-none text-muted small" id="sa-forgot-password-link">Forgot password?</a>
             </div>
           </form>
         </div>
@@ -145,6 +145,8 @@
   <script src="{% static 'js/hoverable-collapse.js' %}"></script>
   <script src="{% static 'js/misc.js' %}"></script>
   
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
     // Add form validation
     document.addEventListener('DOMContentLoaded', function() {
@@ -170,6 +172,59 @@
           this.parentElement.classList.remove('focused');
         });
       });
+
+      const forgotLink = document.getElementById('sa-forgot-password-link');
+      if (forgotLink) {
+        forgotLink.addEventListener('click', function(e) {
+          e.preventDefault();
+          Swal.fire({
+            title: 'Reset Superadmin Password',
+            text: 'Enter your registered Superadmin email or username:',
+            input: 'text',
+            inputPlaceholder: 'admin@fitstack.com or username',
+            showCancelButton: true,
+            confirmButtonText: 'Send Reset Email',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#1e40af',
+            showLoaderOnConfirm: true,
+            preConfirm: function(identifier) {
+              if (!identifier || !identifier.trim()) {
+                Swal.showValidationMessage('Please enter your email or username');
+                return false;
+              }
+              var formData = new URLSearchParams();
+              formData.append('identifier', identifier.trim());
+              formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+              return fetch("{% url 'forgot_password_api' %}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: formData.toString()
+              })
+              .then(function(res) { return res.json(); })
+              .then(function(data) {
+                if (!data.success) {
+                  throw new Error(data.message || 'Failed to send reset email.');
+                }
+                return data;
+              })
+              .catch(function(err) {
+                Swal.showValidationMessage(err.message);
+              });
+            },
+            allowOutsideClick: function() { return !Swal.isLoading(); }
+          }).then(function(result) {
+            if (result.isConfirmed && result.value) {
+              Swal.fire({
+                icon: 'success',
+                title: 'Reset Email Sent!',
+                text: result.value.message,
+                confirmButtonColor: '#1e40af'
+              });
+            }
+          });
+        });
+      }
     });
   </script>
 </body>

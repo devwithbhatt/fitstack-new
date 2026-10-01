@@ -8,10 +8,15 @@ from django.contrib.auth.models import User, Permission
 from functools import wraps
 from django.contrib.contenttypes.models import ContentType
 from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.db.models import Q
+import secrets
+import string
 import logging
 logger = logging.getLogger(__name__)
 from .models import SubAdmin, ROLE_CHOICES
 from .models import SubAdminPermission
+from apps.superadmin.email_service import send_password_reset_email, send_password_changed_email
 
 
 def gym_admin_required(view_func):
@@ -474,11 +479,63 @@ def password_reset_page(request):
                 if hasattr(gym_admin, 'gym'):
                     gym_admin.gym.password_reset_required = False
                     gym_admin.gym.save()
+
+            # Dispatch password change confirmation email
+            if user.email:
+                send_password_changed_email(user, request=request)
             
             messages.success(request, 'Password updated successfully.')
             return redirect('dashboard')
             
     return render(request, 'login/password_reset.html')
+
+
+@require_POST
+def forgot_password_request_api(request):
+    """
+    Self-service password reset request API.
+    Accepts identifier (email or username), generates a secure temporary password,
+    enforces password reset upon next login, and dispatches an email via the SMTP gateway.
+    """
+    identifier = request.POST.get('identifier', '').strip()
+    if not identifier:
+        return JsonResponse({'success': False, 'message': 'Please provide your registered email address or username.'})
+
+    user = User.objects.filter(Q(email__iexact=identifier) | Q(username__iexact=identifier)).first()
+    if not user:
+        return JsonResponse({'success': False, 'message': 'No registered account found matching that email or username.'})
+
+    if not user.email:
+        return JsonResponse({'success': False, 'message': 'This account does not have a registered email address. Please contact your platform administrator.'})
+
+    # Generate a secure 8-character temporary password
+    alphabet = string.ascii_letters + string.digits
+    temp_password = "FS#" + ''.join(secrets.choice(alphabet) for _ in range(6))
+
+    user.set_password(temp_password)
+    user.save()
+
+    gym_name = None
+    if hasattr(user, 'gymadmin') and hasattr(user.gymadmin, 'gym'):
+        user.gymadmin.gym.password_reset_required = True
+        user.gymadmin.gym.save()
+        gym_name = user.gymadmin.gym.name
+
+    email_sent, err = send_password_reset_email(user, temp_password, gym_name=gym_name, request=request)
+
+    if email_sent:
+        parts = user.email.split('@')
+        masked = f"{parts[0][:2]}***@{parts[1]}" if len(parts) == 2 else user.email
+        return JsonResponse({
+            'success': True,
+            'message': f'Temporary password and reset instructions have been sent to {masked}. Please check your inbox.'
+        })
+    else:
+        return JsonResponse({
+            'success': False,
+            'message': f'Could not send reset email: {err}. Please verify SMTP settings with your platform administrator.'
+        })
+
 
 @never_cache
 @login_required(login_url='login')

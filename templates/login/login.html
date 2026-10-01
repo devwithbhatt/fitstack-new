@@ -423,12 +423,57 @@
     });
 
     document.getElementById('forgot-password-link').addEventListener('click', function(event) {
-        event.preventDefault(); // Prevent default link behavior
+        event.preventDefault();
         Swal.fire({
-            title: 'Forgot Password?',
-            text: 'If you forgot your password, please contact the GYM/Superadmin.',
-            icon: 'info',
-            confirmButtonText: 'Okay'
+            title: 'Reset Password',
+            text: 'Enter your registered email address or username to receive a password reset link:',
+            input: 'text',
+            inputPlaceholder: 'name@example.com or username',
+            showCancelButton: true,
+            confirmButtonText: 'Send Reset Email',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#1e40af',
+            showLoaderOnConfirm: true,
+            preConfirm: function(identifier) {
+                if (!identifier || !identifier.trim()) {
+                    Swal.showValidationMessage('Please enter your email or username');
+                    return false;
+                }
+                var formData = new URLSearchParams();
+                formData.append('identifier', identifier.trim());
+                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+                return fetch("{% url 'forgot_password_api' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData.toString()
+                })
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(data) {
+                    if (!data.success) {
+                        throw new Error(data.message || 'Failed to send reset email.');
+                    }
+                    return data;
+                })
+                .catch(function(error) {
+                    Swal.showValidationMessage(error.message);
+                });
+            },
+            allowOutsideClick: function() { return !Swal.isLoading(); }
+        }).then(function(result) {
+            if (result.isConfirmed && result.value) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Reset Email Sent!',
+                    text: result.value.message,
+                    confirmButtonText: 'Back to Login',
+                    confirmButtonColor: '#1e40af'
+                });
+            }
         });
     });
   </script>

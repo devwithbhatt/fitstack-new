@@ -10,4 +10,5 @@ urlpatterns = [
     path('delete_subadmin/<int:sub_admin_id>/', views.delete_subadmin, name='delete_subadmin'),
     path('edit_subadmin/<int:sub_admin_id>/', views.edit_subadmin, name='edit_subadmin'),
     path('password_reset/', views.password_reset_page, name='password_reset_page'),
+    path('forgot-password/', views.forgot_password_request_api, name='forgot_password_api'),
 ]

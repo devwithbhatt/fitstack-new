@@ -24,6 +24,12 @@ from .models import (
     SystemSetting, BackupLog
 )
 from . import backup_service
+from . import email_service
+from .email_service import (
+    send_gym_welcome_email,
+    send_gym_admin_credentials_email,
+    send_password_reset_email
+)
 from .decorators import superadmin_required
 from .notifications import (
     get_user_applicable_notifications_qs,
@@ -200,7 +206,17 @@ def add_gym(request):
                 gym.gst_number = None
 
             gym.save()
-            messages.success(request, f"Gym '{gym.name}' has been added successfully.")
+
+            # Dispatch welcome onboarding email
+            if gym.email:
+                email_sent, _ = send_gym_welcome_email(gym, request=request)
+                if email_sent:
+                    messages.success(request, f"Gym '{gym.name}' has been added successfully. Onboarding welcome email sent to {gym.email}.")
+                else:
+                    messages.success(request, f"Gym '{gym.name}' has been added successfully.")
+            else:
+                messages.success(request, f"Gym '{gym.name}' has been added successfully.")
+
             return redirect('superadmin:create_gym_admin', gym_id=gym.id)
     else:
         initial_data = {}
@@ -221,6 +237,7 @@ def create_gym_admin(request, gym_id):
     if request.method == 'POST':
         form = GymAdminForm(request.POST, request.FILES)
         if form.is_valid():
+            raw_password = form.cleaned_data.get('password')
             user = form.save()
             user.is_staff = True
             user.save()
@@ -238,7 +255,16 @@ def create_gym_admin(request, gym_id):
                 gym_admin.photo = request.FILES['photo']
                 gym_admin.save()
 
-            messages.success(request, f"Admin for '{gym.name}' has been created successfully.")
+            # Dispatch credentials email to new gym administrator
+            if user.email and raw_password:
+                email_sent, _ = send_gym_admin_credentials_email(gym_admin, raw_password, request=request)
+                if email_sent:
+                    messages.success(request, f"Admin for '{gym.name}' has been created successfully. Login credentials emailed to {user.email}.")
+                else:
+                    messages.success(request, f"Admin for '{gym.name}' has been created successfully.")
+            else:
+                messages.success(request, f"Admin for '{gym.name}' has been created successfully.")
+
             return redirect('superadmin:gym_list')
     else:
         form = GymAdminForm()
@@ -520,8 +546,17 @@ def reset_admin_password(request, admin_id):
     # Mark the gym for password reset
     admin.gym.password_reset_required = True
     admin.gym.save()
-    
-    messages.success(request, f"Password for {user.username} has been reset successfully.")
+
+    # Dispatch password reset email
+    if user.email:
+        email_sent, _ = send_password_reset_email(user, 'BTsquare@123', gym_name=admin.gym.name, request=request)
+        if email_sent:
+            messages.success(request, f"Password for {user.username} has been reset successfully and credentials emailed to {user.email}.")
+        else:
+            messages.success(request, f"Password for {user.username} has been reset to default 'BTsquare@123'.")
+    else:
+        messages.success(request, f"Password for {user.username} has been reset to default 'BTsquare@123'.")
+
     return redirect('superadmin:gym_profile', gym_id=admin.gym.id)
 
 
@@ -1825,18 +1860,19 @@ def system_settings_view(request):
             if not test_recipient:
                 return JsonResponse({'success': False, 'message': 'Please provide a valid recipient email address.'})
 
-            host = request.POST.get('smtp_host', setting.smtp_host)
-            port = int(request.POST.get('smtp_port', setting.smtp_port) or 587)
-            user = request.POST.get('smtp_user', setting.smtp_user)
-            pwd = request.POST.get('smtp_password', setting.smtp_password)
-            from_email = request.POST.get('smtp_from_email', setting.smtp_from_email) or user
-            use_tls = request.POST.get('smtp_use_tls') == 'on'
-            use_ssl = request.POST.get('smtp_use_ssl') == 'on'
+            host = request.POST.get('smtp_host') or setting.smtp_host
+            port = int(request.POST.get('smtp_port') or setting.smtp_port or 587)
+            user = request.POST.get('smtp_user') or setting.smtp_user
+            pwd = request.POST.get('smtp_password') or setting.smtp_password
+            from_email = request.POST.get('smtp_from_email') or setting.smtp_from_email or user
+            use_tls = request.POST.get('smtp_use_tls') == 'on' if 'smtp_use_tls' in request.POST else setting.smtp_use_tls
+            use_ssl = request.POST.get('smtp_use_ssl') == 'on' if 'smtp_use_ssl' in request.POST else setting.smtp_use_ssl
 
             if not host:
                 return JsonResponse({'success': False, 'message': 'SMTP Host server is required to send a test email.'})
 
             try:
+                from django.core.mail import EmailMultiAlternatives
                 connection = get_connection(
                     backend='django.core.mail.backends.smtp.EmailBackend',
                     host=host,
@@ -1845,15 +1881,46 @@ def system_settings_view(request):
                     password=pwd,
                     use_tls=use_tls,
                     use_ssl=use_ssl,
-                    timeout=10,
+                    timeout=12,
                 )
-                email = EmailMessage(
-                    subject=f"[{setting.platform_name}] SMTP Test Verification",
-                    body=f"Hello from {setting.platform_name}!\n\nYour SMTP email integration has been successfully configured and tested.\nSent at: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}",
-                    from_email=from_email,
+                platform_name = setting.platform_name or 'FitStack'
+                timestamp_str = timezone.now().strftime('%d %b %Y, %I:%M:%S %p')
+                subject = f"[{platform_name}] SMTP Gateway Test Verification"
+                text_body = f"Hello,\n\nThis is a verification test from {platform_name}.\nYour Outbound Email & SMTP Gateway has been successfully configured and connected.\n\nDispatched at: {timestamp_str}\nHost: {host}:{port}\nSender: {from_email}\n\nFitStack SaaS Platform"
+
+                html_body = f"""
+                <div style="max-width:600px;margin:20px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);border:1px solid #e2e8f0;font-family:sans-serif;">
+                    <div style="background:linear-gradient(135deg,#1e40af,#3b82f6);padding:28px 24px;text-align:center;color:#fff;">
+                        <h2 style="margin:0;font-size:22px;text-transform:uppercase;letter-spacing:0.5px;">{platform_name}</h2>
+                        <p style="margin:4px 0 0;font-size:13px;opacity:0.9;">Outbound Email &amp; SMTP Gateway Verification</p>
+                    </div>
+                    <div style="padding:30px 24px;color:#334155;">
+                        <div style="font-size:16px;font-weight:700;margin-bottom:12px;color:#0f172a;">SMTP Test Succeeded! 🎉</div>
+                        <p style="font-size:14px;line-height:1.6;color:#475569;margin-bottom:20px;">
+                            Congratulations! Your platform mail gateway is fully operational. Outbound transactional emails (such as gym onboarding, admin credentials, and password resets) will now be safely dispatched through this server.
+                        </p>
+                        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid #10b981;border-radius:8px;padding:16px;margin:20px 0;font-size:13px;">
+                            <div><strong>SMTP Server:</strong> {host}:{port}</div>
+                            <div style="margin-top:4px;"><strong>Authenticated User:</strong> {user}</div>
+                            <div style="margin-top:4px;"><strong>From Header:</strong> {from_email}</div>
+                            <div style="margin-top:4px;"><strong>Security:</strong> {'TLS Enabled' if use_tls else ('SSL Enabled' if use_ssl else 'Plain')}</div>
+                            <div style="margin-top:4px;"><strong>Dispatched At:</strong> {timestamp_str}</div>
+                        </div>
+                    </div>
+                    <div style="background:#f8fafc;padding:16px;text-align:center;font-size:12px;color:#94a3b8;border-top:1px solid #e2e8f0;">
+                        &copy; {timezone.now().year} {platform_name}. All rights reserved.
+                    </div>
+                </div>
+                """
+
+                email = EmailMultiAlternatives(
+                    subject=subject,
+                    body=text_body,
+                    from_email=f"{platform_name} <{from_email}>",
                     to=[test_recipient],
                     connection=connection,
                 )
+                email.attach_alternative(html_body, "text/html")
                 email.send(fail_silently=False)
                 return JsonResponse({'success': True, 'message': f'Test email successfully dispatched to {test_recipient}!'})
             except Exception as e:
