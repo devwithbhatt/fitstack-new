@@ -182,7 +182,7 @@
                                 <a href="tel:{{ member.mobile_number }}" class="btn btn-outline-primary btn-sm mr-2 d-flex align-items-center rounded-pill px-3 shadow-sm" style="transition: all 0.2s ease-in-out;" data-toggle="tooltip" title="Call Member" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
                                     <i class="mdi mdi-phone mr-1 mdi-18px"></i> Call
                                 </a>
-                                <a href="https://wa.me/91{{ member.mobile_number }}?text=Hello%20*{{ member.name|urlencode }}*,%20greetings%20from%20*{{ member.gym.name|urlencode }}*!%20{% if due_amount > 0 %}This%20is%20a%20reminder%20regarding%20your%20pending%20due%20of%20*₹{{ due_amount|urlencode }}*.%20{% endif %}How%20can%20we%20help%20you%20today?%20-%20*{{ member.gym.name|urlencode }}*" target="_blank" class="btn btn-outline-success btn-sm d-flex align-items-center rounded-pill px-3 shadow-sm" style="transition: all 0.2s ease-in-out;" data-toggle="tooltip" title="WhatsApp Message" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                <a href="{{ member|whatsapp_profile_url:due_amount }}" target="_blank" class="btn btn-outline-success btn-sm d-flex align-items-center rounded-pill px-3 shadow-sm" style="transition: all 0.2s ease-in-out;" data-toggle="tooltip" title="{% if member.current_status == 'Expired' %}Send Expired Notice via WhatsApp{% elif due_amount > 0 %}Send Due Reminder via WhatsApp{% else %}Send WhatsApp Message{% endif %}" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
                                     <i class="mdi mdi-whatsapp mr-1 mdi-18px"></i> WhatsApp
                                 </a>
                             </div>
@@ -215,9 +215,15 @@
                                                 <a href="{% url 'update_membership_plan' member.id membership_history.id %}" class="btn btn-sm btn-primary mr-1" title="Upgrade Membership Plan">
                                                     <i class="mdi mdi-arrow-up-bold-circle-outline"></i> Upgrade
                                                 </a>
+                                                <a href="{{ member|whatsapp_expiring_soon_url:gym }}" target="_blank" class="btn btn-sm btn-outline-success mr-1" data-toggle="tooltip" title="Send Renewal Reminder via WhatsApp">
+                                                    <i class="mdi mdi-whatsapp"></i> WhatsApp
+                                                </a>
                                             {% else %}
                                                 <a href="{% url 'assign_membership_plan' member.id %}" class="btn btn-sm btn-success mr-1" title="Renew Membership Plan">
                                                     <i class="mdi mdi-autorenew"></i> Renew
+                                                </a>
+                                                <a href="{{ member|whatsapp_expired_url:gym }}" target="_blank" class="btn btn-sm btn-outline-success mr-1" data-toggle="tooltip" title="Send Expired Notice via WhatsApp">
+                                                    <i class="mdi mdi-whatsapp"></i> WhatsApp
                                                 </a>
                                             {% endif %}
                                         {% endif %}

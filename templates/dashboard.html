@@ -455,7 +455,7 @@
                       <a href="tel:{{ member.mobile_number }}" class="btn-icon-action btn-phone" title="Call {{ member.name }}">
                         <i class="fas fa-phone-alt"></i>
                       </a>
-                      <a href="https://wa.me/91{{ member.mobile_number }}" target="_blank" class="btn-icon-action btn-whatsapp" title="WhatsApp {{ member.name }}">
+                      <a href="{{ member|whatsapp_expired_url:gym }}" target="_blank" class="btn-icon-action btn-whatsapp" title="Send Expired Notice to {{ member.name }} via WhatsApp">
                         <i class="fab fa-whatsapp"></i>
                       </a>
                     </div>
@@ -548,7 +548,7 @@
                       <a href="tel:{{ member.mobile_number }}" class="btn-icon-action btn-phone" title="Call {{ member.name }}">
                         <i class="fas fa-phone-alt"></i>
                       </a>
-                      <a href="https://wa.me/91{{ member.mobile_number }}" target="_blank" class="btn-icon-action btn-whatsapp" title="WhatsApp {{ member.name }}">
+                      <a href="{{ member|whatsapp_expiring_soon_url:gym }}" target="_blank" class="btn-icon-action btn-whatsapp" title="Send Renewal Reminder to {{ member.name }} via WhatsApp">
                         <i class="fab fa-whatsapp"></i>
                       </a>
                     </div>
@@ -718,7 +718,7 @@
                       <a href="tel:{{ due.member.mobile_number }}" class="btn-icon-action btn-phone" title="Call {{ due.member.name }}">
                         <i class="fas fa-phone-alt"></i>
                       </a>
-                      <a href="https://wa.me/91{{ due.member.mobile_number }}" target="_blank" class="btn-icon-action btn-whatsapp" title="WhatsApp {{ due.member.name }}">
+                      <a href="{{ due|whatsapp_due_url:gym }}" target="_blank" class="btn-icon-action btn-whatsapp" title="Send Fee Reminder to {{ due.member.name }} via WhatsApp">
                         <i class="fab fa-whatsapp"></i>
                       </a>
                     </div>
@@ -802,7 +802,7 @@
                 <a href="tel:{{ enquiry.mobile_number }}" class="btn-icon-action btn-phone" title="Call {{ enquiry.name }}">
                   <i class="fas fa-phone-alt"></i>
                 </a>
-                <a href="https://wa.me/{{ enquiry.mobile_number }}" target="_blank" class="btn-icon-action btn-whatsapp" title="WhatsApp {{ enquiry.name }}">
+                <a href="{{ enquiry|whatsapp_enquiry_url:gym }}" target="_blank" class="btn-icon-action btn-whatsapp" title="Send Follow-up to {{ enquiry.name }} via WhatsApp">
                   <i class="fab fa-whatsapp"></i>
                 </a>
               </div>
@@ -875,8 +875,8 @@
                   </td>
                   <td class="text-center">
                     <div class="action-buttons-wrap">
-                      <a href="https://wa.me/91{{ member.mobile_number }}?text=Happy%20Birthday%20{{ member.name }}!%20Wishing%20you%20a%20healthy%20and%20prosperous%20year%20ahead%20from%20all%20of%20us%20at%20the%20gym!"
-                         target="_blank" class="btn-icon-action btn-whatsapp" title="Send Birthday Wish to {{ member.name }}">
+                      <a href="{{ member|whatsapp_birthday_url:'today' }}"
+                         target="_blank" class="btn-icon-action btn-whatsapp" title="Send Birthday Wish to {{ member.name }} via WhatsApp">
                         <i class="fab fa-whatsapp"></i>
                       </a>
                       <a href="tel:{{ member.mobile_number }}" class="btn-icon-action btn-phone" title="Call {{ member.name }}">
@@ -904,7 +904,7 @@
                   </td>
                   <td class="text-center">
                     <div class="action-buttons-wrap">
-                      <a href="https://wa.me/91{{ member.mobile_number }}" target="_blank" class="btn-icon-action btn-whatsapp" title="WhatsApp {{ member.name }}">
+                      <a href="{{ member|whatsapp_birthday_url:'upcoming' }}" target="_blank" class="btn-icon-action btn-whatsapp" title="Send Advance Birthday Wish to {{ member.name }} via WhatsApp">
                         <i class="fab fa-whatsapp"></i>
                       </a>
                       <a href="tel:{{ member.mobile_number }}" class="btn-icon-action btn-phone" title="Call {{ member.name }}">

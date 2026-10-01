@@ -94,3 +94,26 @@ def has_module_permission(user, app_label):
         ).exists()
         
     return False
+
+
+# ---------------------------------------------------------------------------
+# WhatsApp URL & Industry-Ready Messaging Filters
+# ---------------------------------------------------------------------------
+try:
+    from apps.whatsapp.templatetags.whatsapp_tags import (
+        whatsapp_expired_url,
+        whatsapp_expiring_soon_url,
+        whatsapp_due_url,
+        whatsapp_profile_url,
+        whatsapp_birthday_url,
+        whatsapp_enquiry_url,
+    )
+    register.filter('whatsapp_expired_url', whatsapp_expired_url)
+    register.filter('whatsapp_expiring_soon_url', whatsapp_expiring_soon_url)
+    register.filter('whatsapp_due_url', whatsapp_due_url)
+    register.filter('whatsapp_profile_url', whatsapp_profile_url)
+    register.filter('whatsapp_birthday_url', whatsapp_birthday_url)
+    register.filter('whatsapp_enquiry_url', whatsapp_enquiry_url)
+except Exception:
+    pass
+
