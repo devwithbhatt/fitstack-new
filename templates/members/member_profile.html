@@ -215,15 +215,9 @@
                                                 <a href="{% url 'update_membership_plan' member.id membership_history.id %}" class="btn btn-sm btn-primary mr-1" title="Upgrade Membership Plan">
                                                     <i class="mdi mdi-arrow-up-bold-circle-outline"></i> Upgrade
                                                 </a>
-                                                <a href="{{ member|whatsapp_expiring_soon_url:gym }}" target="_blank" class="btn btn-sm btn-outline-success mr-1" data-toggle="tooltip" title="Send Renewal Reminder via WhatsApp">
-                                                    <i class="mdi mdi-whatsapp"></i> WhatsApp
-                                                </a>
                                             {% else %}
                                                 <a href="{% url 'assign_membership_plan' member.id %}" class="btn btn-sm btn-success mr-1" title="Renew Membership Plan">
                                                     <i class="mdi mdi-autorenew"></i> Renew
-                                                </a>
-                                                <a href="{{ member|whatsapp_expired_url:gym }}" target="_blank" class="btn btn-sm btn-outline-success mr-1" data-toggle="tooltip" title="Send Expired Notice via WhatsApp">
-                                                    <i class="mdi mdi-whatsapp"></i> WhatsApp
                                                 </a>
                                             {% endif %}
                                         {% endif %}
@@ -245,12 +239,28 @@
                             {% if membership_history %}
                                 <div class="d-flex justify-content-between mb-2">
                                     <span><i class="mdi mdi-trophy-award mr-2 text-primary"></i>Plan</span>
-                                    <span class="text-muted">{{ membership_plan.title }}</span>
+                                    <span class="text-muted font-weight-bold">{{ membership_plan.title }}</span>
                                 </div>
-                                <div class="d-flex justify-content-between">
+                                <div class="d-flex justify-content-between mb-2">
                                     <span><i class="mdi mdi-calendar-clock mr-2 text-primary"></i>End Date</span>
                                     <span class="text-muted">{{ membership_history.get_end_date|date:"d-m-Y" }}</span>
                                 </div>
+                                {% if membership_history.discount > 0 %}
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span><i class="mdi mdi-tag-outline mr-2 text-success"></i>Discount</span>
+                                    <span class="badge badge-success px-2 py-1">-₹{{ membership_history.discount }}</span>
+                                </div>
+                                {% endif %}
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span><i class="mdi mdi-cash-multiple mr-2 text-primary"></i>Total Amount</span>
+                                    <span class="text-dark font-weight-bold">₹{{ membership_history.total_amount }}</span>
+                                </div>
+                                {% if membership_history.due_amount > 0 %}
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span><i class="mdi mdi-alert-circle-outline mr-2 text-danger"></i>Due</span>
+                                    <span class="text-danger font-weight-bold">₹{{ membership_history.due_amount }}</span>
+                                </div>
+                                {% endif %}
                                 {% if membership_history.is_frozen %}
                                 <div class="d-flex justify-content-between">
                                     <span><i class="mdi mdi-information-outline mr-2 text-primary"></i>Reason for Freezing</span>
@@ -273,9 +283,19 @@
                                         </a>
                                     </span>
                                 </div>
-                                <div class="d-flex justify-content-between">
+                                <div class="d-flex justify-content-between mb-2">
                                     <span><i class="mdi mdi-calendar-clock mr-2 text-primary"></i>End Date</span>
                                     <span class="text-muted">{{ pt.get_end_date|date:"d-m-Y" }}</span>
+                                </div>
+                                {% if pt.discount > 0 %}
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span><i class="mdi mdi-tag-outline mr-2 text-success"></i>Discount</span>
+                                    <span class="badge badge-success px-2 py-1">-₹{{ pt.discount }}</span>
+                                </div>
+                                {% endif %}
+                                <div class="d-flex justify-content-between">
+                                    <span><i class="mdi mdi-cash-multiple mr-2 text-primary"></i>Total Amount</span>
+                                    <span class="text-dark font-weight-bold">₹{{ pt.total_amount }}</span>
                                 </div>
                                 {% endwith %}
                             {% else %}
@@ -518,24 +538,46 @@
                                                         </tr>
                                                         <tr>
                                                             <th>Description</th>
-                                                            <td>{{ membership_plan.description }}</td>
+                                                            <td>{{ membership_plan.description|default:"N/A" }}</td>
                                                         </tr>
                                                         <tr>
                                                             <th>Duration</th>
                                                             <td>{{ membership_plan.get_duration_display }}</td>
                                                         </tr>
                                                         <tr>
-                                                            <th>Amount</th>
+                                                            <th>Plan Price</th>
                                                             <td>₹{{ membership_plan.amount }}</td>
                                                         </tr>
+                                                        {% if membership_history.registration_fee > 0 %}
                                                         <tr>
-                                                            <th>Discount</th>
-                                                            <td>₹{{ membership_plan.discount }}</td>
+                                                            <th>Registration Fee</th>
+                                                            <td>₹{{ membership_history.registration_fee }}</td>
+                                                        </tr>
+                                                        {% endif %}
+                                                        <tr>
+                                                            <th>Discount Given</th>
+                                                            <td>
+                                                                {% if membership_history.discount > 0 %}
+                                                                    <span class="badge badge-success px-2 py-1 font-weight-bold">-₹{{ membership_history.discount }}</span>
+                                                                {% else %}
+                                                                    <span class="text-muted">₹0.00</span>
+                                                                {% endif %}
+                                                            </td>
                                                         </tr>
                                                         <tr>
-                                                            <th>Offer Price</th>
-                                                            <td>₹{{ membership_plan.offer_price }}</td>
+                                                            <th>Total Amount</th>
+                                                            <td><strong class="text-dark">₹{{ membership_history.total_amount }}</strong></td>
                                                         </tr>
+                                                        <tr>
+                                                            <th>Paid Amount</th>
+                                                            <td><span class="text-success font-weight-bold">₹{{ membership_history.paid_amount }}</span></td>
+                                                        </tr>
+                                                        {% if membership_history.due_amount > 0 %}
+                                                        <tr>
+                                                            <th>Due Amount</th>
+                                                            <td><span class="text-danger font-weight-bold">₹{{ membership_history.due_amount }}</span></td>
+                                                        </tr>
+                                                        {% endif %}
                                                         <tr>
                                                             <th>Start Date</th>
                                                             <td>{{ membership_history.membership_start_date|date:"d-m-Y" }}</td>
@@ -566,7 +608,9 @@
                                                             <th>Start Date</th>
                                                             <th>End Date</th>
                                                             <th>Add on Days</th>
-                                                            <th>Offer Price</th>
+                                                            <th>Plan Price</th>
+                                                            <th>Discount</th>
+                                                            <th>Total Amount</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -576,7 +620,15 @@
                                                                 <td>{{ history.membership_start_date|date:"d-m-Y" }}</td>
                                                                 <td>{{ history.get_end_date|date:"d-m-Y" }}</td>
                                                                 <td>{{ history.total_add_on_days }}</td>
-                                                                <td>{{ history.plan.offer_price }}</td>
+                                                                <td>₹{{ history.plan.amount }}</td>
+                                                                <td>
+                                                                    {% if history.discount > 0 %}
+                                                                        <span class="badge badge-success">-₹{{ history.discount }}</span>
+                                                                    {% else %}
+                                                                        <span class="text-muted">₹0</span>
+                                                                    {% endif %}
+                                                                </td>
+                                                                <td><strong>₹{{ history.total_amount }}</strong></td>
                                                             </tr>
                                                         {% endfor %}
                                                     </tbody>
@@ -598,6 +650,7 @@
                                                             <th>Plan</th>
                                                             <th>Start Date</th>
                                                             <th>End Date</th>
+                                                            <th>Discount</th>
                                                             <th>Total</th>
                                                             <th>Paid</th>
                                                             <th>Due</th>
@@ -610,6 +663,13 @@
                                                                 <td>{{ history.plan.title }}</td>
                                                                 <td>{{ history.membership_start_date|date:"d-m-Y" }}</td>
                                                                 <td>{{ history.get_end_date|date:"d-m-Y" }}</td>
+                                                                <td>
+                                                                    {% if history.discount > 0 %}
+                                                                        <span class="badge badge-success">-₹{{ history.discount }}</span>
+                                                                    {% else %}
+                                                                        <span class="text-muted">₹0</span>
+                                                                    {% endif %}
+                                                                </td>
                                                                 <td>₹{{ history.total_amount }}</td>
                                                                 <td>₹{{ history.paid_amount }}</td>
                                                                 <td>₹{{ history.due_amount }}</td>
@@ -619,7 +679,7 @@
                                                             </tr>
                                                         {% empty %}
                                                             <tr>
-                                                                <td colspan="7" class="text-center">No membership invoices found.</td>
+                                                                <td colspan="8" class="text-center">No membership invoices found.</td>
                                                             </tr>
                                                         {% endfor %}
                                                     </tbody>
@@ -640,6 +700,7 @@
                                                             <th>Trainer</th>
                                                             <th>Start Date</th>
                                                             <th>End Date</th>
+                                                            <th>Discount</th>
                                                             <th>Total</th>
                                                             <th>Due</th>
                                                             <th>Actions</th>
@@ -652,6 +713,13 @@
                                                                 <td>{{ pt_invoice.trainer.name }}</td>
                                                                 <td>{{ pt_invoice.pt_start_date|date:"d M, Y" }}</td>
                                                                 <td>{{ pt_invoice.get_end_date|date:"d-m-Y" }}</td>
+                                                                <td>
+                                                                    {% if pt_invoice.discount > 0 %}
+                                                                        <span class="badge badge-success">-₹{{ pt_invoice.discount }}</span>
+                                                                    {% else %}
+                                                                        <span class="text-muted">₹0</span>
+                                                                    {% endif %}
+                                                                </td>
                                                                 <td>₹{{ pt_invoice.total_amount }}</td>
                                                                 <td>₹{{ pt_invoice.due_amount }}</td>
                                                                 <td>
@@ -660,7 +728,7 @@
                                                             </tr>
                                                         {% empty %}
                                                             <tr>
-                                                                <td colspan="7" class="text-center">No personal training invoices found.</td>
+                                                                <td colspan="8" class="text-center">No personal training invoices found.</td>
                                                             </tr>
                                                         {% endfor %}
                                                     </tbody>
