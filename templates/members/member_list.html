@@ -5,7 +5,7 @@
 {% block title %}Members Directory - FitStack GYM{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/customstyle.css' %}" />
+<link rel="stylesheet" href="{% static 'css/customstyle.css' %}?v=3.7" />
 <style>
   /* Filter Card Styling */
   .filter-card-box {
@@ -389,7 +389,7 @@
               </td>
               <td data-label="Status">
                 <span
-                  class="badge {% if member.status_display == 'Active' %}badge-success{% elif member.status_display == 'Expired' %}badge-danger{% elif member.status_display == 'Frozen' or member.status_display == 'Expiring Soon' %}badge-warning{% else %}badge-secondary{% endif %}" >
+                  class="badge-status {% if member.status_display == 'Active' %}badge-status-active{% elif member.status_display == 'Expired' %}badge-status-expired{% elif member.status_display == 'Frozen' or member.status_display == 'Expiring Soon' %}badge-status-expiring{% else %}badge-status-inactive{% endif %}">
                   {{ member.status_display }}
                 </span>
               </td>

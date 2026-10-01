@@ -1446,5 +1446,146 @@ legend.h5 {
   border-radius: 14px;
 }
 
+/* ==========================================================================
+   Modern SaaS Data Tables & Micro-Headers
+   ========================================================================== */
+.table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.table thead th {
+  background-color: #f8fafc !important;
+  color: #64748b !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  padding: 0.85rem 1rem !important;
+  border-top: none !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  white-space: nowrap;
+}
+
+.table tbody td {
+  padding: 0.9rem 1rem !important;
+  vertical-align: middle !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  font-size: 0.88rem;
+  color: #1e293b;
+  transition: background-color 0.15s ease;
+}
+
+.table tbody tr:hover td {
+  background-color: #f8fafc !important;
+}
+
+/* Modern Status Pill Chips */
+.badge-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3.5px 10px !important;
+  border-radius: 9999px !important;
+  font-size: 0.74rem !important;
+  font-weight: 600 !important;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.badge-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* Emerald Active / Paid */
+.badge-success,
+.badge-status-active,
+.badge-status-paid {
+  background-color: #ecfdf5 !important;
+  color: #047857 !important;
+  border: 1px solid #a7f3d0 !important;
+}
+.badge-status-active .badge-status-dot,
+.badge-status-paid .badge-status-dot {
+  background-color: #10b981;
+}
+
+/* Amber Expiring */
+.badge-warning,
+.badge-status-expiring,
+.badge-status-pending {
+  background-color: #fffbeb !important;
+  color: #b45309 !important;
+  border: 1px solid #fde68a !important;
+}
+.badge-status-expiring .badge-status-dot,
+.badge-status-pending .badge-status-dot {
+  background-color: #f59e0b;
+}
+
+/* Rose Expired / Unpaid */
+.badge-danger,
+.badge-status-expired,
+.badge-status-unpaid {
+  background-color: #fff1f2 !important;
+  color: #be123c !important;
+  border: 1px solid #fecdd3 !important;
+}
+.badge-status-expired .badge-status-dot,
+.badge-status-unpaid .badge-status-dot {
+  background-color: #f43f5e;
+}
+
+/* Sky Info */
+.badge-info,
+.badge-status-info {
+  background-color: #f0f9ff !important;
+  color: #0369a1 !important;
+  border: 1px solid #bae6fd !important;
+}
+.badge-status-info .badge-status-dot {
+  background-color: #0284c7;
+}
+
+/* SweetAlert2 Brand Customization */
+.swal2-popup {
+  border-radius: 20px !important;
+  padding: 1.75rem !important;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.16) !important;
+  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+  font-family: inherit !important;
+}
+.swal2-title {
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+}
+.swal2-html-container {
+  color: #64748b !important;
+  font-size: 0.92rem !important;
+}
+.swal2-confirm {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%) !important;
+  border-radius: 30px !important;
+  font-weight: 600 !important;
+  padding: 0.6rem 1.6rem !important;
+  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.25) !important;
+}
+.swal2-cancel {
+  border-radius: 30px !important;
+  font-weight: 600 !important;
+  padding: 0.6rem 1.5rem !important;
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+
 
 
