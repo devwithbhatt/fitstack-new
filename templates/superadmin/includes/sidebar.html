@@ -1,113 +1,143 @@
 {% load static %}
+<style>
+  @media (min-width: 768px) {
+    .sidebar {
+        position: fixed !important;
+        height: 100vh !important;
+        overflow-y: auto !important;
+        left: 0 !important; /* Important */
+        top: 0 !important; /* Important */
+    }
+    
+    .page-body-wrapper {
+        margin-left: 250px !important;
+        width: calc(100% - 250px) !important;
+    }
+  }
+
+  /* Royal Blue Gradient Sidebar (Matches Project Primary & Gym Admin) */
+  .sidebar {
+    background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%) !important;
+    box-shadow: 2px 0 16px rgba(15, 23, 42, 0.15) !important;
+  }
+  
+  .sidebar-company-info {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    margin-bottom: 8px;
+  }
+
+  .sidebar .nav .nav-item {
+    padding: 0 0.85rem !important;
+  }
+
+  .sidebar .nav .nav-item .nav-link {
+    color: rgba(255, 255, 255, 0.88) !important;
+    border-radius: 8px !important;
+    padding: 9px 12px !important;
+    margin: 2px 0 !important;
+    transition: all 0.2s ease !important;
+  }
+
+  .sidebar .nav .nav-item .nav-link .menu-title {
+    color: rgba(255, 255, 255, 0.92) !important;
+    font-size: 14px !important;
+  }
+
+  .sidebar .nav .nav-item .nav-link i.menu-icon {
+    color: #ffffff !important;
+    opacity: 0.95 !important;
+    font-size: 19px !important;
+  }
+
+  .sidebar .nav .nav-item .nav-link i.menu-arrow {
+    color: rgba(255, 255, 255, 0.65) !important;
+  }
+
+  .sidebar .nav .nav-item .nav-link i.menu-arrow:before {
+    color: rgba(255, 255, 255, 0.75) !important;
+  }
+
+  .sidebar .nav .nav-item .nav-link:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+    color: #ffffff !important;
+    transform: translateX(3px);
+  }
+
+  .sidebar .nav .nav-item.active > .nav-link {
+    background: rgba(255, 255, 255, 0.22) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  }
+
+  .sidebar .nav .nav-item.active > .nav-link .menu-title {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+  }
+
+  /* Submenu styling */
+  .sidebar .nav.sub-menu {
+    background: rgba(15, 23, 42, 0.22) !important;
+    border-radius: 10px !important;
+    margin: 4px 6px 10px 6px !important;
+    padding: 6px 0 !important;
+  }
+
+  .sidebar .nav.sub-menu .nav-item {
+    padding: 0 !important;
+  }
+
+  .sidebar .nav.sub-menu .nav-item .nav-link {
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-size: 13px !important;
+    padding: 6px 14px 6px 30px !important;
+    margin: 1px 6px !important;
+    border-radius: 6px !important;
+  }
+
+  .sidebar .nav.sub-menu .nav-item .nav-link:before {
+    border-color: rgba(255, 255, 255, 0.65) !important;
+  }
+
+  .sidebar .nav.sub-menu .nav-item .nav-link:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    transform: none !important;
+  }
+
+  .sidebar .nav.sub-menu .nav-item .nav-link.active {
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+  }
+</style>
+
 <nav class="sidebar sidebar-offcanvas" id="sidebar">
-  <style>
-    /* Superadmin Sidebar Brand Modern Fix */
-    .sidebar .superadmin-brand-header {
-      background: transparent !important;
-      padding: 1.5rem 1rem 0.75rem 1rem !important;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      border-bottom: 1px solid rgba(203, 213, 225, 0.4);
-      margin-bottom: 0.5rem;
-    }
-    .sidebar .superadmin-brand-header .brand-logo {
-      display: inline-flex !important;
-      align-items: center;
-      justify-content: center;
-      padding: 0 !important;
-      margin: 0 !important;
-      text-decoration: none;
-    }
-    .sidebar .superadmin-brand-header .brand-logo img {
-      height: 48px !important;
-      max-height: 48px !important;
-      width: auto !important;
-      max-width: 175px !important;
-      object-fit: contain !important;
-      margin: 0 !important;
-      padding: 0 !important;
-      transition: transform 0.2s ease;
-      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.04));
-    }
-    .sidebar .superadmin-brand-header .brand-logo:hover img {
-      transform: scale(1.03);
-    }
-    .sidebar .superadmin-brand-header .brand-logo-mini {
-      display: none !important;
-      padding: 0 !important;
-      margin: 0 !important;
-    }
-    .sidebar .superadmin-brand-header .brand-logo-mini img {
-      height: 38px !important;
-      width: 38px !important;
-      object-fit: contain !important;
-      margin: 0 auto !important;
-      padding: 0 !important;
-    }
-    .sidebar .superadmin-brand-header .brand-badge {
-      display: inline-block;
-      margin-top: 6px;
-      font-size: 0.65rem;
-      font-weight: 700;
-      letter-spacing: 0.8px;
-      text-transform: uppercase;
-      color: #64748b;
-      background: rgba(148, 163, 184, 0.15);
-      padding: 2px 10px;
-      border-radius: 9999px;
-    }
-    .sidebar .superadmin-brand-header .company-slogan {
-      font-size: 0.72rem;
-      color: #94a3b8;
-      margin-top: 4px;
-      margin-bottom: 0;
-    }
-
-    /* When sidebar is collapsed in icon-only mode */
-    .sidebar-icon-only .sidebar .superadmin-brand-header {
-      padding: 1rem 0.25rem !important;
-    }
-    .sidebar-icon-only .sidebar .superadmin-brand-header .brand-logo {
-      display: none !important;
-    }
-    .sidebar-icon-only .sidebar .superadmin-brand-header .brand-logo-mini {
-      display: inline-flex !important;
-    }
-    .sidebar-icon-only .sidebar .superadmin-brand-header .brand-badge,
-    .sidebar-icon-only .sidebar .superadmin-brand-header .company-slogan {
-      display: none !important;
-    }
-  </style>
-
-  <!-- Modern Superadmin Brand Header -->
-  <div class="superadmin-brand-header">
-    <a class="brand-logo" href="{% url 'superadmin:dashboard' %}" title="FitStack Superadmin">
-      <img src="{% static 'images/fitstack.png' %}" alt="FitStack Logo" />
+  <div class="sidebar-company-info text-center py-3">
+    <a href="{% url 'superadmin:dashboard' %}" class="d-inline-block text-decoration-none">
+      <img src="{% static 'images/favicon.png' %}" alt="Logo" class="img-fluid rounded-circle mb-2" style="width: 80px; height: 80px; object-fit: contain; border: 3px solid #fff; box-shadow: 0 0 10px rgba(0,0,0,0.15); background: #ffffff; padding: 6px;">
     </a>
-    <a class="brand-logo-mini" href="{% url 'superadmin:dashboard' %}" title="FitStack">
-      <img src="{% static 'images/favicon.png' %}" alt="FitStack" />
-    </a>
-    <span class="brand-badge">Superadmin</span>
-    <p class="company-slogan">Manage Smarter. Train Better.</p>
+    <h5 class="text-white font-weight-bold mb-1">FitStack</h5>
+    <p class="company-slogan small text-white-50 mb-0">Superadmin Console</p>
   </div>
+
   <ul class="nav">
+    <!-- 1. Dashboard -->
     <li class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
       <a class="nav-link" href="{% url 'superadmin:dashboard' %}">
-        <i class="mdi mdi-view-dashboard menu-icon"></i>
+        <i class="mdi mdi-home menu-icon"></i>
         <span class="menu-title">Dashboard</span>
       </a>
     </li>
 
-    <li class="nav-item {% if request.resolver_match.url_name in 'gym_list,add_gym,update_gym' %}active{% endif %}">
-      <a class="nav-link" data-toggle="collapse" href="#gym-management" aria-expanded="{% if request.resolver_match.url_name in 'gym_list,add_gym,update_gym' %}true{% else %}false{% endif %}" aria-controls="gym-management">
-        <i class="mdi mdi-office-building menu-icon"></i>
+    <!-- 2. Gym Management -->
+    <li class="nav-item {% if request.resolver_match.url_name in 'gym_list,add_gym,update_gym,gym_profile' %}active{% endif %}">
+      <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="#gym-management" aria-expanded="{% if request.resolver_match.url_name in 'gym_list,add_gym,update_gym,gym_profile' %}true{% else %}false{% endif %}" aria-controls="gym-management">
+        <i class="mdi mdi-domain menu-icon"></i>
         <span class="menu-title">Gym Management</span>
         <i class="menu-arrow"></i>
       </a>
-      <div class="collapse {% if request.resolver_match.url_name in 'gym_list,add_gym,update_gym' %}show{% endif %}" id="gym-management">
+      <div class="collapse {% if request.resolver_match.url_name in 'gym_list,add_gym,update_gym,gym_profile' %}show{% endif %}" id="gym-management">
         <ul class="nav flex-column sub-menu">
           <li class="nav-item">
             <a class="nav-link {% if request.resolver_match.url_name == 'gym_list' %}active{% endif %}" href="{% url 'superadmin:gym_list' %}">Gyms</a>
@@ -119,31 +149,33 @@
       </div>
     </li>
 
-    <li class="nav-item {% if request.resolver_match.url_name in 'billing_history,submit_due' %}active{% endif %}">
-      <a class="nav-link" data-toggle="collapse" href="#billing-management" aria-expanded="{% if request.resolver_match.url_name in 'billing_history,submit_due' %}true{% else %}false{% endif %}" aria-controls="billing-management">
-        <i class="mdi mdi-currency-usd menu-icon"></i>
+    <!-- 3. Billings -->
+    <li class="nav-item {% if request.resolver_match.url_name in 'billing_history,submit_due,invoice' %}active{% endif %}">
+      <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="#billing-management" aria-expanded="{% if request.resolver_match.url_name in 'billing_history,submit_due,invoice' %}true{% else %}false{% endif %}" aria-controls="billing-management">
+        <i class="mdi mdi-file-document-box-outline menu-icon"></i>
         <span class="menu-title">Billings</span>
         <i class="menu-arrow"></i>
       </a>
-      <div class="collapse {% if request.resolver_match.url_name in 'billing_history,submit_due' %}show{% endif %}" id="billing-management">
+      <div class="collapse {% if request.resolver_match.url_name in 'billing_history,submit_due,invoice' %}show{% endif %}" id="billing-management">
         <ul class="nav flex-column sub-menu">
           <li class="nav-item">
-            <a class="nav-link {% if request.resolver_match.url_name == 'billing_history' %}active{% endif %}" href="{% url 'superadmin:billing_history' %}">
-              <span class="menu-title">Billing History</span>
+            <a class="nav-link {% if request.resolver_match.url_name == 'billing_history' or request.resolver_match.url_name == 'invoice' %}active{% endif %}" href="{% url 'superadmin:billing_history' %}">
+              Billing History
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link {% if request.resolver_match.url_name == 'submit_due' %}active{% endif %}" href="{% url 'superadmin:submit_due' %}">
-              <span class="menu-title">Submit Due</span>
+              Submit Due
             </a>
           </li>
         </ul>
       </div>
     </li>
 
+    <!-- 4. Subscriptions -->
     <li class="nav-item {% if request.resolver_match.url_name in 'subscription_plan_list,add_subscription_plan,update_subscription_plan' %}active{% endif %}">
-      <a class="nav-link" data-toggle="collapse" href="#subscription-management" aria-expanded="{% if request.resolver_match.url_name in 'subscription_plan_list,add_subscription_plan,update_subscription_plan' %}true{% else %}false{% endif %}" aria-controls="subscription-management">
-        <i class="mdi mdi-currency-usd menu-icon"></i>
+      <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="#subscription-management" aria-expanded="{% if request.resolver_match.url_name in 'subscription_plan_list,add_subscription_plan,update_subscription_plan' %}true{% else %}false{% endif %}" aria-controls="subscription-management">
+        <i class="mdi mdi-credit-card-outline menu-icon"></i>
         <span class="menu-title">Subscriptions</span>
         <i class="menu-arrow"></i>
       </a>
@@ -151,20 +183,19 @@
         <ul class="nav flex-column sub-menu">
           <li class="nav-item">
             <a class="nav-link {% if request.resolver_match.url_name == 'subscription_plan_list' %}active{% endif %}" href="{% url 'superadmin:subscription_plan_list' %}">
-              <span class="menu-title">Subscription Plans</span>
+              Subscription Plans
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link {% if request.resolver_match.url_name == 'add_subscription_plan' %}active{% endif %}" href="{% url 'superadmin:add_subscription_plan' %}">
-              <span class="menu-title">Add Plans</span>
+              Add Plans
             </a>
           </li>
         </ul>
       </div>
     </li>
-    
 
-     
+    <!-- 5. Notifications & Popups -->
     <li class="nav-item {% if 'notification' in request.resolver_match.url_name %}active{% endif %}">
       <a class="nav-link" href="{% url 'superadmin:notification_list' %}">
         <i class="mdi mdi-bullhorn-outline menu-icon"></i>
@@ -172,6 +203,7 @@
       </a>
     </li>
 
+    <!-- 6. Website Inquiries -->
     <li class="nav-item {% if request.resolver_match.url_name == 'website_contact_submissions' %}active{% endif %}">
       <a class="nav-link" href="{% url 'superadmin:website_contact_submissions' %}">
         <i class="mdi mdi-email-open-outline menu-icon"></i>
@@ -179,24 +211,31 @@
       </a>
     </li>
 
+    <!-- 7. WhatsApp Hub & Chat -->
     <li class="nav-item {% if 'whatsapp' in request.resolver_match.url_name %}active{% endif %}">
       <a class="nav-link" href="{% url 'superadmin:whatsapp_messages_hub' %}">
-        <i class="mdi mdi-whatsapp menu-icon" style="color: #25D366;"></i>
+        <i class="mdi mdi-whatsapp menu-icon" style="color: #25D366 !important;"></i>
         <span class="menu-title">WhatsApp Hub & Chat</span>
       </a>
     </li>
 
-    <li class="nav-item">
-      <a class="nav-link" href="{% url 'logout' %}">
-        <i class="mdi mdi-logout menu-icon"></i>
-        <span class="menu-title">Logout</span>
-      </a>
-    </li>
+    <!-- 8. Website Link -->
     <li class="nav-item">
       <a class="nav-link" href="{% url 'index' %}" target="_blank">
         <i class="mdi mdi-web menu-icon"></i>
         <span class="menu-title">Website</span>
       </a>
+    </li>
+
+    <!-- 9. Sign Out -->
+    <li class="nav-item sidebar-actions">
+      <div class="nav-link">
+        <div class="mt-2">
+          <a href="{% url 'logout' %}" class="btn btn-block btn-signout btn-sm font-weight-medium">
+            <i class="mdi mdi-logout"></i> Sign Out
+          </a>
+        </div>
+      </div>
     </li>
   </ul>
 </nav>
