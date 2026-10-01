@@ -14,8 +14,103 @@
         margin-left: 250px !important;
         width: calc(100% - 250px) !important;
     }
-}
+  }
 
+  /* Royal Blue Gradient Sidebar (Matches Project Primary) */
+  .sidebar {
+    background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%) !important;
+    box-shadow: 2px 0 16px rgba(15, 23, 42, 0.15) !important;
+  }
+  
+  .sidebar-company-info {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    margin-bottom: 8px;
+  }
+
+  .sidebar .nav .nav-item {
+    padding: 0 0.85rem !important;
+  }
+
+  .sidebar .nav .nav-item .nav-link {
+    color: rgba(255, 255, 255, 0.88) !important;
+    border-radius: 8px !important;
+    padding: 9px 12px !important;
+    margin: 2px 0 !important;
+    transition: all 0.2s ease !important;
+  }
+
+  .sidebar .nav .nav-item .nav-link .menu-title {
+    color: rgba(255, 255, 255, 0.92) !important;
+    font-size: 14px !important;
+  }
+
+  .sidebar .nav .nav-item .nav-link i.menu-icon {
+    color: #ffffff !important;
+    opacity: 0.95 !important;
+    font-size: 19px !important;
+  }
+
+  .sidebar .nav .nav-item .nav-link i.menu-arrow {
+    color: rgba(255, 255, 255, 0.65) !important;
+  }
+
+  .sidebar .nav .nav-item .nav-link i.menu-arrow:before {
+    color: rgba(255, 255, 255, 0.75) !important;
+  }
+
+  .sidebar .nav .nav-item .nav-link:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+    color: #ffffff !important;
+    transform: translateX(3px);
+  }
+
+  .sidebar .nav .nav-item.active > .nav-link {
+    background: rgba(255, 255, 255, 0.22) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  }
+
+  .sidebar .nav .nav-item.active > .nav-link .menu-title {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+  }
+
+  /* Submenu styling */
+  .sidebar .nav.sub-menu {
+    background: rgba(15, 23, 42, 0.22) !important;
+    border-radius: 10px !important;
+    margin: 4px 6px 10px 6px !important;
+    padding: 6px 0 !important;
+  }
+
+  .sidebar .nav.sub-menu .nav-item {
+    padding: 0 !important;
+  }
+
+  .sidebar .nav.sub-menu .nav-item .nav-link {
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-size: 13px !important;
+    padding: 6px 14px 6px 30px !important;
+    margin: 1px 6px !important;
+    border-radius: 6px !important;
+  }
+
+  .sidebar .nav.sub-menu .nav-item .nav-link:before {
+    border-color: rgba(255, 255, 255, 0.65) !important;
+  }
+
+  .sidebar .nav.sub-menu .nav-item .nav-link:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    transform: none !important;
+  }
+
+  .sidebar .nav.sub-menu .nav-item .nav-link.active {
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+  }
 </style>
 
 <nav class="sidebar sidebar-offcanvas " id="sidebar">
@@ -43,8 +138,8 @@
       <img src="{% static 'images/logo.jpg' %}" alt="Logo" class="img-fluid rounded-circle mb-2" style="width: 80px; height: 80px; object-fit: cover; border: 3px solid #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
     {% endif %}
   
-    <h5 class="text-primary font-weight-bold mb-1">{{ gym.name|default:'GYM Name' }}</h5>
-    <p class="company-slogan small text-muted">{{ gym.slogan|default:'Manage Smarter. Train Better.' }}</p>
+    <h5 class="text-white font-weight-bold mb-1">{{ gym.name|default:'GYM Name' }}</h5>
+    <p class="company-slogan small text-white-50">{{ gym.slogan|default:'Manage Smarter. Train Better.' }}</p>
   </div>
   <ul class="nav">
     {% if request.session.role == 'member' or request.user.member_profile %}

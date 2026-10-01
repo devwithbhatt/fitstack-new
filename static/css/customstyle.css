@@ -2,7 +2,8 @@
 
 /* Import SCSS variables colors */
 :root {
-  --primary-color: #4599cd;
+  --primary-color: #1e40af;
+  --primary-hover: #1d4ed8;
   --secondary-color: #d8d8d8;
   --success-color: #00cccd;
   --info-color: #198ae3;
@@ -18,7 +19,8 @@
   --border-color: #ebedf2;
   --content-bg: #f2f2f2;
   --card-shadow: 0 2px 10px 0 rgba(197, 191, 191, 0.5);
-  --gradient-primary: #2563eb;
+  --gradient-primary: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  --sidebar-gradient: linear-gradient(180deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%);
   --gradient-success: #10b981;
   --gradient-info: #0284c7;
   --gradient-warning: #f59e0b;
@@ -1324,4 +1326,125 @@ input[type="date"].filter-control {
   pointer-events: none;
 }
 
-
+/* ==========================================================================
+   Modern Form Architecture & Controls (Unified FitStack Styling)
+   ========================================================================== */
+
+/* Modern Fieldsets & Legends */
+.form-section-fieldset,
+fieldset.border {
+  background: #ffffff;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 14px !important;
+  padding: 1.5rem !important;
+  margin-bottom: 1.75rem !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.form-section-fieldset:hover,
+fieldset.border:hover {
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+}
+
+.form-section-legend,
+legend.w-auto,
+legend.h5 {
+  font-size: 0.92rem !important;
+  font-weight: 700 !important;
+  color: #1e40af !important;
+  background: #eff6ff !important;
+  border: 1px solid #bfdbfe !important;
+  border-radius: 30px !important;
+  padding: 0.35rem 1rem !important;
+  width: auto !important;
+  float: none !important;
+  margin-bottom: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px;
+}
+
+/* Modern Inputs & Form Controls */
+.card-body form .form-control,
+.card-body form .form-select,
+.card-body form input[type="text"],
+.card-body form input[type="email"],
+.card-body form input[type="number"],
+.card-body form input[type="date"],
+.card-body form input[type="tel"],
+.card-body form select,
+.card-body form textarea {
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.card-body form .form-control:focus,
+.card-body form .form-select:focus,
+.card-body form input:focus,
+.card-body form select:focus,
+.card-body form textarea:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+  outline: none;
+}
+
+/* Input group styling */
+.card-body form .input-group-text {
+  background-color: #f8fafc;
+  border-color: #d1d5db;
+  color: #64748b;
+  font-weight: 500;
+  border-radius: 10px;
+}
+.card-body form .input-group > :not(:last-child):not(.dropdown-toggle) {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.card-body form .input-group > :not(:first-child) {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+/* Form labels */
+.card-body form .form-label,
+.card-body form label {
+  font-weight: 600;
+  font-size: 0.86rem;
+  color: #334155;
+  margin-bottom: 0.35rem;
+}
+
+/* Helper & Invalid text */
+.card-body form .form-text,
+.card-body form .helper-text {
+  font-size: 0.78rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+}
+
+.card-body form .invalid-feedback {
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+/* Modern Card Headers for Form Pages */
+.card > .card-header.bg-primary {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1.15rem 1.5rem;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.card.shadow-sm {
+  border-radius: 14px;
+}
+
+
+

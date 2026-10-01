@@ -31,7 +31,7 @@
     {% comment %}
     <link rel="stylesheet" href="{% static 'css/login.css' %}" />
     {% endcomment %}
-    <link rel="stylesheet" href="{% static 'css/customstyle.css' %}?v=3.1" />
+    <link rel="stylesheet" href="{% static 'css/customstyle.css' %}?v=3.6" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
@@ -47,16 +47,106 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/dashboard_modern.css' %}?v=3.5">
+    <link rel="stylesheet" href="{% static 'css/dashboard_modern.css' %}?v=3.6">
     <link rel="shortcut icon" href="{% static 'images/favicon.png' %}" />
 
-    <!-- Critical Anti-FOUC Styles to prevent layout jumps / huge images before stylesheets load -->
+    <!-- Critical Anti-FOUC & Unified Form Styles -->
     <style>
       .nav-profile-img { width: 32px !important; height: 32px !important; max-width: 32px !important; max-height: 32px !important; object-fit: cover !important; border-radius: 50% !important; display: inline-block !important; }
       .avatar-wrapper { width: 32px !important; height: 32px !important; min-width: 32px !important; flex-shrink: 0 !important; display: inline-block !important; }
       .avatar-wrapper img { width: 32px !important; height: 32px !important; max-width: 32px !important; max-height: 32px !important; object-fit: cover !important; border-radius: 50% !important; display: block !important; }
       .sidebar-brand.brand-logo img { max-height: 45px !important; max-width: 140px !important; width: auto !important; object-fit: contain !important; }
       .sidebar-brand.brand-logo-mini img { max-height: 35px !important; max-width: 35px !important; width: auto !important; object-fit: contain !important; }
+
+      /* Unified Form Section & Controls */
+      .form-section-fieldset,
+      fieldset.border {
+        background: #ffffff;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 12px !important;
+        padding: 1.5rem !important;
+        margin-bottom: 1.75rem !important;
+        transition: box-shadow 0.2s ease, border-color 0.2s ease;
+      }
+      .form-section-fieldset:hover,
+      fieldset.border:hover {
+        border-color: #cbd5e1 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+      }
+      .form-section-legend,
+      legend.w-auto,
+      legend.h5 {
+        font-size: 0.95rem !important;
+        font-weight: 700 !important;
+        color: #1e40af !important;
+        background: #eff6ff !important;
+        border: 1px solid #bfdbfe !important;
+        border-radius: 30px !important;
+        padding: 0.35rem 1rem !important;
+        width: auto !important;
+        float: none !important;
+        margin-bottom: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+      }
+      .form-label {
+        font-weight: 600 !important;
+        font-size: 0.88rem !important;
+        color: #334155 !important;
+        margin-bottom: 0.35rem !important;
+      }
+      .helper-text {
+        font-size: 0.78rem !important;
+        color: #64748b !important;
+        margin-top: 0.25rem !important;
+      }
+      .input-group-text {
+        background-color: #f8fafc !important;
+        border-color: #ced4da !important;
+        color: #64748b !important;
+      }
+      .form-control:focus + .input-group-text,
+      .input-group-text:focus-within {
+        border-color: #86b7fe !important;
+      }
+
+      /* Project-wide Primary Theme Definition (Royal Blue Gradient #1e40af -> #3b82f6) */
+      :root {
+        --primary-color: #1e40af !important;
+        --primary-hover: #1d4ed8 !important;
+        --primary-gradient: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%) !important;
+        --sidebar-gradient: linear-gradient(180deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%) !important;
+      }
+
+      .bg-primary {
+        background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%) !important;
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%) !important;
+        border-color: #1e40af !important;
+      }
+      .btn-primary:hover,
+      .btn-primary:focus,
+      .btn-primary:active {
+        background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%) !important;
+        border-color: #1d4ed8 !important;
+        box-shadow: 0 4px 14px rgba(30, 64, 175, 0.35) !important;
+      }
+      .btn-outline-primary {
+        color: #1e40af !important;
+        border-color: #1e40af !important;
+      }
+      .btn-outline-primary:hover {
+        background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%) !important;
+        color: #ffffff !important;
+      }
+      .text-primary {
+        color: #1e40af !important;
+      }
+      .border-primary {
+        border-color: #2563eb !important;
+      }
     </style>
 
     <link rel="manifest" href="{% static 'manifest.json' %}" />
