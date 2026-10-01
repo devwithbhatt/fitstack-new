@@ -219,7 +219,30 @@
       </a>
     </li>
 
-    <!-- 8. Website Link -->
+    <!-- 8. Platform Settings & Disaster Recovery -->
+    <li class="nav-item {% if request.resolver_match.url_name in 'system_settings,backup_manager' %}active{% endif %}">
+      <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="#platform-settings" aria-expanded="{% if request.resolver_match.url_name in 'system_settings,backup_manager' %}true{% else %}false{% endif %}" aria-controls="platform-settings">
+        <i class="mdi mdi-settings menu-icon"></i>
+        <span class="menu-title">Settings</span>
+        <i class="menu-arrow"></i>
+      </a>
+      <div class="collapse {% if request.resolver_match.url_name in 'system_settings,backup_manager' %}show{% endif %}" id="platform-settings">
+        <ul class="nav flex-column sub-menu">
+          <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'system_settings' %}active{% endif %}" href="{% url 'superadmin:system_settings' %}">
+              <i class="mdi mdi-settings-outline mr-1"></i> System Settings
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'backup_manager' %}active{% endif %}" href="{% url 'superadmin:backup_manager' %}">
+              <i class="mdi mdi-backup-restore mr-1"></i> Backup & Restore
+            </a>
+          </li>
+        </ul>
+      </div>
+    </li>
+
+    <!-- 9. Website Link -->
     <li class="nav-item">
       <a class="nav-link" href="{% url 'index' %}" target="_blank">
         <i class="mdi mdi-web menu-icon"></i>

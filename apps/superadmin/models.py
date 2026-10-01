@@ -252,3 +252,91 @@ class NotificationUserStatus(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.notification.title} (Read: {self.is_read}, Views: {self.popup_view_count})"
+
+
+class SystemSetting(models.Model):
+    # Platform Identity
+    platform_name = models.CharField(max_length=150, default="FitStack")
+    tagline = models.CharField(max_length=255, default="Next-Gen Gym & Fitness Management SaaS", blank=True)
+    company_name = models.CharField(max_length=200, default="FitStack Technologies Inc.", blank=True)
+    support_email = models.EmailField(default="support@fitstack.com", blank=True)
+    support_phone = models.CharField(max_length=30, default="+91 88875 58415", blank=True)
+    website_url = models.URLField(default="https://fitstack.nextgenapplication.com", blank=True)
+    currency_symbol = models.CharField(max_length=10, default="₹")
+    currency_code = models.CharField(max_length=10, default="INR")
+    timezone = models.CharField(max_length=50, default="Asia/Kolkata")
+    platform_logo = models.ImageField(upload_to="platform_settings/", blank=True, null=True)
+    platform_favicon = models.ImageField(upload_to="platform_settings/", blank=True, null=True)
+
+    # Defaults & SaaS Rules
+    default_trial_days = models.PositiveIntegerField(default=14, help_text="Default trial duration for new gyms in days")
+    grace_period_days = models.PositiveIntegerField(default=7, help_text="Grace period days after plan expiry before freeze")
+    default_member_prefix = models.CharField(max_length=10, default="MEM", help_text="Default member ID prefix")
+    allow_public_registration = models.BooleanField(default=True, help_text="Allow new gyms to self-register from public portal")
+    global_whatsapp_master = models.BooleanField(default=True, help_text="Master kill-switch for automated WhatsApp notifications")
+    maintenance_mode = models.BooleanField(default=False, help_text="Enable system-wide maintenance mode")
+    maintenance_message = models.TextField(default="FitStack is currently undergoing scheduled maintenance. We'll be back shortly!", blank=True)
+
+    # Email / SMTP Settings
+    smtp_host = models.CharField(max_length=255, blank=True, null=True, help_text="e.g. smtp.gmail.com")
+    smtp_port = models.PositiveIntegerField(default=587)
+    smtp_user = models.CharField(max_length=255, blank=True, null=True)
+    smtp_password = models.CharField(max_length=255, blank=True, null=True)
+    smtp_from_email = models.EmailField(blank=True, null=True)
+    smtp_use_tls = models.BooleanField(default=True)
+    smtp_use_ssl = models.BooleanField(default=False)
+
+    # Backup & Storage Policy
+    auto_backup_enabled = models.BooleanField(default=False)
+    backup_frequency = models.CharField(max_length=20, default='daily', choices=[('daily', 'Daily'), ('weekly', 'Weekly'), ('monthly', 'Monthly')])
+    backup_retention_days = models.PositiveIntegerField(default=30)
+    include_media_in_auto_backup = models.BooleanField(default=False)
+
+    # Security
+    session_timeout_minutes = models.PositiveIntegerField(default=120)
+    max_login_attempts = models.PositiveIntegerField(default=5)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "System Setting"
+        verbose_name_plural = "System Settings"
+
+    def __str__(self):
+        return f"{self.platform_name} Settings (Updated: {self.updated_at.strftime('%Y-%m-%d %H:%M')})"
+
+    @classmethod
+    def get_settings(cls):
+        obj = cls.objects.first()
+        if not obj:
+            obj = cls.objects.create()
+        return obj
+
+
+class BackupLog(models.Model):
+    BACKUP_TYPE_CHOICES = [
+        ('full', 'Full System Backup'),
+        ('gym', 'Selected Gym Backup'),
+        ('media', 'Media Assets Only'),
+    ]
+
+    filename = models.CharField(max_length=255)
+    file_path = models.CharField(max_length=500)
+    backup_type = models.CharField(max_length=20, choices=BACKUP_TYPE_CHOICES, default='full')
+    gym = models.ForeignKey(Gym, on_delete=models.SET_NULL, null=True, blank=True, related_name='backups')
+    gym_name = models.CharField(max_length=200, blank=True, null=True)
+    includes_database = models.BooleanField(default=True)
+    includes_media = models.BooleanField(default=False)
+    file_size_bytes = models.BigIntegerField(default=0)
+    file_size_display = models.CharField(max_length=50, default="0 KB")
+    status = models.CharField(max_length=20, default='completed')  # completed, failed, restored
+    notes = models.TextField(blank=True, null=True)
+    manifest_data = models.JSONField(blank=True, null=True, default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey("auth.User", on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.filename} ({self.get_backup_type_display()}) - {self.file_size_display}"

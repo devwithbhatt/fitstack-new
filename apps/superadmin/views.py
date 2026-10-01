@@ -1,3 +1,4 @@
+import os
 import csv
 import json
 from decimal import Decimal
@@ -11,12 +12,18 @@ from django.db.models import Q, Sum, F, Count, Value
 from django.db.models.functions import Concat
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, FileResponse
 from django.views.decorators.http import require_POST
 from django.contrib import messages
+from django.core.mail import EmailMessage, get_connection
 from apps.website.models import WebsiteContactSubmission
 from .forms import GymForm, GymAdminForm, SubscriptionPlanForm
-from .models import Gym, GymAdmin, SubscriptionPlan, GymSubscription, PlatformNotification, NotificationUserStatus
+from .models import (
+    Gym, GymAdmin, SubscriptionPlan, GymSubscription,
+    PlatformNotification, NotificationUserStatus,
+    SystemSetting, BackupLog
+)
+from . import backup_service
 from .decorators import superadmin_required
 from .notifications import (
     get_user_applicable_notifications_qs,
@@ -1794,4 +1801,356 @@ def whatsapp_send_api(request):
                 'whatsapp_url': log.whatsapp_url,
             }
         })
+
+
+# ==============================================================================
+# SYSTEM SETTINGS & CONFIGURATION
+# ==============================================================================
+
+@login_required
+@superadmin_required
+def system_settings_view(request):
+    """
+    Superadmin console for platform-wide common settings, branding,
+    defaults, SMTP configuration, and security policies.
+    """
+    setting = SystemSetting.get_settings()
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '').strip()
+
+        # 1. AJAX Test Email Dispatch
+        if action == 'send_test_email':
+            test_recipient = request.POST.get('test_recipient', '').strip() or request.user.email
+            if not test_recipient:
+                return JsonResponse({'success': False, 'message': 'Please provide a valid recipient email address.'})
+
+            host = request.POST.get('smtp_host', setting.smtp_host)
+            port = int(request.POST.get('smtp_port', setting.smtp_port) or 587)
+            user = request.POST.get('smtp_user', setting.smtp_user)
+            pwd = request.POST.get('smtp_password', setting.smtp_password)
+            from_email = request.POST.get('smtp_from_email', setting.smtp_from_email) or user
+            use_tls = request.POST.get('smtp_use_tls') == 'on'
+            use_ssl = request.POST.get('smtp_use_ssl') == 'on'
+
+            if not host:
+                return JsonResponse({'success': False, 'message': 'SMTP Host server is required to send a test email.'})
+
+            try:
+                connection = get_connection(
+                    backend='django.core.mail.backends.smtp.EmailBackend',
+                    host=host,
+                    port=port,
+                    username=user,
+                    password=pwd,
+                    use_tls=use_tls,
+                    use_ssl=use_ssl,
+                    timeout=10,
+                )
+                email = EmailMessage(
+                    subject=f"[{setting.platform_name}] SMTP Test Verification",
+                    body=f"Hello from {setting.platform_name}!\n\nYour SMTP email integration has been successfully configured and tested.\nSent at: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}",
+                    from_email=from_email,
+                    to=[test_recipient],
+                    connection=connection,
+                )
+                email.send(fail_silently=False)
+                return JsonResponse({'success': True, 'message': f'Test email successfully dispatched to {test_recipient}!'})
+            except Exception as e:
+                return JsonResponse({'success': False, 'message': f'SMTP Error: {str(e)}'})
+
+        # 2. Update General Settings
+        setting.platform_name = request.POST.get('platform_name', setting.platform_name).strip()
+        setting.tagline = request.POST.get('tagline', setting.tagline).strip()
+        setting.company_name = request.POST.get('company_name', setting.company_name).strip()
+        setting.support_email = request.POST.get('support_email', setting.support_email).strip()
+        setting.support_phone = request.POST.get('support_phone', setting.support_phone).strip()
+        setting.website_url = request.POST.get('website_url', setting.website_url).strip()
+        setting.currency_symbol = request.POST.get('currency_symbol', setting.currency_symbol).strip()
+        setting.currency_code = request.POST.get('currency_code', setting.currency_code).strip()
+        setting.timezone = request.POST.get('timezone', setting.timezone).strip()
+
+        # Defaults
+        setting.default_trial_days = int(request.POST.get('default_trial_days', setting.default_trial_days) or 14)
+        setting.grace_period_days = int(request.POST.get('grace_period_days', setting.grace_period_days) or 7)
+        setting.default_member_prefix = request.POST.get('default_member_prefix', setting.default_member_prefix).strip()
+        setting.allow_public_registration = request.POST.get('allow_public_registration') == 'on'
+        setting.global_whatsapp_master = request.POST.get('global_whatsapp_master') == 'on'
+        setting.maintenance_mode = request.POST.get('maintenance_mode') == 'on'
+        setting.maintenance_message = request.POST.get('maintenance_message', setting.maintenance_message).strip()
+
+        # SMTP
+        setting.smtp_host = request.POST.get('smtp_host', '').strip()
+        setting.smtp_port = int(request.POST.get('smtp_port') or 587)
+        setting.smtp_user = request.POST.get('smtp_user', '').strip()
+        if request.POST.get('smtp_password'):
+            setting.smtp_password = request.POST.get('smtp_password')
+        setting.smtp_from_email = request.POST.get('smtp_from_email', '').strip()
+        setting.smtp_use_tls = request.POST.get('smtp_use_tls') == 'on'
+        setting.smtp_use_ssl = request.POST.get('smtp_use_ssl') == 'on'
+
+        # Backup & Security
+        setting.auto_backup_enabled = request.POST.get('auto_backup_enabled') == 'on'
+        setting.backup_frequency = request.POST.get('backup_frequency', setting.backup_frequency)
+        setting.backup_retention_days = int(request.POST.get('backup_retention_days', setting.backup_retention_days) or 30)
+        setting.include_media_in_auto_backup = request.POST.get('include_media_in_auto_backup') == 'on'
+        setting.session_timeout_minutes = int(request.POST.get('session_timeout_minutes', setting.session_timeout_minutes) or 120)
+        setting.max_login_attempts = int(request.POST.get('max_login_attempts', setting.max_login_attempts) or 5)
+
+        # Uploads
+        if 'platform_logo' in request.FILES:
+            setting.platform_logo = request.FILES['platform_logo']
+        if 'platform_favicon' in request.FILES:
+            setting.platform_favicon = request.FILES['platform_favicon']
+
+        setting.save()
+        messages.success(request, "Platform settings have been updated successfully.")
+        return redirect('superadmin:system_settings')
+
+    context = {
+        'setting': setting,
+        'title': 'System Settings',
+    }
+    return render(request, 'superadmin/settings.html', context)
+
+
+# ==============================================================================
+# BACKUP & DISASTER RECOVERY MANAGEMENT
+# ==============================================================================
+
+@login_required
+@superadmin_required
+def backup_manager_view(request):
+    """
+    Main Disaster Recovery & Backup dashboard. Allows full platform backups,
+    single gym backups, media exports, upload inspection, and one-click restores.
+    """
+    # 1. Sync disk files with logs
+    backup_service.sync_backups_with_disk()
+
+    # 2. Gather system storage metrics
+    storage_stats = backup_service.get_system_storage_stats()
+
+    # 3. Gyms directory for selective backup
+    gyms = Gym.objects.annotate(
+        member_total=Count('member', filter=Q(member__is_deleted=False), distinct=True)
+    ).order_by('name')
+
+    # 4. Filterable Backups Registry
+    backups_qs = BackupLog.objects.select_related('gym', 'created_by').order_by('-created_at')
+
+    q = request.GET.get('q', '').strip()
+    if q:
+        backups_qs = backups_qs.filter(Q(filename__icontains=q) | Q(gym_name__icontains=q) | Q(notes__icontains=q))
+
+    b_type = request.GET.get('type', '').strip()
+    if b_type in ['full', 'gym', 'media']:
+        backups_qs = backups_qs.filter(backup_type=b_type)
+
+    paginator = Paginator(backups_qs, 15)
+    page_number = request.GET.get('page')
+    backups = paginator.get_page(page_number)
+
+    setting = SystemSetting.get_settings()
+
+    context = {
+        'storage_stats': storage_stats,
+        'gyms': gyms,
+        'backups': backups,
+        'setting': setting,
+        'search_query': q,
+        'type_filter': b_type,
+        'title': 'Backup & Restore Center',
+    }
+    return render(request, 'superadmin/backup_manager.html', context)
+
+
+@login_required
+@superadmin_required
+@require_POST
+def create_backup_action(request):
+    """
+    Handles generation of Full, Selected Gym, or Media backups.
+    """
+    scope = request.POST.get('backup_scope', 'full')  # 'full', 'gym', 'media'
+    gym_id = request.POST.get('gym_id')
+    include_db = request.POST.get('include_db') == '1' or request.POST.get('include_db') == 'on'
+    include_media = request.POST.get('include_media') == '1' or request.POST.get('include_media') == 'on'
+    notes = request.POST.get('notes', '').strip()
+    download_now = request.POST.get('download_now') == '1' or request.POST.get('download_now') == 'true'
+
+    try:
+        if scope == 'gym':
+            if not gym_id:
+                messages.error(request, "Please select a specific gym to backup.")
+                return redirect('superadmin:backup_manager')
+            gym = get_object_or_404(Gym, id=gym_id)
+            log, filepath = backup_service.create_gym_backup(
+                gym=gym,
+                include_media=include_media,
+                user=request.user,
+                notes=notes
+            )
+            msg = f"Backup for gym '{gym.name}' created successfully ({log.file_size_display})."
+
+        elif scope == 'media':
+            gym = Gym.objects.filter(id=gym_id).first() if gym_id else None
+            log, filepath = backup_service.create_media_only_backup(
+                gym=gym,
+                user=request.user,
+                notes=notes
+            )
+            msg = f"Media archive created successfully ({log.file_size_display})."
+
+        else:
+            # Full Project
+            log, filepath = backup_service.create_full_backup(
+                include_db=include_db if ('include_db' in request.POST) else True,
+                include_media=include_media,
+                user=request.user,
+                notes=notes
+            )
+            msg = f"Full system backup created successfully ({log.file_size_display})."
+
+        if download_now and os.path.exists(filepath):
+            return FileResponse(open(filepath, 'rb'), as_attachment=True, filename=log.filename)
+
+        messages.success(request, msg)
+
+    except Exception as e:
+        messages.error(request, f"Failed to generate backup: {str(e)}")
+
+    return redirect('superadmin:backup_manager')
+
+
+@login_required
+@superadmin_required
+def download_backup_action(request, backup_id):
+    """
+    Direct attachment download for a stored backup file.
+    """
+    log = get_object_or_404(BackupLog, id=backup_id)
+    if not os.path.exists(log.file_path):
+        messages.error(request, f"Backup file '{log.filename}' could not be found on server disk.")
+        return redirect('superadmin:backup_manager')
+
+    return FileResponse(open(log.file_path, 'rb'), as_attachment=True, filename=log.filename)
+
+
+@login_required
+@superadmin_required
+@require_POST
+def delete_backup_action(request, backup_id):
+    """
+    Permanently deletes a backup file from disk and removes its log entry.
+    """
+    log = get_object_or_404(BackupLog, id=backup_id)
+    filename = log.filename
+    if os.path.exists(log.file_path):
+        try:
+            os.remove(log.file_path)
+        except OSError as e:
+            pass
+
+    log.delete()
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'success': True, 'message': f"Backup '{filename}' deleted successfully."})
+
+    messages.success(request, f"Backup archive '{filename}' deleted permanently.")
+    return redirect('superadmin:backup_manager')
+
+
+@login_required
+@superadmin_required
+def inspect_backup_api(request):
+    """
+    API endpoint to inspect an archive file (.zip, .json, .sqlite3)
+    and return structural metadata before performing restore.
+    """
+    backup_id = request.GET.get('backup_id') or request.POST.get('backup_id')
+
+    # Case 1: Inspect existing backup on server
+    if backup_id:
+        log = get_object_or_404(BackupLog, id=backup_id)
+        if not os.path.exists(log.file_path):
+            return JsonResponse({'is_valid': False, 'error': 'Backup file not found on disk.'})
+        report = backup_service.inspect_backup_file(log.file_path)
+        report['filename'] = log.filename
+        report['backup_id'] = log.id
+        return JsonResponse(report)
+
+    # Case 2: Inspect newly uploaded file
+    if request.method == 'POST' and 'backup_file' in request.FILES:
+        uploaded = request.FILES['backup_file']
+        temp_dir = os.path.join(backup_service.BACKUP_DIR, 'temp_inspect')
+        os.makedirs(temp_dir, exist_ok=True)
+        temp_path = os.path.join(temp_dir, f"inspect_{uploaded.name}")
+
+        with open(temp_path, 'wb+') as dest:
+            for chunk in uploaded.chunks():
+                dest.write(chunk)
+
+        try:
+            report = backup_service.inspect_backup_file(temp_path)
+            report['filename'] = uploaded.name
+            return JsonResponse(report)
+        finally:
+            if os.path.exists(temp_path):
+                try:
+                    os.remove(temp_path)
+                except OSError:
+                    pass
+
+    return JsonResponse({'is_valid': False, 'error': 'No backup file or ID provided for inspection.'})
+
+
+@login_required
+@superadmin_required
+@require_POST
+def restore_backup_action(request):
+    """
+    Executes restore from an existing backup ID or uploaded backup archive.
+    """
+    confirm_text = request.POST.get('confirm_text', '').strip().upper()
+    if confirm_text != 'RESTORE':
+        messages.error(request, "Restoration aborted: Confirmation word must be exactly 'RESTORE'.")
+        return redirect('superadmin:backup_manager')
+
+    backup_id = request.POST.get('backup_id')
+    filepath = None
+    is_uploaded = False
+
+    if backup_id:
+        log = get_object_or_404(BackupLog, id=backup_id)
+        if not os.path.exists(log.file_path):
+            messages.error(request, "Backup file not found on server disk.")
+            return redirect('superadmin:backup_manager')
+        filepath = log.file_path
+
+    elif 'backup_file' in request.FILES:
+        uploaded = request.FILES['backup_file']
+        timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+        save_name = f"uploaded_{timestamp}_{uploaded.name}"
+        filepath = os.path.join(backup_service.BACKUP_DIR, save_name)
+
+        with open(filepath, 'wb+') as dest:
+            for chunk in uploaded.chunks():
+                dest.write(chunk)
+        is_uploaded = True
+
+    if not filepath or not os.path.exists(filepath):
+        messages.error(request, "No valid backup file was provided for restoration.")
+        return redirect('superadmin:backup_manager')
+
+    # Execute restore
+    success, message = backup_service.restore_backup(filepath, user=request.user)
+
+    if success:
+        messages.success(request, f"Restore Successful: {message}")
+    else:
+        messages.error(request, f"Restore Failed: {message}")
+
+    return redirect('superadmin:backup_manager')
+
 

@@ -197,8 +197,15 @@ def gym_details(request):
             unread_count = 0
             recent_notifs = []
 
+    try:
+        from .models import SystemSetting
+        system_setting = SystemSetting.get_settings()
+    except Exception:
+        system_setting = None
+
     context = {
         'gym': gym,
+        'system_setting': system_setting,
         'unread_notifications_count': unread_count,
         'recent_notifications': recent_notifs,
         **user_info,

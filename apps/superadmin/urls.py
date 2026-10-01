@@ -50,4 +50,12 @@ urlpatterns = [
     path('whatsapp-messages/api/conversations/', views.whatsapp_conversations_api, name='whatsapp_conversations_api'),
     path('whatsapp-messages/api/thread/<str:phone>/', views.whatsapp_thread_api, name='whatsapp_thread_api'),
     path('whatsapp-messages/api/send/', views.whatsapp_send_api, name='whatsapp_send_api'),
+    # System Settings & Disaster Recovery / Backups
+    path('settings/', views.system_settings_view, name='system_settings'),
+    path('backups/', views.backup_manager_view, name='backup_manager'),
+    path('backups/create/', views.create_backup_action, name='create_backup'),
+    path('backups/download/<int:backup_id>/', views.download_backup_action, name='download_backup'),
+    path('backups/delete/<int:backup_id>/', views.delete_backup_action, name='delete_backup'),
+    path('backups/inspect/', views.inspect_backup_api, name='inspect_backup_api'),
+    path('backups/restore/', views.restore_backup_action, name='restore_backup'),
 ]
