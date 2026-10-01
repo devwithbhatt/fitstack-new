@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %} FitStack | Super Admin{% endblock title %}</title>
+  <title>{% block title %}{{ system_setting.platform_name|default:"FitStack" }} | Super Admin{% endblock title %}</title>
   <link rel="stylesheet" href="{% static 'vendors/mdi/css/materialdesignicons.min.css' %}" />
   <link rel="stylesheet" href="{% static 'vendors/flag-icon-css/css/flag-icon.min.css' %}" /> 
   <link rel="stylesheet" href="{% static 'vendors/css/vendor.bundle.base.css' %}" /> 
@@ -20,7 +20,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/dashboard_modern.css' %}?v=3.7">
-  <link rel="shortcut icon" href="{% static 'images/favicon.png' %}" />
+  {% if system_setting and system_setting.platform_favicon %}
+    <link rel="shortcut icon" href="{{ system_setting.platform_favicon.url }}" />
+  {% else %}
+    <link rel="shortcut icon" href="{% static 'images/favicon.png' %}" />
+  {% endif %}
   
   <!-- Critical Anti-FOUC Styles & Theme Tokens -->
   <style>

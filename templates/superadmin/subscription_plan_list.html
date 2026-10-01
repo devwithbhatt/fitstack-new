@@ -190,7 +190,7 @@
                             </td>
                             <td data-label="Price & Duration">
                                 <div class="font-weight-bold text-primary" style="font-size: 1rem;">
-                                    ₹{{ plan.price|floatformat:2 }}
+                                    {{ system_setting.currency_symbol|default:"₹" }}{{ plan.price|floatformat:2 }}
                                 </div>
                                 <small class="text-muted">
                                     for {{ plan.duration_months }} Month{{ plan.duration_months|pluralize }}
@@ -282,7 +282,7 @@
                                             data-plan-name="{{ plan.name|escape }}"
                                             data-plan-tier="{{ plan.get_plan_tier_display }}"
                                             data-plan-tagline="{{ plan.tagline|default:''|escape }}"
-                                            data-plan-price="₹{{ plan.price|floatformat:2 }}"
+                                            data-plan-price="{{ system_setting.currency_symbol|default:'₹' }}{{ plan.price|floatformat:2 }}"
                                             data-plan-duration="{{ plan.duration_months }}"
                                             data-plan-popular="{{ plan.is_popular|yesno:'1,0' }}"
                                             data-plan-status="{{ plan.is_active|yesno:'Active,Inactive' }}"

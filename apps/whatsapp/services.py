@@ -192,6 +192,15 @@ class WhatsAppService:
         """Format phone number using Twilio service"""
         return self.twilio.format_phone_number(phone_number)
     
+    def _is_whatsapp_enabled(self):
+        """Checks if WhatsApp outbound messaging is globally allowed by SystemSetting"""
+        try:
+            from apps.superadmin.models import SystemSetting
+            setting = SystemSetting.get_settings()
+            return bool(setting.global_whatsapp_master)
+        except Exception:
+            return True
+
     def check_template_status(self, content_sid):
         """Check if a template is approved"""
         return self.twilio.check_template_status(content_sid)
@@ -210,6 +219,9 @@ class WhatsAppService:
         Returns:
             dict: Response from Twilio
         """
+        if not self._is_whatsapp_enabled():
+            logger.info("🚫 WhatsApp dispatch skipped: Global WhatsApp Master kill-switch is DISABLED in System Settings.")
+            return {'success': False, 'error': 'Global WhatsApp messaging is currently disabled by system administrator.'}
         content_sid = getattr(settings, 'TWILIO_CONTENT_SID', None)
         
         if not content_sid:
@@ -236,14 +248,13 @@ class WhatsAppService:
     def send_message(self, to_number, message):
         """
         Sends a plain text message.
-        
-        Args:
-            to_number (str): Recipient phone number
-            message (str): Text message to send
-            
-        Returns:
-            dict: Response from Twilio
         """
+        if not self._is_whatsapp_enabled():
+            logger.info("🚫 WhatsApp dispatch skipped: Global WhatsApp Master kill-switch is DISABLED in System Settings.")
+            res = {'success': False, 'error': 'Global WhatsApp messaging is currently disabled by system administrator.'}
+            self._log_message(recipient_name=to_number, recipient_phone=to_number, message_content=message, message_type='custom', result=res)
+            return res
+
         if not self.twilio.client:
             logger.error("❌ Twilio client not initialized")
             res = {'success': False, 'error': 'Twilio client not initialized'}

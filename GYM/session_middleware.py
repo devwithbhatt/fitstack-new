@@ -92,8 +92,18 @@ class SessionExpiredMiddleware:
         self._public_prefixes = _get_public_prefixes()
 
     def __call__(self, request):
-        # Only intervene for unauthenticated requests.
-        if not request.user.is_authenticated:
+        # Enforce session inactivity timeout from SystemSetting for authenticated sessions
+        if request.user.is_authenticated:
+            try:
+                from apps.superadmin.models import SystemSetting
+                system_setting = SystemSetting.get_settings()
+                if system_setting and system_setting.session_timeout_minutes:
+                    timeout_seconds = int(system_setting.session_timeout_minutes) * 60
+                    request.session.set_expiry(timeout_seconds)
+            except Exception:
+                pass
+        else:
+            # Only intervene for unauthenticated requests.
             if not self._is_public(request):
                 logger.debug(
                     'SessionExpiredMiddleware: unauthenticated access to %s – redirecting to login.',

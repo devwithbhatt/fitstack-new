@@ -218,14 +218,55 @@
                                 <input type="url" name="website_url" class="form-control" value="{{ setting.website_url }}">
                             </div>
                             <div class="col-md-4 form-group">
-                                <label>Currency Symbol</label>
-                                <input type="text" name="currency_symbol" class="form-control font-weight-bold" value="{{ setting.currency_symbol }}" maxlength="5">
-                                <small class="text-muted">e.g. ₹, $, €, £</small>
+                                <label class="font-weight-bold text-dark">Currency Symbol</label>
+                                <select name="currency_symbol" id="currency_symbol" class="form-control font-weight-bold" onchange="syncFromSymbol(this.value)">
+                                    <option value="₹" {% if setting.currency_symbol == '₹' %}selected{% endif %}>₹ (INR Rupee)</option>
+                                    <option value="$" {% if setting.currency_symbol == '$' %}selected{% endif %}>$ (USD / CAD / AUD Dollar)</option>
+                                    <option value="€" {% if setting.currency_symbol == '€' %}selected{% endif %}>€ (EUR Euro)</option>
+                                    <option value="£" {% if setting.currency_symbol == '£' %}selected{% endif %}>£ (GBP British Pound)</option>
+                                    <option value="د.إ" {% if setting.currency_symbol == 'د.إ' %}selected{% endif %}>د.إ (AED UAE Dirham)</option>
+                                    <option value="﷼" {% if setting.currency_symbol == '﷼' %}selected{% endif %}>﷼ (SAR Saudi Riyal)</option>
+                                    <option value="C$" {% if setting.currency_symbol == 'C$' %}selected{% endif %}>C$ (Canadian Dollar)</option>
+                                    <option value="A$" {% if setting.currency_symbol == 'A$' %}selected{% endif %}>A$ (Australian Dollar)</option>
+                                    <option value="S$" {% if setting.currency_symbol == 'S$' %}selected{% endif %}>S$ (Singapore Dollar)</option>
+                                    <option value="RM" {% if setting.currency_symbol == 'RM' %}selected{% endif %}>RM (Malaysian Ringgit)</option>
+                                    <option value="¥" {% if setting.currency_symbol == '¥' %}selected{% endif %}>¥ (JPY Yen / CNY Yuan)</option>
+                                    <option value="R" {% if setting.currency_symbol == 'R' %}selected{% endif %}>R (ZAR South African Rand)</option>
+                                    <option value="KD" {% if setting.currency_symbol == 'KD' %}selected{% endif %}>KD (Kuwaiti Dinar)</option>
+                                    <option value="BD" {% if setting.currency_symbol == 'BD' %}selected{% endif %}>BD (Bahraini Dinar)</option>
+                                    <option value="QR" {% if setting.currency_symbol == 'QR' %}selected{% endif %}>QR (Qatari Riyal)</option>
+                                    <option value="OMR" {% if setting.currency_symbol == 'OMR' %}selected{% endif %}>OMR (Omani Rial)</option>
+                                    {% if setting.currency_symbol and setting.currency_symbol not in "₹,$,€,£,د.إ,﷼,C$,A$,S$,RM,¥,R,KD,BD,QR,OMR" %}
+                                        <option value="{{ setting.currency_symbol }}" selected>{{ setting.currency_symbol }} (Current Custom)</option>
+                                    {% endif %}
+                                </select>
+                                <small class="text-muted">Symbol for plan prices &amp; billing</small>
                             </div>
                             <div class="col-md-4 form-group">
-                                <label>Currency ISO Code</label>
-                                <input type="text" name="currency_code" class="form-control text-uppercase" value="{{ setting.currency_code }}" maxlength="5">
-                                <small class="text-muted">e.g. INR, USD, EUR</small>
+                                <label class="font-weight-bold text-dark">Currency ISO Code</label>
+                                <select name="currency_code" id="currency_code" class="form-control font-weight-bold text-uppercase" onchange="syncFromCode(this.value)">
+                                    <option value="INR" data-symbol="₹" {% if setting.currency_code == 'INR' %}selected{% endif %}>INR - Indian Rupee (₹)</option>
+                                    <option value="USD" data-symbol="$" {% if setting.currency_code == 'USD' %}selected{% endif %}>USD - US Dollar ($)</option>
+                                    <option value="EUR" data-symbol="€" {% if setting.currency_code == 'EUR' %}selected{% endif %}>EUR - Euro (€)</option>
+                                    <option value="GBP" data-symbol="£" {% if setting.currency_code == 'GBP' %}selected{% endif %}>GBP - British Pound (£)</option>
+                                    <option value="AED" data-symbol="د.إ" {% if setting.currency_code == 'AED' %}selected{% endif %}>AED - UAE Dirham (د.إ)</option>
+                                    <option value="SAR" data-symbol="﷼" {% if setting.currency_code == 'SAR' %}selected{% endif %}>SAR - Saudi Riyal (﷼)</option>
+                                    <option value="CAD" data-symbol="C$" {% if setting.currency_code == 'CAD' %}selected{% endif %}>CAD - Canadian Dollar (C$)</option>
+                                    <option value="AUD" data-symbol="A$" {% if setting.currency_code == 'AUD' %}selected{% endif %}>AUD - Australian Dollar (A$)</option>
+                                    <option value="SGD" data-symbol="S$" {% if setting.currency_code == 'SGD' %}selected{% endif %}>SGD - Singapore Dollar (S$)</option>
+                                    <option value="MYR" data-symbol="RM" {% if setting.currency_code == 'MYR' %}selected{% endif %}>MYR - Malaysian Ringgit (RM)</option>
+                                    <option value="JPY" data-symbol="¥" {% if setting.currency_code == 'JPY' %}selected{% endif %}>JPY - Japanese Yen (¥)</option>
+                                    <option value="CNY" data-symbol="¥" {% if setting.currency_code == 'CNY' %}selected{% endif %}>CNY - Chinese Yuan (¥)</option>
+                                    <option value="ZAR" data-symbol="R" {% if setting.currency_code == 'ZAR' %}selected{% endif %}>ZAR - South African Rand (R)</option>
+                                    <option value="KWD" data-symbol="KD" {% if setting.currency_code == 'KWD' %}selected{% endif %}>KWD - Kuwaiti Dinar (KD)</option>
+                                    <option value="BHD" data-symbol="BD" {% if setting.currency_code == 'BHD' %}selected{% endif %}>BHD - Bahraini Dinar (BD)</option>
+                                    <option value="QAR" data-symbol="QR" {% if setting.currency_code == 'QAR' %}selected{% endif %}>QAR - Qatari Riyal (QR)</option>
+                                    <option value="OMR" data-symbol="OMR" {% if setting.currency_code == 'OMR' %}selected{% endif %}>OMR - Omani Rial (OMR)</option>
+                                    {% if setting.currency_code and setting.currency_code not in "INR,USD,EUR,GBP,AED,SAR,CAD,AUD,SGD,MYR,JPY,CNY,ZAR,KWD,BHD,QAR,OMR" %}
+                                        <option value="{{ setting.currency_code }}" selected>{{ setting.currency_code }} (Current Custom)</option>
+                                    {% endif %}
+                                </select>
+                                <small class="text-muted">3-letter standard ISO currency code</small>
                             </div>
                             <div class="col-md-4 form-group">
                                 <label>Timezone</label>
@@ -871,6 +912,51 @@
                 document.getElementById(previewId).src = e.target.result;
             }
             reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function syncFromCode(code) {
+        const codeSelect = document.getElementById('currency_code');
+        const selectedOption = codeSelect.options[codeSelect.selectedIndex];
+        const symbol = selectedOption ? selectedOption.getAttribute('data-symbol') : null;
+        if (symbol) {
+            const symbolSelect = document.getElementById('currency_symbol');
+            for (let i = 0; i < symbolSelect.options.length; i++) {
+                if (symbolSelect.options[i].value === symbol) {
+                    symbolSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+    }
+
+    function syncFromSymbol(symbol) {
+        const symbolToCodeMap = {
+            '₹': 'INR',
+            '$': 'USD',
+            '€': 'EUR',
+            '£': 'GBP',
+            'د.إ': 'AED',
+            '﷼': 'SAR',
+            'C$': 'CAD',
+            'A$': 'AUD',
+            'S$': 'SGD',
+            'RM': 'MYR',
+            'KD': 'KWD',
+            'BD': 'BHD',
+            'QR': 'QAR',
+            'OMR': 'OMR',
+            'R': 'ZAR'
+        };
+        if (symbolToCodeMap[symbol]) {
+            const targetCode = symbolToCodeMap[symbol];
+            const codeSelect = document.getElementById('currency_code');
+            for (let i = 0; i < codeSelect.options.length; i++) {
+                if (codeSelect.options[i].value === targetCode) {
+                    codeSelect.selectedIndex = i;
+                    break;
+                }
+            }
         }
     }
 

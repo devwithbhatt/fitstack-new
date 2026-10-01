@@ -47,16 +47,36 @@ def gym_admin_required(view_func):
 
 @never_cache
 def superadmin_login(request):
+    try:
+        from apps.superadmin.models import SystemSetting
+        max_attempts = int(SystemSetting.get_settings().max_login_attempts or 5)
+    except Exception:
+        max_attempts = 5
+
+    attempts_key = 'sa_failed_login_attempts'
+    current_attempts = request.session.get(attempts_key, 0)
+
     if request.method == 'POST':
+        if current_attempts >= max_attempts:
+            messages.error(request, f'Too many failed login attempts ({current_attempts}/{max_attempts}). Login is temporarily locked for security.')
+            return render(request, 'login/superadmin_login.html')
+
         username = request.POST.get('username')
         password = request.POST.get('password')
         user = authenticate(request, username=username, password=password)
         if user is not None and user.is_superuser:
             login(request, user)
             request.session['role'] = 'superadmin'
+            request.session[attempts_key] = 0
             return redirect('superadmin:dashboard')
         else:
-            messages.error(request, 'Invalid username or password for superadmin.')
+            current_attempts += 1
+            request.session[attempts_key] = current_attempts
+            remaining = max(0, max_attempts - current_attempts)
+            if remaining > 0:
+                messages.error(request, f'Invalid username or password. {remaining} attempt(s) remaining before lockout.')
+            else:
+                messages.error(request, f'Maximum failed login attempts reached ({max_attempts}). Temporary lockout active.')
     return render(request, 'login/superadmin_login.html')
 
 def get_login_candidates(identifier):
@@ -156,6 +176,17 @@ def user_login(request):
             return redirect('dashboard')
 
     if request.method == 'POST':
+        try:
+            from apps.superadmin.models import SystemSetting
+            max_attempts = int(SystemSetting.get_settings().max_login_attempts or 5)
+        except Exception:
+            max_attempts = 5
+
+        current_attempts = request.session.get('user_failed_attempts', 0)
+        if current_attempts >= max_attempts:
+            messages.error(request, f'Too many failed login attempts ({current_attempts}/{max_attempts}). For security, login is temporarily locked.')
+            return render(request, 'login/login.html')
+
         identifier = (request.POST.get('identifier') or request.POST.get('username') or '').strip()
         password = request.POST.get('password', '')
         selected_username = (request.POST.get('selected_username') or '').strip()
@@ -180,6 +211,7 @@ def user_login(request):
 
         user = authenticate(request, username=target_username, password=password)
         if user is not None:
+            request.session['user_failed_attempts'] = 0
             login(request, user)
 
             if user.is_superuser:
@@ -226,7 +258,13 @@ def user_login(request):
             messages.error(request, 'Invalid user role configuration.')
             return redirect('login')
         else:
-            messages.error(request, 'Invalid login credentials. Please check your username/mobile and password.')
+            current_attempts += 1
+            request.session['user_failed_attempts'] = current_attempts
+            remaining = max(0, max_attempts - current_attempts)
+            if remaining > 0:
+                messages.error(request, f'Invalid login credentials. {remaining} attempt(s) remaining before lockout.')
+            else:
+                messages.error(request, f'Maximum failed login attempts reached ({max_attempts}). Temporary lockout active.')
     return render(request, 'login/login.html')
 
 

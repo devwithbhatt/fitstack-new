@@ -63,7 +63,12 @@ class Member(models.Model):
         """
         if not self.member_id:
             year = timezone.now().strftime("%y")
-            prefix = f"{self.gym.gym_id_prefix}-MEM-{year}-"
+            try:
+                from apps.superadmin.models import SystemSetting
+                member_prefix = (SystemSetting.get_settings().default_member_prefix or "MEM").strip().upper()
+            except Exception:
+                member_prefix = "MEM"
+            prefix = f"{self.gym.gym_id_prefix}-{member_prefix}-{year}-"
 
             # Find the latest member_id for this gym and year
             latest_member = Member.objects.filter(
