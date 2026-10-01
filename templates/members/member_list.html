@@ -401,6 +401,14 @@
                   title="View Profile"
                   ><i class="mdi mdi-eye-outline"></i
                 ></a>
+                <a
+                  href="{{ member|whatsapp_profile_url:member.total_due }}"
+                  target="_blank"
+                  class="btn btn-success btn-sm"
+                  data-toggle="tooltip"
+                  title="Send WhatsApp Message"
+                  ><i class="mdi mdi-whatsapp"></i
+                ></a>
                 {% if request.user|has_permission:'change_member' %}
                 <a
                   href="{% url 'edit_member' member.id %}"

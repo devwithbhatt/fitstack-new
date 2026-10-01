@@ -221,3 +221,21 @@ class MemberSecurityAndTenantIsolationTests(TestCase):
         # Previously this was skipped because history_id was set. Now it MUST be called.
         self.assertTrue(mock_instance.send_membership_plan_details.called)
 
+    def test_member_profile_displays_discount(self):
+        """Verify that member-specific discount is displayed on member profile page."""
+        MembershipHistory.objects.create(
+            gym=self.gym1,
+            member=self.member1,
+            plan=self.plan1,
+            membership_start_date=date.today(),
+            discount=Decimal('750.00'),
+            total_amount=Decimal('2250.00'),
+            paid_amount=Decimal('2250.00'),
+            status='active'
+        )
+        url = reverse('member_profile', kwargs={'member_id': self.member1.id})
+        response = self.client1.get(url, secure=True, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '750.00')
+        self.assertContains(response, 'Discount Given')
+
