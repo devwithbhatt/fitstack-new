@@ -1,7 +1,7 @@
 from .models import PaymentSetting
 
 def payment_settings_context(request):
-    if request.user.is_authenticated:
+    if getattr(request, 'user', None) and request.user.is_authenticated:
         gym = getattr(request, 'gym', None)
         if gym:
             try:

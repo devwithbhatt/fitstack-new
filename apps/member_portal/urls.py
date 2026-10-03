@@ -18,4 +18,5 @@ urlpatterns = [
     path('billing/', views.member_billing_view, name='billing'),
     path('personal-training/', views.member_pt_view, name='personal_training'),
     path('profile/', views.member_profile_view, name='profile'),
+    path('verify-pass/<str:member_id>/', views.member_verify_pass_view, name='verify_pass'),
 ]

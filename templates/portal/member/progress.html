@@ -503,6 +503,7 @@
                 <thead style="background: #f8fafc;">
                   <tr style="font-size: 0.74rem; color: #475569; letter-spacing: 0.03em;">
                     <th><i class="far fa-calendar-alt text-muted mr-1"></i> DATE</th>
+                    <th class="text-center" style="width: 70px;"><i class="fas fa-camera text-muted mr-1"></i> PHOTO</th>
                     <th><i class="fas fa-weight-scale text-muted mr-1"></i> WEIGHT</th>
                     <th><i class="fas fa-percentage text-muted mr-1"></i> BODY FAT</th>
                     <th><i class="fas fa-ruler-horizontal text-muted mr-1"></i> CHEST</th>
@@ -517,6 +518,15 @@
                   {% for m in body_metrics %}
                   <tr>
                     <td class="font-weight-bold text-dark">{{ m.date|date:"d M Y" }}</td>
+                    <td class="text-center align-middle">
+                      {% if m.photo %}
+                        <a href="javascript:void(0);" onclick="openPhotoModal('{{ m.photo.url }}', '{{ m.date|date:"d M Y" }}', '{{ m.weight_kg }} kg', '{{ m.notes|default:""|escapejs }}');" title="View Full Transformation Photo" class="d-inline-block">
+                          <img src="{{ m.photo.url }}" alt="Progress Photo" class="rounded shadow-sm" style="width: 38px; height: 38px; object-fit: cover; border: 2px solid #2563eb; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.15)';" onmouseout="this.style.transform='scale(1)';">
+                        </a>
+                      {% else %}
+                        <span class="text-muted small" title="No photo recorded"><i class="fas fa-minus text-black-50"></i></span>
+                      {% endif %}
+                    </td>
                     <td><strong class="text-primary">{{ m.weight_kg }} kg</strong></td>
                     <td>{% if m.body_fat_percentage %}{{ m.body_fat_percentage }}%{% else %}--{% endif %}</td>
                     <td>{% if m.chest_inches %}{{ m.chest_inches }}"{% else %}--{% endif %}</td>
@@ -524,7 +534,7 @@
                     <td>{% if m.biceps_inches %}{{ m.biceps_inches }}"{% else %}--{% endif %}</td>
                     <td>{% if m.thighs_inches %}{{ m.thighs_inches }}"{% else %}--{% endif %}</td>
                     <td class="text-muted small">{{ m.notes|default:"--" }}</td>
-                    <td class="text-right">
+                    <td class="text-right align-middle">
                       <form method="POST" action="{% url 'member_portal:delete_metric' m.id %}" class="d-inline" onsubmit="return confirm('Delete this measurement entry?');">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle p-0 d-inline-flex align-items-center justify-content-center" style="width: 28px; height: 28px;" title="Delete Entry">
@@ -717,10 +727,10 @@
         </button>
       </div>
 
-      <form method="POST" action="{% url 'member_portal:log_metrics' %}">
+      <form method="POST" action="{% url 'member_portal:log_metrics' %}" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="modal-body p-4">
-          <p class="text-muted small mb-3">Keep track of your weight transformation and tape measurements over time.</p>
+          <p class="text-muted small mb-3">Keep track of your weight transformation, progress photos, and tape measurements over time.</p>
 
           <div class="row">
             <div class="col-6 mb-3">
@@ -770,6 +780,37 @@
               <input type="text" name="notes" class="form-control rounded-pill" placeholder="e.g. Morning fasting measurement">
             </div>
           </div>
+
+          <!-- Progress / Transformation Photo Upload -->
+          <div class="form-group mb-2">
+            <label class="font-weight-bold text-dark small">
+              <i class="fas fa-camera text-primary mr-1"></i> Transformation / Physique Photo <span class="text-muted font-weight-normal">(Optional)</span>
+            </label>
+            <div class="p-3 rounded-lg d-flex align-items-center justify-content-between" style="background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 12px;">
+              <div class="d-flex align-items-center" style="min-width: 0;">
+                <div id="metricsPhotoPreviewContainer" class="mr-3" style="display: none;">
+                  <img id="metricsPhotoPreview" src="#" alt="Preview" class="rounded shadow-sm" style="width: 52px; height: 52px; object-fit: cover; border: 2px solid #2563eb;">
+                </div>
+                <div id="metricsPhotoPlaceholderIcon" class="mr-3 text-primary d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" style="width: 44px; height: 44px; background: #eff6ff; font-size: 1.2rem;">
+                  <i class="fas fa-portrait"></i>
+                </div>
+                <div style="min-width: 0;">
+                  <div class="font-weight-bold small text-dark text-truncate" id="metricsPhotoFileName">Add Transformation Photo</div>
+                  <div class="text-muted small" style="font-size: 0.72rem;">JPG or PNG, max 5MB (Front, Side, or Back pose)</div>
+                </div>
+              </div>
+              <div class="d-flex align-items-center flex-shrink-0 ml-2">
+                <input type="file" name="photo" id="metricsPhotoInput" class="d-none" accept="image/*" onchange="handleMetricsPhotoSelect(this);">
+                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill font-weight-bold px-3 py-1" onclick="document.getElementById('metricsPhotoInput').click();">
+                  <i class="fas fa-upload mr-1"></i> Choose
+                </button>
+                <button type="button" id="metricsPhotoRemoveBtn" class="btn btn-sm btn-outline-danger rounded-circle ml-2 p-0" style="display: none; width: 28px; height: 28px;" onclick="removeMetricsPhoto();" title="Remove Photo">
+                  <i class="fas fa-times" style="font-size: 0.75rem;"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
         </div>
 
         <div class="modal-footer bg-light py-3 px-4 border-top">
@@ -870,8 +911,76 @@
   </div>
 </div>
 
+<!-- ============================================================================== -->
+<!-- 4. MODAL: PHOTO VIEWER LIGHTBOX -->
+<!-- ============================================================================== -->
+<div class="modal fade" id="photoViewModal" tabindex="-1" role="dialog" aria-labelledby="photoViewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document" style="max-width: 560px;">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 18px; overflow: hidden; background: #0f172a; color: #ffffff;">
+      <div class="modal-header py-3 px-4 d-flex justify-content-between align-items-center border-0" style="background: rgba(255, 255, 255, 0.06);">
+        <div class="d-flex align-items-center">
+          <span class="badge badge-primary px-3 py-1.5 rounded-pill font-weight-bold" id="photoModalDateBadge">Date</span>
+          <span class="badge badge-success px-3 py-1.5 rounded-pill font-weight-bold ml-2" id="photoModalWeightBadge">Weight</span>
+        </div>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" style="opacity: 0.9; text-shadow: none;">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body p-3 text-center" style="background: #020617;">
+        <img id="photoModalImg" src="#" alt="Transformation Photo" class="img-fluid rounded" style="max-height: 480px; object-fit: contain; width: 100%; border: 1px solid rgba(255, 255, 255, 0.1);">
+      </div>
+      <div class="modal-footer py-2.5 px-4 d-flex justify-content-between align-items-center border-0" style="background: rgba(255, 255, 255, 0.06);">
+        <small class="text-white-50 text-truncate font-italic" id="photoModalNotes" style="max-width: 70%;"></small>
+        <button type="button" class="btn btn-sm btn-outline-light rounded-pill px-3 font-weight-bold" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+function handleMetricsPhotoSelect(input) {
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Photo must be less than 5MB.');
+      input.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('metricsPhotoPreview').src = e.target.result;
+      document.getElementById('metricsPhotoPreviewContainer').style.display = 'block';
+      document.getElementById('metricsPhotoPlaceholderIcon').style.display = 'none';
+      document.getElementById('metricsPhotoFileName').textContent = file.name;
+      document.getElementById('metricsPhotoRemoveBtn').style.display = 'inline-flex';
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function removeMetricsPhoto() {
+  const input = document.getElementById('metricsPhotoInput');
+  if (input) input.value = '';
+  document.getElementById('metricsPhotoPreviewContainer').style.display = 'none';
+  document.getElementById('metricsPhotoPlaceholderIcon').style.display = 'flex';
+  document.getElementById('metricsPhotoFileName').textContent = 'Add Transformation Photo';
+  document.getElementById('metricsPhotoRemoveBtn').style.display = 'none';
+}
+
+function openPhotoModal(photoUrl, dateStr, weightStr, notesStr) {
+  document.getElementById('photoModalImg').src = photoUrl;
+  document.getElementById('photoModalDateBadge').innerHTML = '<i class="far fa-calendar-alt mr-1"></i> ' + dateStr;
+  document.getElementById('photoModalWeightBadge').innerHTML = '<i class="fas fa-weight-scale mr-1"></i> ' + weightStr;
+  const notesEl = document.getElementById('photoModalNotes');
+  if (notesStr && notesStr !== '--' && notesStr.trim() !== '') {
+    notesEl.textContent = 'Note: ' + notesStr;
+  } else {
+    notesEl.textContent = '';
+  }
+  $('#photoViewModal').modal('show');
+}
+
 function addExerciseRow() {
   const container = document.getElementById('exerciseRowsContainer');
   const tr = document.createElement('tr');

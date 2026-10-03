@@ -392,6 +392,7 @@ class MemberBodyMetric(models.Model):
     waist_inches = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True, help_text="Waist (inches)")
     biceps_inches = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True, help_text="Arms / Biceps (inches)")
     thighs_inches = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True, help_text="Thighs (inches)")
+    photo = models.ImageField(upload_to='progress_photos/', null=True, blank=True, help_text="Physique / Transformation progress photo")
     notes = models.CharField(max_length=255, blank=True, help_text="Progress notes or weekly observations")
     created_at = models.DateTimeField(auto_now_add=True)
 

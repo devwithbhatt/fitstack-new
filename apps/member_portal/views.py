@@ -439,27 +439,216 @@ def member_billing_view(request):
 def member_profile_view(request):
     member = request.member
     gym = request.gym
+    today = timezone.localdate()
 
-    if request.method == 'POST' and 'change_password' in request.POST:
-        new_pwd = request.POST.get('new_password', '').strip()
-        confirm_pwd = request.POST.get('confirm_password', '').strip()
-        if len(new_pwd) < 6:
-            messages.error(request, 'Password must be at least 6 characters long.')
-        elif new_pwd != confirm_pwd:
-            messages.error(request, 'Passwords do not match.')
-        else:
-            request.user.set_password(new_pwd)
-            request.user.save()
-            from django.contrib.auth import update_session_auth_hash
-            update_session_auth_hash(request, request.user)
-            messages.success(request, 'Password updated successfully!')
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'update_profile':
+            first_name = request.POST.get('first_name', '').strip()
+            last_name = request.POST.get('last_name', '').strip()
+            email = request.POST.get('email', '').strip()
+            profession = request.POST.get('profession', '').strip()
+            address = request.POST.get('address', '').strip()
+            city = request.POST.get('city', '').strip()
+            state = request.POST.get('state', '').strip()
+            pincode = request.POST.get('pincode', '').strip()
+
+            if not first_name:
+                messages.error(request, 'First name cannot be empty.')
+                return redirect('member_portal:profile')
+
+            # Ensure email uniqueness within gym if provided and changed
+            if email and email.lower() != (member.email or '').lower():
+                existing = Member.objects.filter(gym=gym, email__iexact=email).exclude(id=member.id).first()
+                if existing:
+                    messages.error(request, 'This email address is already in use by another member in your gym.')
+                    return redirect('member_portal:profile')
+
+            member.first_name = first_name
+            member.last_name = last_name
+            member.email = email or None
+            member.profession = profession
+            member.address = address
+            member.city = city
+            member.state = state
+            member.pincode = pincode
+
+            if 'profile_picture' in request.FILES:
+                pic = request.FILES['profile_picture']
+                if pic.size > 5 * 1024 * 1024:
+                    messages.error(request, 'Profile photo file size must be less than 5MB.')
+                    return redirect('member_portal:profile')
+                member.profile_picture = pic
+
+            member.save()
+
+            # Keep Django User synchronized
+            if member.user:
+                member.user.first_name = first_name
+                member.user.last_name = last_name
+                member.user.email = email
+                member.user.save()
+
+            messages.success(request, 'Profile details updated successfully!')
             return redirect('member_portal:profile')
+
+        elif action == 'change_password' or 'change_password' in request.POST:
+            current_pwd = request.POST.get('current_password', '').strip()
+            new_pwd = request.POST.get('new_password', '').strip()
+            confirm_pwd = request.POST.get('confirm_password', '').strip()
+
+            if current_pwd and not request.user.check_password(current_pwd):
+                messages.error(request, 'Current password verification failed.')
+                return redirect('member_portal:profile')
+
+            if len(new_pwd) < 6:
+                messages.error(request, 'New password must be at least 6 characters long.')
+            elif new_pwd != confirm_pwd:
+                messages.error(request, 'New passwords do not match. Please try again.')
+            else:
+                request.user.set_password(new_pwd)
+                request.user.save()
+                from django.contrib.auth import update_session_auth_hash
+                update_session_auth_hash(request, request.user)
+                messages.success(request, 'Password updated successfully! Keep your credentials safe.')
+                return redirect('member_portal:profile')
+
+    # Rich contextual profile metrics
+    latest_membership = MembershipHistory.objects.filter(
+        member=member, is_deleted=False
+    ).select_related('plan').order_by('-membership_start_date').first()
+
+    end_date = latest_membership.get_end_date() if latest_membership else None
+    days_left = (end_date - today).days if end_date and end_date >= today else 0
+    is_active = (member.current_status == 'Active') or (latest_membership and latest_membership.status == 'active' and (end_date is None or end_date >= today))
+
+    total_checkins = MemberAttendance.objects.filter(member=member).count()
+    pt_assignment = PersonalTrainer.objects.filter(
+        member=member, status='active', is_deleted=False
+    ).select_related('trainer').first()
+
+    fitness_goal = MemberFitnessGoal.objects.filter(member=member, gym=gym).first()
+    latest_metric = MemberBodyMetric.objects.filter(member=member, gym=gym).order_by('-date', '-created_at').first()
+
+    # Calculate Profile Completeness
+    completeness_fields = [
+        bool(member.first_name and member.last_name),
+        bool(member.mobile_number),
+        bool(member.email),
+        bool(member.profile_picture),
+        bool(member.address),
+        bool(member.city),
+        bool(member.profession),
+        bool(member.gender),
+    ]
+    profile_pct = int((sum(1 for f in completeness_fields if f) / len(completeness_fields)) * 100)
+
+    # Generate Live Scannable QR Code for Digital ID Pass
+    qr_data_uri = None
+    from django.urls import reverse
+    verify_url = request.build_absolute_uri(reverse('member_portal:verify_pass', args=[member.member_id]))
+    try:
+        import qrcode
+        import io
+        import base64
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=5,
+            border=1,
+        )
+        qr.add_data(verify_url)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="#0a192f", back_color="white")
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        qr_b64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+        qr_data_uri = f"data:image/png;base64,{qr_b64}"
+    except Exception as e:
+        qr_data_uri = None
+
+    # Generate base64 Data URIs for profile photo and gym logo so card download/canvas has 0 CORS issues
+    profile_pic_data_uri = None
+    if member.profile_picture:
+        try:
+            import mimetypes
+            with member.profile_picture.open('rb') as f:
+                content = f.read()
+                mime, _ = mimetypes.guess_type(member.profile_picture.name)
+                mime = mime or 'image/jpeg'
+                profile_pic_data_uri = f"data:{mime};base64,{base64.b64encode(content).decode('utf-8')}"
+        except Exception:
+            profile_pic_data_uri = None
+
+    gym_logo_data_uri = None
+    if gym and gym.logo:
+        try:
+            import mimetypes
+            with gym.logo.open('rb') as f:
+                content = f.read()
+                mime, _ = mimetypes.guess_type(gym.logo.name)
+                mime = mime or 'image/png'
+                gym_logo_data_uri = f"data:{mime};base64,{base64.b64encode(content).decode('utf-8')}"
+        except Exception:
+            gym_logo_data_uri = None
 
     context = {
         'member': member,
         'gym': gym,
+        'latest_membership': latest_membership,
+        'end_date': end_date,
+        'days_left': days_left,
+        'is_active': is_active,
+        'total_checkins': total_checkins,
+        'pt_assignment': pt_assignment,
+        'fitness_goal': fitness_goal,
+        'latest_metric': latest_metric,
+        'profile_pct': profile_pct,
+        'qr_data_uri': qr_data_uri,
+        'profile_pic_data_uri': profile_pic_data_uri,
+        'gym_logo_data_uri': gym_logo_data_uri,
+        'verify_url': verify_url,
     }
     return render(request, 'portal/member/profile.html', context)
+
+
+def member_verify_pass_view(request, member_id):
+    """
+    Public verification endpoint to verify authenticity of digital pass via QR code scan.
+    Accessible on mobile devices without requiring member login.
+    """
+    from apps.members.models import Member, MembershipHistory
+    today = timezone.localdate()
+    member = Member.objects.filter(member_id=member_id, is_deleted=False).select_related('gym').first()
+
+    if not member:
+        return render(request, 'portal/member/verify_pass.html', {
+            'found': False,
+            'member_id': member_id,
+        })
+
+    latest_membership = MembershipHistory.objects.filter(
+        member=member, is_deleted=False
+    ).select_related('plan').order_by('-membership_start_date').first()
+
+    end_date = latest_membership.get_end_date() if latest_membership else None
+    days_left = (end_date - today).days if end_date and end_date >= today else 0
+    is_active = (getattr(member, 'current_status', None) == 'Active') or bool(
+        latest_membership and latest_membership.status == 'active' and (end_date is None or end_date >= today)
+    )
+
+    context = {
+        'found': True,
+        'member': member,
+        'gym': member.gym,
+        'latest_membership': latest_membership,
+        'end_date': end_date,
+        'days_left': days_left,
+        'is_active': is_active,
+        'today': today,
+    }
+    return render(request, 'portal/member/verify_pass.html', context)
 
 
 @never_cache
@@ -881,6 +1070,14 @@ def member_log_metrics_action(request):
     thighs = parse_dec('thighs_inches')
     notes = request.POST.get('notes', '').strip()
 
+    photo_file = None
+    if 'photo' in request.FILES:
+        uploaded_photo = request.FILES['photo']
+        if uploaded_photo.size > 5 * 1024 * 1024:
+            messages.error(request, 'Progress photo file size must be less than 5MB.')
+            return redirect('member_portal:progress')
+        photo_file = uploaded_photo
+
     MemberBodyMetric.objects.create(
         gym=gym,
         member=member,
@@ -891,6 +1088,7 @@ def member_log_metrics_action(request):
         waist_inches=waist,
         biceps_inches=biceps,
         thighs_inches=thighs,
+        photo=photo_file,
         notes=notes,
     )
 
