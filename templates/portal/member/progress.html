@@ -263,7 +263,7 @@
           </div>
           <div class="col-lg-4 text-lg-right mt-3 mt-lg-0">
             <button type="button" class="btn btn-primary font-weight-bold px-4 py-2 rounded-pill shadow-sm" data-toggle="modal" data-target="#setGoalModal">
-              <i class="fas fa-bullseye mr-1"></i> Set Your Fitness Target 🎯
+              <i class="fas fa-bullseye mr-1"></i> Set Your Fitness Target
             </button>
           </div>
         </div>
@@ -304,23 +304,94 @@
   </div>
 
   <!-- TABS: WORKOUT SESSIONS & BODY MEASUREMENTS (GYM-CARD CONTAINER) -->
+  <style>
+    .modern-pill-tabs {
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 9999px;
+      border: 1px solid #e2e8f0;
+      display: inline-flex;
+      align-items: center;
+    }
+    .modern-pill-tabs .nav {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .modern-pill-tabs .nav-link {
+      border-radius: 9999px !important;
+      border: none !important;
+      color: #475569 !important;
+      background: transparent !important;
+      font-weight: 600;
+      font-size: 0.84rem;
+      padding: 7px 18px !important;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none !important;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .modern-pill-tabs .nav-link:hover {
+      color: #0f172a !important;
+      background: rgba(255, 255, 255, 0.75) !important;
+    }
+    .modern-pill-tabs .nav-link.active {
+      color: #ffffff !important;
+      background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%) !important;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.28) !important;
+      font-weight: 700 !important;
+    }
+    .modern-pill-tabs .nav-link.active i {
+      color: #ffffff !important;
+    }
+    .modern-pill-tabs .pill-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      line-height: 1;
+      margin-left: 4px;
+      background: #e2e8f0;
+      color: #475569;
+      transition: all 0.2s ease;
+    }
+    .modern-pill-tabs .nav-link.active .pill-badge {
+      background: rgba(255, 255, 255, 0.25) !important;
+      color: #ffffff !important;
+    }
+  </style>
+
   <div class="gym-card mb-4">
     <div class="gym-card-header d-flex justify-content-between align-items-center flex-wrap">
-      <ul class="nav nav-pills" id="progressTabs" role="tablist">
-        <li class="nav-item mr-2">
-          <a class="nav-link active font-weight-bold px-3 py-1.5 rounded-pill" id="workouts-tab" data-toggle="pill" href="#workoutsContent" role="tab" style="font-size: 0.85rem;">
-            <i class="fas fa-dumbbell mr-1"></i> Workout Logs ({{ total_workouts }})
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link font-weight-bold px-3 py-1.5 rounded-pill" id="metrics-tab" data-toggle="pill" href="#metricsContent" role="tab" style="font-size: 0.85rem;">
-            <i class="fas fa-ruler-combined mr-1"></i> Body Measurements History ({{ body_metrics|length }})
-          </a>
-        </li>
-      </ul>
-      <div class="mt-2 mt-sm-0">
-        <button type="button" class="btn btn-sm btn-primary rounded-pill font-weight-bold px-3" data-toggle="modal" data-target="#logWorkoutModal">
-          <i class="fas fa-plus mr-1"></i> Log Today's Session
+      <div class="modern-pill-tabs">
+        <ul class="nav" id="progressTabs" role="tablist">
+          <li class="nav-item">
+            <a class="nav-link active" id="workouts-tab" data-toggle="pill" href="#workoutsContent" role="tab">
+              <i class="fas fa-dumbbell mr-1"></i> Workout Logs
+              <span class="pill-badge">{{ total_workouts }}</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="metrics-tab" data-toggle="pill" href="#metricsContent" role="tab">
+              <i class="fas fa-ruler-combined mr-1"></i> Body Measurements History
+              <span class="pill-badge">{{ body_metrics|length }}</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+      <div class="d-flex align-items-center gap-2 mt-2 mt-sm-0">
+        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill font-weight-bold px-3 py-1.5" data-toggle="modal" data-target="#logWorkoutModal">
+          <i class="fas fa-plus mr-1"></i> Log Session
+        </button>
+        <button type="button" class="btn btn-sm btn-primary rounded-pill font-weight-bold px-3 py-1.5 shadow-sm" data-toggle="modal" data-target="#logMetricsModal">
+          <i class="fas fa-ruler-combined mr-1"></i> Record Metrics
         </button>
       </div>
     </div>
@@ -417,7 +488,7 @@
               <div class="text-muted mb-2"><i class="fas fa-dumbbell" style="font-size: 2.5rem; color: #94a3b8;"></i></div>
               <h5 class="font-weight-bold text-dark">No Workout Sessions Logged Yet</h5>
               <p class="text-muted small mb-3">Keep yourself accountable by logging today's exercises, weights, and repetitions.</p>
-              <button type="button" class="btn btn-warning font-weight-bold px-4 py-2 rounded-pill shadow-sm" data-toggle="modal" data-target="#logWorkoutModal">
+              <button type="button" class="btn btn-primary font-weight-bold px-4 py-2 rounded-pill shadow-sm" data-toggle="modal" data-target="#logWorkoutModal">
                 <i class="fas fa-plus mr-1"></i> Log Today's Workout
               </button>
             </div>
@@ -428,18 +499,18 @@
         <div class="tab-pane fade" id="metricsContent" role="tabpanel">
           {% if body_metrics %}
             <div class="table-responsive">
-              <table class="table table-hover table-bordered mb-0" style="border-radius: 8px; overflow: hidden;">
-                <thead class="thead-light">
-                  <tr>
-                    <th>Date</th>
-                    <th>Weight</th>
-                    <th>Body Fat</th>
-                    <th>Chest</th>
-                    <th>Waist</th>
-                    <th>Arms/Biceps</th>
-                    <th>Thighs</th>
-                    <th>Notes</th>
-                    <th class="text-right">Action</th>
+              <table class="table table-hover table-bordered mb-0" style="border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0;">
+                <thead style="background: #f8fafc;">
+                  <tr style="font-size: 0.74rem; color: #475569; letter-spacing: 0.03em;">
+                    <th><i class="far fa-calendar-alt text-muted mr-1"></i> DATE</th>
+                    <th><i class="fas fa-weight-scale text-muted mr-1"></i> WEIGHT</th>
+                    <th><i class="fas fa-percentage text-muted mr-1"></i> BODY FAT</th>
+                    <th><i class="fas fa-ruler-horizontal text-muted mr-1"></i> CHEST</th>
+                    <th><i class="fas fa-ruler-horizontal text-muted mr-1"></i> WAIST</th>
+                    <th><i class="fas fa-ruler-horizontal text-muted mr-1"></i> ARMS / BICEPS</th>
+                    <th><i class="fas fa-ruler-horizontal text-muted mr-1"></i> THIGHS</th>
+                    <th><i class="far fa-sticky-note text-muted mr-1"></i> NOTES</th>
+                    <th class="text-right">ACTION</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -456,8 +527,8 @@
                     <td class="text-right">
                       <form method="POST" action="{% url 'member_portal:delete_metric' m.id %}" class="d-inline" onsubmit="return confirm('Delete this measurement entry?');">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-sm btn-link text-danger p-0" title="Delete">
-                          <i class="fas fa-trash-alt"></i>
+                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle p-0 d-inline-flex align-items-center justify-content-center" style="width: 28px; height: 28px;" title="Delete Entry">
+                          <i class="fas fa-trash-alt" style="font-size: 0.75rem;"></i>
                         </button>
                       </form>
                     </td>
@@ -490,11 +561,17 @@
 <div class="modal fade" id="logWorkoutModal" tabindex="-1" role="dialog" aria-labelledby="logWorkoutModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
     <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
-      <div class="modal-header py-3 px-4" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff;">
-        <h5 class="modal-title font-weight-bold text-white d-flex align-items-center mb-0" id="logWorkoutModalLabel">
-          <i class="fas fa-dumbbell mr-2 text-warning"></i> Log Today's Workout Session
-        </h5>
-        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" style="opacity: 0.9;">
+      <div class="modal-header py-3 px-4 d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: #ffffff;">
+        <div class="d-flex align-items-center">
+          <div class="d-inline-flex align-items-center justify-content-center mr-2.5 rounded-circle" style="width: 36px; height: 36px; background: rgba(255, 255, 255, 0.18);">
+            <i class="fas fa-dumbbell text-white" style="font-size: 1rem;"></i>
+          </div>
+          <div>
+            <h5 class="modal-title font-weight-bold text-white mb-0" id="logWorkoutModalLabel">Log Today's Workout Session</h5>
+            <small class="text-white-50" style="font-size: 0.75rem;">Record exercises, sets, weights, and training effort</small>
+          </div>
+        </div>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" style="opacity: 0.9; text-shadow: none;">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
@@ -505,15 +582,15 @@
           <!-- Session Header Fields -->
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label class="font-weight-bold text-dark small">Workout Title / Routine <span class="text-danger">*</span></label>
+              <label class="font-weight-bold text-dark small"><i class="fas fa-pen text-primary mr-1"></i> Workout Title / Routine <span class="text-danger">*</span></label>
               <input type="text" name="title" class="form-control rounded-pill" placeholder="e.g. Chest & Triceps Blast, Leg Day, 5K Run" required>
             </div>
             <div class="col-md-3 mb-3">
-              <label class="font-weight-bold text-dark small">Date <span class="text-danger">*</span></label>
+              <label class="font-weight-bold text-dark small"><i class="far fa-calendar-alt text-primary mr-1"></i> Date <span class="text-danger">*</span></label>
               <input type="date" name="date" class="form-control rounded-pill" value="{{ today|date:'Y-m-d' }}" required>
             </div>
             <div class="col-md-3 mb-3">
-              <label class="font-weight-bold text-dark small">Training Type</label>
+              <label class="font-weight-bold text-dark small"><i class="fas fa-layer-group text-primary mr-1"></i> Training Type</label>
               <select name="workout_type" class="form-control rounded-pill">
                 <option value="strength">Strength / Resistance</option>
                 <option value="cardio">Cardio / Conditioning</option>
@@ -527,7 +604,7 @@
 
           <div class="row">
             <div class="col-md-4 mb-3">
-              <label class="font-weight-bold text-dark small">Duration (Minutes)</label>
+              <label class="font-weight-bold text-dark small"><i class="far fa-clock text-primary mr-1"></i> Duration (Minutes)</label>
               <div class="input-group">
                 <input type="number" name="duration_minutes" class="form-control" value="45" min="5" max="300" style="border-top-left-radius: 20px; border-bottom-left-radius: 20px;">
                 <div class="input-group-append">
@@ -536,7 +613,7 @@
               </div>
             </div>
             <div class="col-md-4 mb-3">
-              <label class="font-weight-bold text-dark small">Calories Burned (Est.)</label>
+              <label class="font-weight-bold text-dark small"><i class="fas fa-fire text-danger mr-1"></i> Calories Burned (Est.)</label>
               <div class="input-group">
                 <input type="number" name="calories_burned" class="form-control" placeholder="e.g. 350" min="0" max="3000" style="border-top-left-radius: 20px; border-bottom-left-radius: 20px;">
                 <div class="input-group-append">
@@ -545,13 +622,13 @@
               </div>
             </div>
             <div class="col-md-4 mb-3">
-              <label class="font-weight-bold text-dark small">How did it feel? (1-5)</label>
+              <label class="font-weight-bold text-dark small"><i class="fas fa-bolt text-warning mr-1"></i> Energy Level (1-5)</label>
               <select name="energy_rating" class="form-control rounded-pill">
-                <option value="5">⭐⭐⭐⭐⭐ Energetic / Crushed It!</option>
-                <option value="4" selected>⭐⭐⭐⭐ Solid Workout</option>
-                <option value="3">⭐⭐⭐ Moderate</option>
-                <option value="2">⭐⭐ Tired / Low Energy</option>
-                <option value="1">⭐ Struggled / Tough Day</option>
+                <option value="5">5 / 5 - Energetic (Peak Energy)</option>
+                <option value="4" selected>4 / 5 - Solid (Great Session)</option>
+                <option value="3">3 / 5 - Moderate (Steady Pace)</option>
+                <option value="2">2 / 5 - Low Energy (Fatigued)</option>
+                <option value="1">1 / 5 - Struggled (Tough Day)</option>
               </select>
             </div>
           </div>
@@ -566,35 +643,35 @@
             </div>
 
             <div class="table-responsive">
-              <table class="table table-bordered mb-0" id="exerciseInputsTable" style="border-radius: 8px; overflow: hidden;">
-                <thead class="bg-light">
-                  <tr style="font-size: 0.75rem; color: #475569;">
-                    <th style="width: 35%;">Exercise Name</th>
-                    <th style="width: 15%;">Sets</th>
-                    <th style="width: 15%;">Reps</th>
-                    <th style="width: 15%;">Weight (kg)</th>
-                    <th style="width: 15%;">Notes</th>
+              <table class="table table-bordered mb-0" id="exerciseInputsTable" style="border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0;">
+                <thead style="background: #f8fafc;">
+                  <tr style="font-size: 0.74rem; color: #475569; letter-spacing: 0.03em;">
+                    <th style="width: 35%;"><i class="fas fa-dumbbell text-muted mr-1"></i> EXERCISE NAME</th>
+                    <th style="width: 15%;"><i class="fas fa-layer-group text-muted mr-1"></i> SETS</th>
+                    <th style="width: 15%;"><i class="fas fa-redo-alt text-muted mr-1"></i> REPS</th>
+                    <th style="width: 15%;"><i class="fas fa-weight-hanging text-muted mr-1"></i> WEIGHT (KG)</th>
+                    <th style="width: 15%;"><i class="far fa-sticky-note text-muted mr-1"></i> NOTES</th>
                     <th style="width: 5%; text-align: center;"></th>
                   </tr>
                 </thead>
                 <tbody id="exerciseRowsContainer">
                   <!-- Row 1 -->
                   <tr>
-                    <td><input type="text" name="exercise_name[]" class="form-control form-control-sm" placeholder="e.g. Barbell Bench Press" required></td>
-                    <td><input type="number" name="sets[]" class="form-control form-control-sm" value="3" min="1" max="20"></td>
-                    <td><input type="text" name="reps[]" class="form-control form-control-sm" value="10-12" placeholder="e.g. 10"></td>
-                    <td><input type="number" step="0.5" name="weight[]" class="form-control form-control-sm" value="0.0" placeholder="0.0"></td>
-                    <td><input type="text" name="exercise_notes[]" class="form-control form-control-sm" placeholder="e.g. Good form"></td>
-                    <td class="text-center"><button type="button" class="btn btn-sm text-danger p-0" onclick="removeExerciseRow(this)"><i class="fas fa-times"></i></button></td>
+                    <td><input type="text" name="exercise_name[]" class="form-control form-control-sm rounded" placeholder="e.g. Barbell Bench Press" required></td>
+                    <td><input type="number" name="sets[]" class="form-control form-control-sm rounded" value="3" min="1" max="20"></td>
+                    <td><input type="text" name="reps[]" class="form-control form-control-sm rounded" value="10-12" placeholder="e.g. 10"></td>
+                    <td><input type="number" step="0.5" name="weight[]" class="form-control form-control-sm rounded" value="0.0" placeholder="0.0"></td>
+                    <td><input type="text" name="exercise_notes[]" class="form-control form-control-sm rounded" placeholder="e.g. Good form"></td>
+                    <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger rounded-circle p-0 d-inline-flex align-items-center justify-content-center" style="width: 28px; height: 28px;" onclick="removeExerciseRow(this)" title="Remove Exercise"><i class="fas fa-trash-alt" style="font-size: 0.75rem;"></i></button></td>
                   </tr>
                   <!-- Row 2 -->
                   <tr>
-                    <td><input type="text" name="exercise_name[]" class="form-control form-control-sm" placeholder="e.g. Incline Dumbbell Press"></td>
-                    <td><input type="number" name="sets[]" class="form-control form-control-sm" value="3" min="1" max="20"></td>
-                    <td><input type="text" name="reps[]" class="form-control form-control-sm" value="10-12" placeholder="e.g. 12"></td>
-                    <td><input type="number" step="0.5" name="weight[]" class="form-control form-control-sm" value="0.0" placeholder="0.0"></td>
-                    <td><input type="text" name="exercise_notes[]" class="form-control form-control-sm" placeholder="e.g. Felt strong"></td>
-                    <td class="text-center"><button type="button" class="btn btn-sm text-danger p-0" onclick="removeExerciseRow(this)"><i class="fas fa-times"></i></button></td>
+                    <td><input type="text" name="exercise_name[]" class="form-control form-control-sm rounded" placeholder="e.g. Incline Dumbbell Press"></td>
+                    <td><input type="number" name="sets[]" class="form-control form-control-sm rounded" value="3" min="1" max="20"></td>
+                    <td><input type="text" name="reps[]" class="form-control form-control-sm rounded" value="10-12" placeholder="e.g. 12"></td>
+                    <td><input type="number" step="0.5" name="weight[]" class="form-control form-control-sm rounded" value="0.0" placeholder="0.0"></td>
+                    <td><input type="text" name="exercise_notes[]" class="form-control form-control-sm rounded" placeholder="e.g. Felt strong"></td>
+                    <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger rounded-circle p-0 d-inline-flex align-items-center justify-content-center" style="width: 28px; height: 28px;" onclick="removeExerciseRow(this)" title="Remove Exercise"><i class="fas fa-trash-alt" style="font-size: 0.75rem;"></i></button></td>
                   </tr>
                 </tbody>
               </table>
@@ -603,14 +680,14 @@
 
           <!-- General Reflection Notes -->
           <div class="form-group mb-0">
-            <label class="font-weight-bold text-dark small mb-1">Session Reflections & PR Notes (Optional)</label>
+            <label class="font-weight-bold text-dark small mb-1"><i class="far fa-comment-dots text-primary mr-1"></i> Session Reflections & PR Notes (Optional)</label>
             <textarea name="notes" class="form-control" rows="2" placeholder="Hit a new PR today! Felt great on bench press..." style="border-radius: 10px;"></textarea>
           </div>
         </div>
 
         <div class="modal-footer bg-light py-3 px-4 border-top">
-          <button type="button" class="btn btn-secondary font-weight-bold rounded-pill px-4" data-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-warning font-weight-bold px-4 rounded-pill shadow-sm">
+          <button type="button" class="btn btn-outline-secondary font-weight-bold rounded-pill px-4" data-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary font-weight-bold px-4 rounded-pill shadow-sm">
             <i class="fas fa-check-circle mr-1"></i> Save Workout Session
           </button>
         </div>
@@ -625,11 +702,17 @@
 <div class="modal fade" id="logMetricsModal" tabindex="-1" role="dialog" aria-labelledby="logMetricsModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" role="document" style="max-width: 520px;">
     <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
-      <div class="modal-header py-3 px-4" style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: #ffffff;">
-        <h5 class="modal-title font-weight-bold text-white d-flex align-items-center mb-0" id="logMetricsModalLabel">
-          <i class="fas fa-weight-scale mr-2 text-warning"></i> Record Body Measurements
-        </h5>
-        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" style="opacity: 0.9;">
+      <div class="modal-header py-3 px-4 d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: #ffffff;">
+        <div class="d-flex align-items-center">
+          <div class="d-inline-flex align-items-center justify-content-center mr-2.5 rounded-circle" style="width: 36px; height: 36px; background: rgba(255, 255, 255, 0.18);">
+            <i class="fas fa-weight-scale text-white" style="font-size: 1rem;"></i>
+          </div>
+          <div>
+            <h5 class="modal-title font-weight-bold text-white mb-0" id="logMetricsModalLabel">Record Body Measurements</h5>
+            <small class="text-white-50" style="font-size: 0.75rem;">Track weight changes and tape measurements</small>
+          </div>
+        </div>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" style="opacity: 0.9; text-shadow: none;">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
@@ -641,7 +724,7 @@
 
           <div class="row">
             <div class="col-6 mb-3">
-              <label class="font-weight-bold text-dark small">Body Weight (kg) <span class="text-danger">*</span></label>
+              <label class="font-weight-bold text-dark small"><i class="fas fa-weight-scale text-primary mr-1"></i> Body Weight (kg) <span class="text-danger">*</span></label>
               <div class="input-group">
                 <input type="number" step="0.1" name="weight_kg" class="form-control" placeholder="e.g. 72.5" required style="border-top-left-radius: 20px; border-bottom-left-radius: 20px;">
                 <div class="input-group-append">
@@ -650,47 +733,47 @@
               </div>
             </div>
             <div class="col-6 mb-3">
-              <label class="font-weight-bold text-dark small">Date <span class="text-danger">*</span></label>
+              <label class="font-weight-bold text-dark small"><i class="far fa-calendar-alt text-primary mr-1"></i> Date <span class="text-danger">*</span></label>
               <input type="date" name="date" class="form-control rounded-pill" value="{{ today|date:'Y-m-d' }}" required>
             </div>
           </div>
 
           <div class="row">
             <div class="col-6 mb-3">
-              <label class="font-weight-bold text-dark small">Body Fat % (Optional)</label>
+              <label class="font-weight-bold text-dark small"><i class="fas fa-percentage text-primary mr-1"></i> Body Fat % (Optional)</label>
               <input type="number" step="0.1" name="body_fat_percentage" class="form-control rounded-pill" placeholder="e.g. 16.5">
             </div>
             <div class="col-6 mb-3">
-              <label class="font-weight-bold text-dark small">Chest (Inches)</label>
+              <label class="font-weight-bold text-dark small"><i class="fas fa-ruler-horizontal text-primary mr-1"></i> Chest (Inches)</label>
               <input type="number" step="0.25" name="chest_inches" class="form-control rounded-pill" placeholder="e.g. 38.5">
             </div>
           </div>
 
           <div class="row">
             <div class="col-6 mb-3">
-              <label class="font-weight-bold text-dark small">Waist (Inches)</label>
+              <label class="font-weight-bold text-dark small"><i class="fas fa-ruler-horizontal text-primary mr-1"></i> Waist (Inches)</label>
               <input type="number" step="0.25" name="waist_inches" class="form-control rounded-pill" placeholder="e.g. 32.0">
             </div>
             <div class="col-6 mb-3">
-              <label class="font-weight-bold text-dark small">Arms / Biceps (Inches)</label>
+              <label class="font-weight-bold text-dark small"><i class="fas fa-ruler-horizontal text-primary mr-1"></i> Arms / Biceps (Inches)</label>
               <input type="number" step="0.25" name="biceps_inches" class="form-control rounded-pill" placeholder="e.g. 14.5">
             </div>
           </div>
 
           <div class="row">
             <div class="col-6 mb-3">
-              <label class="font-weight-bold text-dark small">Thighs (Inches)</label>
+              <label class="font-weight-bold text-dark small"><i class="fas fa-ruler-horizontal text-primary mr-1"></i> Thighs (Inches)</label>
               <input type="number" step="0.25" name="thighs_inches" class="form-control rounded-pill" placeholder="e.g. 22.0">
             </div>
             <div class="col-6 mb-3">
-              <label class="font-weight-bold text-dark small">Notes / Observations</label>
+              <label class="font-weight-bold text-dark small"><i class="far fa-sticky-note text-primary mr-1"></i> Notes / Observations</label>
               <input type="text" name="notes" class="form-control rounded-pill" placeholder="e.g. Morning fasting measurement">
             </div>
           </div>
         </div>
 
         <div class="modal-footer bg-light py-3 px-4 border-top">
-          <button type="button" class="btn btn-secondary font-weight-bold rounded-pill px-4" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-outline-secondary font-weight-bold rounded-pill px-4" data-dismiss="modal">Cancel</button>
           <button type="submit" class="btn btn-primary font-weight-bold px-4 rounded-pill shadow-sm">
             <i class="fas fa-check-circle mr-1"></i> Save Measurement
           </button>
@@ -706,11 +789,17 @@
 <div class="modal fade" id="setGoalModal" tabindex="-1" role="dialog" aria-labelledby="setGoalModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" role="document" style="max-width: 520px;">
     <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
-      <div class="modal-header py-3 px-4" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff;">
-        <h5 class="modal-title font-weight-bold text-white d-flex align-items-center mb-0" id="setGoalModalLabel">
-          <i class="fas fa-bullseye mr-2 text-warning"></i> Set Your Fitness Target Goal
-        </h5>
-        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" style="opacity: 0.9;">
+      <div class="modal-header py-3 px-4 d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: #ffffff;">
+        <div class="d-flex align-items-center">
+          <div class="d-inline-flex align-items-center justify-content-center mr-2.5 rounded-circle" style="width: 36px; height: 36px; background: rgba(255, 255, 255, 0.18);">
+            <i class="fas fa-bullseye text-white" style="font-size: 1rem;"></i>
+          </div>
+          <div>
+            <h5 class="modal-title font-weight-bold text-white mb-0" id="setGoalModalLabel">Set Your Fitness Target Goal</h5>
+            <small class="text-white-50" style="font-size: 0.75rem;">Set your target weight and timeline for live chase analysis</small>
+          </div>
+        </div>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" style="opacity: 0.9; text-shadow: none;">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
@@ -721,7 +810,7 @@
           <p class="text-muted small mb-3">Set your baseline and finish line to track your head-to-head Growth vs Needed Growth.</p>
 
           <div class="form-group mb-3">
-            <label class="font-weight-bold text-dark small">Primary Goal Type <span class="text-danger">*</span></label>
+            <label class="font-weight-bold text-dark small"><i class="fas fa-crosshairs text-primary mr-1"></i> Primary Goal Type <span class="text-danger">*</span></label>
             <select name="goal_type" class="form-control rounded-pill">
               <option value="weight_loss" {% if fitness_goal and fitness_goal.goal_type == 'weight_loss' %}selected{% endif %}>Weight Loss & Fat Reduction</option>
               <option value="muscle_gain" {% if fitness_goal and fitness_goal.goal_type == 'muscle_gain' %}selected{% endif %}>Muscle Building & Bulking</option>
@@ -733,22 +822,22 @@
 
           <div class="row">
             <div class="col-6 mb-3">
-              <label class="font-weight-bold text-dark small">Starting Weight (kg) <span class="text-danger">*</span></label>
+              <label class="font-weight-bold text-dark small"><i class="fas fa-play text-primary mr-1"></i> Starting Weight (kg) <span class="text-danger">*</span></label>
               <input type="number" step="0.1" name="starting_weight_kg" class="form-control rounded-pill" value="{{ fitness_goal.starting_weight_kg|default:latest_metric.weight_kg|default:'75.0' }}" required>
             </div>
             <div class="col-6 mb-3">
-              <label class="font-weight-bold text-dark small">Target Goal Weight (kg) <span class="text-danger">*</span></label>
+              <label class="font-weight-bold text-dark small"><i class="fas fa-flag-checkered text-warning mr-1"></i> Target Goal Weight (kg) <span class="text-danger">*</span></label>
               <input type="number" step="0.1" name="target_weight_kg" class="form-control rounded-pill" value="{{ fitness_goal.target_weight_kg|default:'68.0' }}" required>
             </div>
           </div>
 
           <div class="row">
             <div class="col-6 mb-3">
-              <label class="font-weight-bold text-dark small">Target Body Fat % (Optional)</label>
+              <label class="font-weight-bold text-dark small"><i class="fas fa-percentage text-primary mr-1"></i> Target Body Fat % (Optional)</label>
               <input type="number" step="0.1" name="target_body_fat" class="form-control rounded-pill" placeholder="e.g. 15.0" value="{{ fitness_goal.target_body_fat|default:'' }}">
             </div>
             <div class="col-6 mb-3">
-              <label class="font-weight-bold text-dark small">Target Workouts / Wk</label>
+              <label class="font-weight-bold text-dark small"><i class="fas fa-dumbbell text-primary mr-1"></i> Target Workouts / Wk</label>
               <select name="target_weekly_workouts" class="form-control rounded-pill">
                 <option value="3" {% if fitness_goal and fitness_goal.target_weekly_workouts == 3 %}selected{% endif %}>3 Days / Week</option>
                 <option value="4" {% if not fitness_goal or fitness_goal.target_weekly_workouts == 4 %}selected{% endif %}>4 Days / Week</option>
@@ -759,20 +848,20 @@
           </div>
 
           <div class="form-group mb-3">
-            <label class="font-weight-bold text-dark small">Target Deadline Date (Target Overs)</label>
+            <label class="font-weight-bold text-dark small"><i class="far fa-calendar-check text-primary mr-1"></i> Target Deadline Date</label>
             <input type="date" name="target_date" class="form-control rounded-pill" value="{{ fitness_goal.target_date|date:'Y-m-d'|default:'' }}">
-            <small class="text-muted">Setting a target date enables Required Run Rate (RRR kg/week) calculation.</small>
+            <small class="text-muted">Setting a target date enables Required Rate (RRR kg/week) calculation.</small>
           </div>
 
           <div class="form-group mb-0">
-            <label class="font-weight-bold text-dark small">Personal Mantra / Motivation (Optional)</label>
-            <input type="text" name="motivation_notes" class="form-control rounded-pill" placeholder="e.g. Lose 6kg before Goa trip, get lean!" value="{{ fitness_goal.motivation_notes|default:'' }}">
+            <label class="font-weight-bold text-dark small"><i class="far fa-lightbulb text-warning mr-1"></i> Personal Mantra / Motivation (Optional)</label>
+            <input type="text" name="motivation_notes" class="form-control rounded-pill" placeholder="e.g. Stay consistent and build core strength" value="{{ fitness_goal.motivation_notes|default:'' }}">
           </div>
         </div>
 
         <div class="modal-footer bg-light py-3 px-4 border-top">
-          <button type="button" class="btn btn-secondary font-weight-bold rounded-pill px-4" data-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-warning font-weight-bold px-4 rounded-pill shadow-sm">
+          <button type="button" class="btn btn-outline-secondary font-weight-bold rounded-pill px-4" data-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary font-weight-bold px-4 rounded-pill shadow-sm">
             <i class="fas fa-check-circle mr-1"></i> Lock In Target
           </button>
         </div>
@@ -787,12 +876,12 @@ function addExerciseRow() {
   const container = document.getElementById('exerciseRowsContainer');
   const tr = document.createElement('tr');
   tr.innerHTML = `
-    <td><input type="text" name="exercise_name[]" class="form-control form-control-sm" placeholder="Exercise name..." required></td>
-    <td><input type="number" name="sets[]" class="form-control form-control-sm" value="3" min="1" max="20"></td>
-    <td><input type="text" name="reps[]" class="form-control form-control-sm" value="10-12"></td>
-    <td><input type="number" step="0.5" name="weight[]" class="form-control form-control-sm" value="0.0"></td>
-    <td><input type="text" name="exercise_notes[]" class="form-control form-control-sm" placeholder="Notes..."></td>
-    <td class="text-center"><button type="button" class="btn btn-sm text-danger p-0" onclick="removeExerciseRow(this)"><i class="fas fa-times"></i></button></td>
+    <td><input type="text" name="exercise_name[]" class="form-control form-control-sm rounded" placeholder="Exercise name..." required></td>
+    <td><input type="number" name="sets[]" class="form-control form-control-sm rounded" value="3" min="1" max="20"></td>
+    <td><input type="text" name="reps[]" class="form-control form-control-sm rounded" value="10-12"></td>
+    <td><input type="number" step="0.5" name="weight[]" class="form-control form-control-sm rounded" value="0.0"></td>
+    <td><input type="text" name="exercise_notes[]" class="form-control form-control-sm rounded" placeholder="Notes..."></td>
+    <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger rounded-circle p-0 d-inline-flex align-items-center justify-content-center" style="width: 28px; height: 28px;" onclick="removeExerciseRow(this)" title="Remove Exercise"><i class="fas fa-trash-alt" style="font-size: 0.75rem;"></i></button></td>
   `;
   container.appendChild(tr);
 }

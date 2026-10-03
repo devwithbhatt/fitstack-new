@@ -626,7 +626,7 @@ def member_progress_view(request):
         moving_towards_target = (total_target_delta < 0 and current_growth_delta < 0) or (total_target_delta > 0 and current_growth_delta > 0)
 
         if is_goal_met:
-            status_label = "Target Achieved! 🏆"
+            status_label = "Target Achieved"
             status_badge_class = "badge-soft-success"
             pace_analysis = "Match Won! You have successfully reached your fitness target!"
             pace_icon = "fa-trophy text-warning"
@@ -636,22 +636,22 @@ def member_progress_view(request):
             pace_analysis = "Target deadline concluded. Review your milestones and set your next challenge!"
             pace_icon = "fa-flag-checkered text-primary"
         elif moving_towards_target and required_pace and current_pace >= required_pace:
-            status_label = "Ahead of Required Rate 🟢"
+            status_label = "Ahead of Required Rate"
             status_badge_class = "badge-soft-success"
             pace_analysis = f"Cruising! Current rate ({current_pace} kg/wk) is matching required rate ({required_pace} kg/wk)."
             pace_icon = "fa-bolt text-success"
         elif moving_towards_target and required_pace:
-            status_label = "Acceleration Required ⚠️"
+            status_label = "Acceleration Required"
             status_badge_class = "badge-soft-warning"
             pace_analysis = f"Need to accelerate! Target requires {required_pace} kg/wk vs current {current_pace} kg/wk."
             pace_icon = "fa-chart-line text-warning"
         elif moving_towards_target:
-            status_label = "Chasing Target 🎯"
+            status_label = "Chasing Target"
             status_badge_class = "badge-soft-primary"
             pace_analysis = f"Steady progress towards your {target_w} kg target."
             pace_icon = "fa-crosshairs text-primary"
         else:
-            status_label = "Recalibration Needed ⚠️"
+            status_label = "Recalibration Needed"
             status_badge_class = "badge-soft-danger"
             pace_analysis = f"Currently +{abs(current_growth_delta)} kg above baseline. Adjust diet & workouts to chase down the {abs(needed_growth_delta)} kg gap!"
             pace_icon = "fa-compass text-danger"
@@ -761,7 +761,7 @@ def member_set_goal_action(request):
         }
     )
 
-    messages.success(request, f"Fitness Goal locked in! Target: {target_w} kg. Game on! 🎯🏏")
+    messages.success(request, f"Fitness Goal locked in! Target: {target_w} kg.")
     return redirect('member_portal:progress')
 
 
@@ -838,7 +838,7 @@ def member_log_workout_action(request):
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({'status': 'success', 'message': 'Workout logged successfully!'})
 
-    messages.success(request, f"Awesome job! Workout '{title}' logged successfully. Keep up the streak! 🔥")
+    messages.success(request, f"Workout '{title}' logged successfully.")
     return redirect('member_portal:progress')
 
 
