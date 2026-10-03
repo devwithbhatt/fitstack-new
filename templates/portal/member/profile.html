@@ -21,10 +21,7 @@
   width: 385px;
   max-width: 100%;
   box-sizing: border-box;
-  background: 
-    radial-gradient(circle at 88% 12%, rgba(212, 175, 55, 0.16) 0%, transparent 45%),
-    radial-gradient(circle at 12% 88%, rgba(59, 130, 246, 0.12) 0%, transparent 45%),
-    linear-gradient(155deg, #0d1424 0%, #070b14 45%, #020408 100%);
+  background: linear-gradient(160deg, #111726 0%, #080d18 50%, #020408 100%);
   border: 2px solid #d4af37;
   border-radius: 26px;
   position: relative;
@@ -34,7 +31,6 @@
   print-color-adjust: exact !important;
   box-shadow: 
     inset 0 0 0 1px rgba(254, 240, 138, 0.45),
-    inset 0 2px 25px rgba(212, 175, 55, 0.12),
     0 24px 60px -10px rgba(0, 0, 0, 0.95),
     0 0 30px rgba(212, 175, 55, 0.22);
   padding: 22px 20px 18px 20px;
@@ -45,43 +41,8 @@
 .ultra-smart-pass:hover {
   box-shadow: 
     inset 0 0 0 1.2px rgba(254, 240, 138, 0.6),
-    inset 0 2px 30px rgba(212, 175, 55, 0.18),
     0 32px 70px -12px rgba(0, 0, 0, 0.98),
     0 0 40px rgba(212, 175, 55, 0.35);
-}
-
-/* Luxury Security Guilloché Pattern Background */
-.pass-guilloche-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0.06;
-  background-image: 
-    radial-gradient(#d4af37 1px, transparent 1px),
-    radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.25) 0%, transparent 65%);
-  background-size: 20px 20px, 100% 100%;
-  background-position: 0 0, 0 0;
-  pointer-events: none;
-}
-
-/* Prismatic Holographic Sheen Layer */
-.pass-hologram-sheen {
-  position: absolute;
-  top: -60%;
-  left: -60%;
-  width: 220%;
-  height: 220%;
-  background: linear-gradient(135deg, 
-    rgba(255, 255, 255, 0) 0%, 
-    rgba(212, 175, 55, 0.05) 25%, 
-    rgba(255, 255, 255, 0.14) 48%, 
-    rgba(96, 165, 250, 0.08) 52%, 
-    rgba(255, 255, 255, 0) 70%
-  );
-  transform: rotate(-15deg);
-  pointer-events: none;
 }
 
 /* Ultra VIP Ribbon Badge */
@@ -454,14 +415,6 @@
 
             <!-- OFFICIAL DIGITAL ID CARD ELEMENT (CANVAS/MOBILE EXPORT TARGET) -->
             <div id="officialMemberIdCard" class="ultra-smart-pass mx-auto text-left shadow-2xl">
-
-              <!-- Security Guilloché Geometric Watermark -->
-              <div class="pass-guilloche-bg"></div>
-
-              <!-- Holographic Light Sheen & Specular Ambience -->
-              <div class="pass-hologram-sheen"></div>
-              <div style="position: absolute; top: -65px; right: -65px; width: 190px; height: 190px; background: radial-gradient(circle, rgba(212, 175, 55, 0.28) 0%, transparent 70%); pointer-events: none;"></div>
-              <div style="position: absolute; bottom: -65px; left: -65px; width: 190px; height: 190px; background: radial-gradient(circle, rgba(59, 130, 246, 0.18) 0%, transparent 70%); pointer-events: none;"></div>
 
               <!-- SECTION 1: GYM BRAND HEADER & GOLD EMV SMART CHIP -->
               <div class="d-flex justify-content-between align-items-center mb-3" style="gap: 8px;">
@@ -992,7 +945,7 @@ function downloadIdCardAsImage() {
 
   card.style.transform = 'none';
   card.style.transition = 'none';
-  card.style.boxShadow = 'inset 0 0 0 1px rgba(254, 240, 138, 0.45)';
+  card.style.boxShadow = 'none';
 
   html2canvas(card, {
     scale: 3,                // 3x Super-Sampling for Retina Ultra-HD
