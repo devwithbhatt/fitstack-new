@@ -562,25 +562,27 @@
 <!-- MODALS -->
 <!-- ============================================================================== -->
 
-<!-- 1. Modal: Inspect Archive Contents -->
-<div class="modal fade" id="inspectModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 14px;">
-            <div class="modal-header bg-primary text-white" style="border-top-left-radius: 14px; border-top-right-radius: 14px;">
-                <h5 class="modal-title font-weight-bold">
-                    <i class="fas fa-search mr-2"></i> Backup Archive Inspection Report
-                </h5>
-                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+<!-- 1. Modal: Inspect Archive Contents (Compact & Responsive) -->
+<div class="modal fade" id="inspectModal" tabindex="-1" role="dialog" aria-labelledby="inspectModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 520px;" role="document">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+            <div class="modal-header py-2.5 px-3.5" style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: #ffffff; border-bottom: none;">
+                <h6 class="modal-title font-weight-bold text-white d-flex align-items-center mb-0" id="inspectModalLabel" style="font-size: 0.95rem;">
+                    <i class="fas fa-search mr-2 text-warning"></i> Backup Inspection Report
+                </h6>
+                <button type="button" class="close text-white" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close" onclick="closeInspectModal()" style="opacity: 0.9; font-size: 1.4rem; background: transparent; border: none; line-height: 1; padding: 0.2rem 0.4rem; transition: opacity 0.2s;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
-            <div class="modal-body p-4" id="inspectModalBody">
+            <div class="modal-body p-3.5" id="inspectModalBody">
                 <div class="text-center py-4">
-                    <div class="spinner-border text-primary" role="status"></div>
-                    <p class="mt-2 text-muted">Analyzing archive manifest and records structure...</p>
+                    <div class="spinner-border text-primary" role="status" style="width: 2rem; height: 2rem;"></div>
+                    <p class="mt-2 text-muted small mb-0">Analyzing archive manifest and records structure...</p>
                 </div>
             </div>
-            <div class="modal-footer bg-light" style="border-bottom-left-radius: 14px; border-bottom-right-radius: 14px;">
-                <button type="button" class="btn btn-secondary font-weight-bold btn-sm" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-warning text-dark font-weight-bold btn-sm d-none" id="btnModalTriggerRestore" onclick="openRestoreFromInspection()">
+            <div class="modal-footer py-2 px-3 bg-light border-top" style="justify-content: flex-end; gap: 6px;">
+                <button type="button" class="btn btn-secondary font-weight-bold btn-sm px-3 rounded-pill" data-bs-dismiss="modal" data-dismiss="modal" onclick="closeInspectModal()">Close</button>
+                <button type="button" class="btn btn-warning text-dark font-weight-bold btn-sm px-3 rounded-pill d-none" id="btnModalTriggerRestore" onclick="openRestoreFromInspection()">
                     <i class="fas fa-undo-alt mr-1"></i> Proceed to Restore
                 </button>
             </div>
@@ -588,42 +590,44 @@
     </div>
 </div>
 
-<!-- 2. Modal: Safety Restore Confirmation Dialog -->
-<div class="modal fade" id="restoreConfirmModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 14px;">
-            <div class="modal-header bg-danger text-white" style="border-top-left-radius: 14px; border-top-right-radius: 14px;">
-                <h5 class="modal-title font-weight-bold">
+<!-- 2. Modal: Safety Restore Confirmation Dialog (Compact) -->
+<div class="modal fade" id="restoreConfirmModal" tabindex="-1" role="dialog" aria-labelledby="restoreConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 520px;" role="document">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+            <div class="modal-header py-2.5 px-3.5 bg-danger text-white" style="border-bottom: none;">
+                <h6 class="modal-title font-weight-bold text-white d-flex align-items-center mb-0" id="restoreConfirmModalLabel" style="font-size: 0.95rem;">
                     <i class="fas fa-exclamation-triangle mr-2"></i> Confirm Disaster Recovery Restore
-                </h5>
-                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                </h6>
+                <button type="button" class="close text-white" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close" onclick="closeRestoreModal()" style="opacity: 0.9; font-size: 1.4rem; background: transparent; border: none; line-height: 1; padding: 0.2rem 0.4rem;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <form method="POST" action="{% url 'superadmin:restore_backup' %}" enctype="multipart/form-data" id="restoreForm">
                 {% csrf_token %}
                 <input type="hidden" name="backup_id" id="restore_backup_id_input">
                 <input type="file" name="backup_file" id="restore_backup_file_input" style="display: none;">
 
-                <div class="modal-body p-4">
-                    <div class="alert alert-warning border-0 small mb-3">
+                <div class="modal-body p-3.5">
+                    <div class="alert alert-warning border-0 small mb-3 p-2.5" style="border-radius: 10px;">
                         <i class="fas fa-info-circle mr-1 font-weight-bold"></i>
-                        <strong>Crucial Safety Notice:</strong> Restoring will import database records and extract media assets into production. An automated safety backup of the current database will be created first.
+                        <strong>Notice:</strong> Restoring will import database records and media assets into production. An automated safety backup of current data will be created first.
                     </div>
 
-                    <div class="p-3 bg-light rounded border mb-3">
-                        <div class="small text-muted font-weight-bold text-uppercase">Target Archive</div>
-                        <div class="font-weight-bold text-dark" id="restoreTargetFilename">---</div>
+                    <div class="p-2.5 bg-light rounded border mb-3">
+                        <div class="small text-muted font-weight-bold text-uppercase" style="font-size: 0.72rem;">Target Archive</div>
+                        <div class="font-weight-bold text-dark text-truncate" id="restoreTargetFilename" style="font-size: 0.88rem;">---</div>
                     </div>
 
                     <div class="form-group mb-0">
-                        <label class="font-weight-bold text-danger">To confirm, type <span class="badge badge-danger">RESTORE</span> below:</label>
+                        <label class="font-weight-bold text-danger small mb-1">To confirm, type <span class="badge badge-danger">RESTORE</span> below:</label>
                         <input type="text" name="confirm_text" id="confirmRestoreTextInput" class="form-control safety-code-input" placeholder="RESTORE" autocomplete="off" oninput="validateRestoreCode(this)">
-                        <small class="text-muted">Type RESTORE exactly to unlock the execution button.</small>
+                        <small class="text-muted" style="font-size: 0.75rem;">Type RESTORE exactly to unlock the execution button.</small>
                     </div>
                 </div>
 
-                <div class="modal-footer bg-light" style="border-bottom-left-radius: 14px; border-bottom-right-radius: 14px;">
-                    <button type="button" class="btn btn-secondary btn-sm font-weight-bold" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger btn-sm font-weight-bold" id="btnExecuteRestore" disabled>
+                <div class="modal-footer py-2 px-3 bg-light border-top" style="justify-content: flex-end; gap: 6px;">
+                    <button type="button" class="btn btn-secondary btn-sm font-weight-bold px-3 rounded-pill" data-bs-dismiss="modal" data-dismiss="modal" onclick="closeRestoreModal()">Cancel</button>
+                    <button type="submit" class="btn btn-danger btn-sm font-weight-bold px-3 rounded-pill" id="btnExecuteRestore" disabled>
                         <i class="fas fa-undo-alt mr-1"></i> Start Restoration
                     </button>
                 </div>
@@ -686,6 +690,52 @@
         }
     }
 
+    function showModal(modalId) {
+        const el = document.getElementById(modalId);
+        if (!el) return;
+        if (window.bootstrap && bootstrap.Modal) {
+            let inst = bootstrap.Modal.getInstance(el);
+            if (!inst) inst = new bootstrap.Modal(el);
+            inst.show();
+            return;
+        }
+        if (window.$ && $.fn && $.fn.modal) {
+            $(el).modal('show');
+            return;
+        }
+        el.classList.add('show');
+        el.style.display = 'block';
+        document.body.classList.add('modal-open');
+    }
+
+    function hideModal(modalId) {
+        const el = document.getElementById(modalId);
+        if (!el) return;
+        if (window.bootstrap && bootstrap.Modal) {
+            let inst = bootstrap.Modal.getInstance(el);
+            if (inst) {
+                inst.hide();
+            }
+        }
+        if (window.$ && $.fn && $.fn.modal) {
+            $(el).modal('hide');
+        }
+        el.classList.remove('show');
+        el.style.display = 'none';
+        document.body.classList.remove('modal-open');
+        document.body.style.removeProperty('padding-right');
+        document.body.style.removeProperty('overflow');
+        document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+    }
+
+    function closeInspectModal() {
+        hideModal('inspectModal');
+    }
+
+    function closeRestoreModal() {
+        hideModal('restoreConfirmModal');
+    }
+
     function inspectUploadedFile() {
         const input = document.getElementById('uploadBackupFileInput');
         if (!input.files || !input.files[0]) return;
@@ -695,11 +745,11 @@
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
         formData.append('backup_file', file);
 
-        $('#inspectModal').modal('show');
+        showModal('inspectModal');
         document.getElementById('inspectModalBody').innerHTML = `
             <div class="text-center py-4">
-                <div class="spinner-border text-primary" role="status"></div>
-                <p class="mt-2 text-muted">Inspecting uploaded archive '${file.name}'...</p>
+                <div class="spinner-border text-primary" role="status" style="width: 2rem; height: 2rem;"></div>
+                <p class="mt-2 text-muted small mb-0">Inspecting uploaded archive '${file.name}'...</p>
             </div>
         `;
         document.getElementById('btnModalTriggerRestore').classList.add('d-none');
@@ -716,7 +766,7 @@
         })
         .catch(err => {
             document.getElementById('inspectModalBody').innerHTML = `
-                <div class="alert alert-danger mb-0">
+                <div class="alert alert-danger mb-0 small">
                     <i class="fas fa-exclamation-circle mr-1"></i> Failed to inspect archive: Network or parsing error.
                 </div>
             `;
@@ -724,11 +774,11 @@
     }
 
     function inspectStoredBackup(backupId) {
-        $('#inspectModal').modal('show');
+        showModal('inspectModal');
         document.getElementById('inspectModalBody').innerHTML = `
             <div class="text-center py-4">
-                <div class="spinner-border text-primary" role="status"></div>
-                <p class="mt-2 text-muted">Reading stored archive manifest...</p>
+                <div class="spinner-border text-primary" role="status" style="width: 2rem; height: 2rem;"></div>
+                <p class="mt-2 text-muted small mb-0">Reading stored archive manifest...</p>
             </div>
         `;
         document.getElementById('btnModalTriggerRestore').classList.add('d-none');
@@ -743,7 +793,7 @@
         })
         .catch(err => {
             document.getElementById('inspectModalBody').innerHTML = `
-                <div class="alert alert-danger mb-0">
+                <div class="alert alert-danger mb-0 small">
                     <i class="fas fa-exclamation-circle mr-1"></i> Failed to inspect archive: File unreadable.
                 </div>
             `;
@@ -754,7 +804,7 @@
         if (!data.is_valid) {
             document.getElementById('inspectModalBody').innerHTML = `
                 <div class="alert alert-danger mb-0">
-                    <h6 class="font-weight-bold"><i class="fas fa-exclamation-circle mr-1"></i> Invalid Archive File</h6>
+                    <h6 class="font-weight-bold mb-1"><i class="fas fa-exclamation-circle mr-1"></i> Invalid Archive File</h6>
                     <p class="mb-0 small">${data.error || 'The file structure is not recognized as a valid backup.'}</p>
                 </div>
             `;
@@ -765,7 +815,7 @@
         if (data.record_counts && Object.keys(data.record_counts).length > 0) {
             for (const [model, count] of Object.entries(data.record_counts)) {
                 if (count > 0) {
-                    recordBadgesHtml += `<span class="badge badge-light border mr-2 mb-2 p-2" style="font-size: 0.78rem;"><strong>${model.replace('_', ' ')}:</strong> ${count}</span>`;
+                    recordBadgesHtml += `<span class="badge badge-light border mr-1.5 mb-1.5 p-1.5" style="font-size: 0.74rem;"><strong>${model.replace('_', ' ')}:</strong> ${count}</span>`;
                 }
             }
         }
@@ -773,30 +823,44 @@
         let scopeLabel = 'Full Platform Archive';
         let scopeBadgeClass = 'badge-primary';
         if (data.backup_type === 'gym') {
-            scopeLabel = `Tenant: ${data.gym_name} (${data.gym_id})`;
+            scopeLabel = `Tenant: ${data.gym_name || 'Gym'}`;
             scopeBadgeClass = 'badge-info';
         } else if (data.backup_type === 'media') {
-            scopeLabel = 'Media Assets Archive';
+            scopeLabel = 'Media Archive';
             scopeBadgeClass = 'badge-warning text-dark';
         }
 
+        let formattedDate = data.created_at || 'N/A';
+        if (data.created_at && data.created_at.includes('T')) {
+            try {
+                const parsed = new Date(data.created_at);
+                if (!isNaN(parsed.getTime())) {
+                    formattedDate = parsed.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                }
+            } catch (e) {}
+        }
+
         document.getElementById('inspectModalBody').innerHTML = `
-            <div class="p-3 bg-light rounded border mb-3">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h6 class="font-weight-bold text-dark mb-0">${filename}</h6>
-                    <span class="badge ${scopeBadgeClass} font-weight-bold px-2 py-1">${scopeLabel}</span>
+            <div class="p-3 bg-light rounded border mb-2.5">
+                <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                    <span class="font-weight-bold text-dark text-truncate" style="max-width: 320px; font-size: 0.88rem;" title="${filename}">
+                        <i class="far fa-file-archive text-primary mr-1"></i> ${filename}
+                    </span>
+                    <span class="badge ${scopeBadgeClass} font-weight-bold px-2 py-1" style="font-size: 0.7rem; border-radius: 9999px;">${scopeLabel}</span>
                 </div>
-                <div class="row small text-muted">
-                    <div class="col-sm-6"><strong>Archive Size:</strong> ${data.file_size_display}</div>
-                    <div class="col-sm-6"><strong>Created:</strong> ${data.created_at || 'N/A'}</div>
-                    <div class="col-sm-6"><strong>Contains Database:</strong> ${data.has_database ? '<span class="text-success font-weight-bold">Yes</span>' : 'No'}</div>
-                    <div class="col-sm-6"><strong>Contains Media Files:</strong> ${data.has_media ? `<span class="text-success font-weight-bold">${data.media_files_count} files</span>` : 'No'}</div>
+                <div class="row g-2 small text-muted">
+                    <div class="col-6 mb-1.5"><span class="text-secondary font-weight-semibold">Archive Size:</span> <strong class="text-dark">${data.file_size_display}</strong></div>
+                    <div class="col-6 mb-1.5"><span class="text-secondary font-weight-semibold">Created:</span> <strong class="text-dark">${formattedDate}</strong></div>
+                    <div class="col-6"><span class="text-secondary font-weight-semibold">Database:</span> ${data.has_database ? '<span class="text-success font-weight-bold"><i class="fas fa-check-circle mr-1"></i>Yes</span>' : '<span class="text-muted">No</span>'}</div>
+                    <div class="col-6"><span class="text-secondary font-weight-semibold">Media Files:</span> ${data.has_media ? `<span class="text-info font-weight-bold"><i class="fas fa-images mr-1"></i>${data.media_files_count} files</span>` : '<span class="text-muted">None</span>'}</div>
                 </div>
             </div>
 
             ${recordBadgesHtml ? `
-                <h6 class="font-weight-bold text-dark mb-2" style="font-size: 0.9rem;"><i class="fas fa-layer-group mr-1 text-primary"></i> Entity Breakdown:</h6>
-                <div class="d-flex flex-wrap mb-2">${recordBadgesHtml}</div>
+                <div class="mt-2">
+                    <div class="font-weight-bold text-dark mb-1.5 small"><i class="fas fa-layer-group mr-1 text-primary"></i> Entity Breakdown:</div>
+                    <div class="d-flex flex-wrap" style="max-height: 110px; overflow-y: auto;">${recordBadgesHtml}</div>
+                </div>
             ` : ''}
         `;
 
@@ -804,7 +868,7 @@
     }
 
     function openRestoreFromInspection() {
-        $('#inspectModal').modal('hide');
+        hideModal('inspectModal');
         if (!activeInspectionData) return;
 
         if (activeInspectionData.backup_id) {
@@ -821,7 +885,7 @@
                 document.getElementById('restoreTargetFilename').innerText = uploadInput.files[0].name;
                 document.getElementById('confirmRestoreTextInput').value = '';
                 document.getElementById('btnExecuteRestore').disabled = true;
-                $('#restoreConfirmModal').modal('show');
+                showModal('restoreConfirmModal');
             }
         }
     }
@@ -832,7 +896,7 @@
         document.getElementById('restoreTargetFilename').innerText = filename;
         document.getElementById('confirmRestoreTextInput').value = '';
         document.getElementById('btnExecuteRestore').disabled = true;
-        $('#restoreConfirmModal').modal('show');
+        showModal('restoreConfirmModal');
     }
 
     function validateRestoreCode(input) {
