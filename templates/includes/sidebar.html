@@ -150,6 +150,18 @@
         <span class="menu-title">Dashboard</span>
       </a>
     </li>
+    <li class="nav-item {% if request.resolver_match.app_name == 'member_portal' and request.resolver_match.url_name == 'progress' %}active{% endif %}">
+      <a class="nav-link" href="{% url 'member_portal:progress' %}">
+        <i class="mdi mdi-chart-line menu-icon"></i>
+        <span class="menu-title">Workout Progress</span>
+      </a>
+    </li>
+    <li class="nav-item {% if request.resolver_match.app_name == 'member_portal' and request.resolver_match.url_name == 'attendance' %}active{% endif %}">
+      <a class="nav-link" href="{% url 'member_portal:attendance' %}">
+        <i class="mdi mdi-calendar-check menu-icon"></i>
+        <span class="menu-title">My Attendance</span>
+      </a>
+    </li>
     <li class="nav-item {% if request.resolver_match.app_name == 'member_portal' and request.resolver_match.url_name == 'personal_training' %}active{% endif %}">
       <a class="nav-link" href="{% url 'member_portal:personal_training' %}">
         <i class="mdi mdi-account-tie menu-icon"></i>
@@ -166,12 +178,6 @@
       <a class="nav-link" href="{% url 'member_portal:diet_plan' %}">
         <i class="mdi mdi-food-apple-outline menu-icon"></i>
         <span class="menu-title">Diet Plan</span>
-      </a>
-    </li>
-    <li class="nav-item {% if request.resolver_match.app_name == 'member_portal' and request.resolver_match.url_name == 'attendance' %}active{% endif %}">
-      <a class="nav-link" href="{% url 'member_portal:attendance' %}">
-        <i class="mdi mdi-calendar-check menu-icon"></i>
-        <span class="menu-title">My Attendance</span>
       </a>
     </li>
     <li class="nav-item {% if request.resolver_match.url_name == 'billing' %}active{% endif %}">

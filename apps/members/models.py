@@ -329,5 +329,103 @@ class AssignWorkoutPlan(models.Model):
     assigned_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.member.first_name} {self.member.last_name} - {self.workout_plan.title}"
-        return f'{self.member.name} - {self.workout_plan.name}'
+        plan_title = self.workout_plan.name if self.workout_plan else 'Plan'
+        return f'{self.member.name} - {plan_title}'
+
+
+class MemberWorkoutLog(models.Model):
+    WORKOUT_TYPE_CHOICES = [
+        ('strength', 'Strength & Resistance'),
+        ('cardio', 'Cardio & Conditioning'),
+        ('hiit', 'HIIT & Circuit'),
+        ('crossfit', 'CrossFit & Functional'),
+        ('yoga', 'Yoga & Mobility'),
+        ('recovery', 'Active Recovery & Stretching'),
+    ]
+
+    gym = models.ForeignKey(Gym, on_delete=models.CASCADE, related_name='member_workout_logs')
+    member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name='workout_logs')
+    date = models.DateField(default=timezone.localdate)
+    title = models.CharField(max_length=150, help_text="e.g. Chest & Triceps Blast, Leg Day, Back & Biceps")
+    workout_type = models.CharField(max_length=50, choices=WORKOUT_TYPE_CHOICES, default='strength')
+    duration_minutes = models.PositiveIntegerField(default=45, help_text="Total workout duration in minutes")
+    calories_burned = models.PositiveIntegerField(null=True, blank=True, help_text="Estimated calories burned")
+    energy_rating = models.PositiveSmallIntegerField(default=4, help_text="Rating 1-5")
+    notes = models.TextField(blank=True, help_text="Workout reflections, PRs, or trainer feedback")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-date', '-created_at']
+
+    def __str__(self):
+        return f"{self.member.name} - {self.title} ({self.date})"
+
+    @property
+    def total_exercises(self):
+        return self.exercises.count()
+
+
+class MemberExerciseLog(models.Model):
+    workout_log = models.ForeignKey(MemberWorkoutLog, on_delete=models.CASCADE, related_name='exercises')
+    exercise_name = models.CharField(max_length=150, help_text="e.g. Barbell Bench Press, Barbell Squat")
+    sets = models.PositiveIntegerField(default=3)
+    reps = models.CharField(max_length=50, default="10-12", help_text="e.g. 12, 10, 8 or 10-12")
+    weight_kg = models.DecimalField(max_digits=7, decimal_places=2, default=0.00, help_text="Weight lifted in kg")
+    notes = models.CharField(max_length=255, blank=True, help_text="e.g. Drop set on last, felt strong")
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', 'id']
+
+    def __str__(self):
+        return f"{self.exercise_name} ({self.sets}x{self.reps} @ {self.weight_kg}kg)"
+
+
+class MemberBodyMetric(models.Model):
+    gym = models.ForeignKey(Gym, on_delete=models.CASCADE, related_name='member_body_metrics')
+    member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name='body_metrics')
+    date = models.DateField(default=timezone.localdate)
+    weight_kg = models.DecimalField(max_digits=7, decimal_places=2, help_text="Body weight in kg")
+    body_fat_percentage = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True, help_text="Body fat %")
+    chest_inches = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True, help_text="Chest (inches)")
+    waist_inches = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True, help_text="Waist (inches)")
+    biceps_inches = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True, help_text="Arms / Biceps (inches)")
+    thighs_inches = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True, help_text="Thighs (inches)")
+    notes = models.CharField(max_length=255, blank=True, help_text="Progress notes or weekly observations")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date', '-created_at']
+
+    def __str__(self):
+        return f"{self.member.name} - {self.weight_kg} kg on {self.date}"
+
+
+class MemberFitnessGoal(models.Model):
+    GOAL_TYPE_CHOICES = [
+        ('weight_loss', 'Weight Loss & Fat Reduction'),
+        ('muscle_gain', 'Muscle Building & Bulking'),
+        ('body_recomp', 'Body Recomposition & Toning'),
+        ('endurance', 'Cardio & Stamina Building'),
+        ('strength', 'Strength & Powerlifting'),
+    ]
+
+    gym = models.ForeignKey(Gym, on_delete=models.CASCADE, related_name='member_fitness_goals')
+    member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name='fitness_goals')
+    goal_type = models.CharField(max_length=50, choices=GOAL_TYPE_CHOICES, default='weight_loss')
+    starting_weight_kg = models.DecimalField(max_digits=7, decimal_places=2, help_text="Starting baseline weight in kg")
+    target_weight_kg = models.DecimalField(max_digits=7, decimal_places=2, help_text="Target goal weight in kg")
+    target_body_fat = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True, help_text="Target body fat %")
+    target_weekly_workouts = models.PositiveSmallIntegerField(default=4, help_text="Target workouts per week")
+    target_date = models.DateField(null=True, blank=True, help_text="Target deadline date to reach the goal")
+    motivation_notes = models.CharField(max_length=255, blank=True, help_text="Personal mantra, motivation or reason for goal")
+    is_achieved = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.member.name} Goal: {self.get_goal_type_display()} ({self.target_weight_kg} kg)"

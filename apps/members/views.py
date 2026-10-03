@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import MemberForm, MedicalHistoryForm, EmergencyContactForm, MembershipHistoryForm, PersonalTrainerForm, AssignDietPlanForm, AssignWorkoutPlanForm
-from .models import Member, MedicalHistory, EmergencyContact, MembershipHistory, PersonalTrainer, MembershipFreeze, AssignDietPlan, AssignWorkoutPlan
+from .models import Member, MedicalHistory, EmergencyContact, MembershipHistory, PersonalTrainer, MembershipFreeze, AssignDietPlan, AssignWorkoutPlan, MemberWorkoutLog, MemberBodyMetric, MemberFitnessGoal
 from apps.management.models import MembershipPlan
 from apps.trainers.models import Trainer
 from apps.billing.models import Payment
@@ -175,6 +175,9 @@ def member_profile(request, member_id):
 
     assigned_diet_plans = AssignDietPlan.objects.filter(member=member, gym=gym).order_by('-assigned_at')
     assigned_workout_plans = AssignWorkoutPlan.objects.filter(member=member, gym=gym).order_by('-assigned_at')
+    workout_logs = MemberWorkoutLog.objects.filter(member=member, gym=gym).prefetch_related('exercises').order_by('-workout_date', '-created_at')[:30]
+    body_metrics = MemberBodyMetric.objects.filter(member=member, gym=gym).order_by('-metric_date', '-created_at')[:30]
+    fitness_goal = MemberFitnessGoal.objects.filter(member=member, gym=gym).first()
 
     return render(request, 'members/member_profile.html', {
         'member': member, 
@@ -187,6 +190,9 @@ def member_profile(request, member_id):
         'membership_plan': latest_membership.plan if latest_membership else None,
         'assigned_diet_plans': assigned_diet_plans,
         'assigned_workout_plans': assigned_workout_plans,
+        'workout_logs': workout_logs,
+        'body_metrics': body_metrics,
+        'fitness_goal': fitness_goal,
         'is_plan_active': is_plan_active,
     })
 

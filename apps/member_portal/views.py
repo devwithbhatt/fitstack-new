@@ -1,3 +1,5 @@
+import json
+from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
@@ -8,7 +10,12 @@ from datetime import timedelta
 from functools import wraps
 from django.db.models import Sum, F
 
-from apps.members.models import Member, MembershipHistory, PersonalTrainer, AssignDietPlan, AssignWorkoutPlan
+from apps.members.models import (
+    Member, MembershipHistory, PersonalTrainer, 
+    AssignDietPlan, AssignWorkoutPlan,
+    MemberWorkoutLog, MemberExerciseLog, MemberBodyMetric,
+    MemberFitnessGoal
+)
 from apps.attendance.models import MemberAttendance, MemberLeave
 from apps.billing.models import Payment
 from apps.management.models import DietPlan, WorkoutPlan
@@ -504,4 +511,420 @@ def member_pt_view(request):
         'total_pt_months': total_pt_months,
     }
     return render(request, 'portal/member/personal_training.html', context)
+
+
+@never_cache
+@member_required
+def member_progress_view(request):
+    member = request.member
+    gym = request.gym
+    today = timezone.localdate()
+
+    # Aggregate Core Stats
+    workout_logs = MemberWorkoutLog.objects.filter(member=member, gym=gym).prefetch_related('exercises')
+    total_workouts = workout_logs.count()
+    total_minutes = workout_logs.aggregate(s=Sum('duration_minutes'))['s'] or 0
+    total_hours = round(total_minutes / 60, 1)
+
+    # Weekly streak: Workouts this current week (from Monday)
+    start_of_week = today - timedelta(days=today.weekday())
+    workouts_this_week = workout_logs.filter(date__gte=start_of_week).values('date').distinct().count()
+
+    # Body metrics
+    body_metrics = MemberBodyMetric.objects.filter(member=member, gym=gym).order_by('-date', '-created_at')
+    latest_metric = body_metrics.first()
+    first_metric = MemberBodyMetric.objects.filter(member=member, gym=gym).order_by('date', 'created_at').first()
+
+    weight_delta = None
+    if latest_metric and first_metric and latest_metric.id != first_metric.id:
+        weight_delta = round(latest_metric.weight_kg - first_metric.weight_kg, 1)
+
+    # Chart Data Preparation (Ascending by date for timeline)
+    metrics_for_chart = list(MemberBodyMetric.objects.filter(member=member, gym=gym).order_by('date', 'created_at')[:20])
+    chart_dates = [m.date.strftime('%d %b') for m in metrics_for_chart]
+    chart_weights = [float(m.weight_kg) for m in metrics_for_chart]
+
+    # Assigned workout routine
+    assigned_workout = AssignWorkoutPlan.objects.filter(
+        member=member
+    ).select_related('workout_plan').order_by('-id').first()
+
+    # Member Fitness Goal & Cricket-Style Chase Metrics
+    fitness_goal = MemberFitnessGoal.objects.filter(member=member, gym=gym).first()
+    goal_stats = None
+    target_weights_json = json.dumps([])
+
+    if fitness_goal:
+        start_w = float(fitness_goal.starting_weight_kg)
+        target_w = float(fitness_goal.target_weight_kg)
+        current_w = float(latest_metric.weight_kg) if latest_metric else start_w
+
+        total_target_delta = round(target_w - start_w, 1)
+        current_growth_delta = round(current_w - start_w, 1)
+        needed_growth_delta = round(target_w - current_w, 1)
+
+        # Percentage progress
+        if abs(total_target_delta) > 0:
+            if total_target_delta < 0:
+                pct = ((start_w - current_w) / (start_w - target_w)) * 100
+            else:
+                pct = ((current_w - start_w) / (target_w - start_w)) * 100
+            progress_pct = max(0.0, min(100.0, round(pct, 1)))
+        else:
+            progress_pct = 100.0
+
+        remaining_pct = round(100.0 - progress_pct, 1)
+
+        # Days & Weeks Left
+        days_left = None
+        weeks_left = None
+        if fitness_goal.target_date:
+            diff_days = (fitness_goal.target_date - today).days
+            days_left = diff_days
+            weeks_left = max(0.5, diff_days / 7.0) if diff_days > 0 else 0.5
+
+        # Required Run Rate (RRR - kg needed per week)
+        required_pace = None
+        if weeks_left and abs(needed_growth_delta) > 0 and (days_left and days_left > 0):
+            required_pace = round(abs(needed_growth_delta) / weeks_left, 2)
+
+        # Current Run Rate (CRR - actual kg changed per week)
+        elapsed_days = max(1, (today - fitness_goal.created_at.date()).days)
+        elapsed_weeks = max(0.5, elapsed_days / 7.0)
+        current_pace = round(abs(current_growth_delta) / elapsed_weeks, 2)
+
+        # Growth direction and badges
+        if current_growth_delta < 0:
+            growth_verb = "lost"
+            growth_badge_class = "badge-soft-success"
+            growth_badge_style = "background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;"
+        elif current_growth_delta > 0:
+            growth_verb = "gained"
+            if total_target_delta > 0:
+                growth_badge_class = "badge-soft-success"
+                growth_badge_style = "background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;"
+            else:
+                growth_badge_class = "badge-soft-danger"
+                growth_badge_style = "background: #fff1f2; color: #be123c; border: 1px solid #fecdd3;"
+        else:
+            growth_verb = "maintained"
+            growth_badge_class = "badge-soft-secondary"
+            growth_badge_style = "background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;"
+
+        if needed_growth_delta < 0:
+            needed_verb = "to lose"
+        elif needed_growth_delta > 0:
+            needed_verb = "to gain"
+        else:
+            needed_verb = "reached"
+
+        # Status Check (Match Result / Chase Analysis)
+        is_goal_met = (
+            (total_target_delta < 0 and current_w <= target_w) or
+            (total_target_delta > 0 and current_w >= target_w)
+        )
+        moving_towards_target = (total_target_delta < 0 and current_growth_delta < 0) or (total_target_delta > 0 and current_growth_delta > 0)
+
+        if is_goal_met:
+            status_label = "Target Achieved! 🏆"
+            status_badge_class = "badge-soft-success"
+            pace_analysis = "Match Won! You have successfully reached your fitness target!"
+            pace_icon = "fa-trophy text-warning"
+        elif days_left is not None and days_left <= 0:
+            status_label = "Target Date Concluded"
+            status_badge_class = "badge-soft-secondary"
+            pace_analysis = "Target deadline concluded. Review your milestones and set your next challenge!"
+            pace_icon = "fa-flag-checkered text-primary"
+        elif moving_towards_target and required_pace and current_pace >= required_pace:
+            status_label = "Ahead of Required Rate 🟢"
+            status_badge_class = "badge-soft-success"
+            pace_analysis = f"Cruising! Current rate ({current_pace} kg/wk) is matching required rate ({required_pace} kg/wk)."
+            pace_icon = "fa-bolt text-success"
+        elif moving_towards_target and required_pace:
+            status_label = "Acceleration Required ⚠️"
+            status_badge_class = "badge-soft-warning"
+            pace_analysis = f"Need to accelerate! Target requires {required_pace} kg/wk vs current {current_pace} kg/wk."
+            pace_icon = "fa-chart-line text-warning"
+        elif moving_towards_target:
+            status_label = "Chasing Target 🎯"
+            status_badge_class = "badge-soft-primary"
+            pace_analysis = f"Steady progress towards your {target_w} kg target."
+            pace_icon = "fa-crosshairs text-primary"
+        else:
+            status_label = "Recalibration Needed ⚠️"
+            status_badge_class = "badge-soft-danger"
+            pace_analysis = f"Currently +{abs(current_growth_delta)} kg above baseline. Adjust diet & workouts to chase down the {abs(needed_growth_delta)} kg gap!"
+            pace_icon = "fa-compass text-danger"
+
+        goal_stats = {
+            'goal_type_display': fitness_goal.get_goal_type_display(),
+            'start_weight': start_w,
+            'current_weight': current_w,
+            'target_weight': target_w,
+            'total_target_delta': abs(total_target_delta),
+            'current_growth': abs(current_growth_delta),
+            'growth_verb': growth_verb,
+            'growth_badge_class': growth_badge_class,
+            'growth_badge_style': growth_badge_style,
+            'needed_growth': abs(needed_growth_delta),
+            'needed_verb': needed_verb,
+            'progress_pct': progress_pct,
+            'remaining_pct': remaining_pct,
+            'days_left': days_left,
+            'required_pace': required_pace,
+            'current_pace': current_pace,
+            'status_label': status_label,
+            'status_badge_class': status_badge_class,
+            'pace_analysis': pace_analysis,
+            'pace_icon': pace_icon,
+            'is_achieved': is_goal_met,
+            'target_weekly_workouts': fitness_goal.target_weekly_workouts,
+            'target_body_fat': fitness_goal.target_body_fat,
+            'motivation': fitness_goal.motivation_notes,
+            'target_date': fitness_goal.target_date,
+        }
+
+        # Target reference line across the chart
+        if chart_dates:
+            target_weights_json = json.dumps([target_w] * len(chart_dates))
+
+    context = {
+        'member': member,
+        'gym': gym,
+        'total_workouts': total_workouts,
+        'total_hours': total_hours,
+        'workouts_this_week': workouts_this_week,
+        'latest_metric': latest_metric,
+        'weight_delta': weight_delta,
+        'workout_logs': workout_logs[:20],
+        'body_metrics': body_metrics[:15],
+        'chart_dates_json': json.dumps(chart_dates),
+        'chart_weights_json': json.dumps(chart_weights),
+        'target_weights_json': target_weights_json,
+        'fitness_goal': fitness_goal,
+        'goal_stats': goal_stats,
+        'assigned_workout': assigned_workout,
+        'today': today,
+    }
+    return render(request, 'portal/member/progress.html', context)
+
+
+@never_cache
+@member_required
+def member_set_goal_action(request):
+    if request.method != 'POST':
+        return redirect('member_portal:progress')
+
+    member = request.member
+    gym = request.gym
+
+    goal_type = request.POST.get('goal_type', 'weight_loss')
+    
+    try:
+        start_w = Decimal(request.POST.get('starting_weight_kg', '70')).quantize(Decimal('0.01'))
+    except Exception:
+        start_w = Decimal('70.00')
+
+    try:
+        target_w = Decimal(request.POST.get('target_weight_kg', '65')).quantize(Decimal('0.01'))
+    except Exception:
+        target_w = Decimal('65.00')
+
+    body_fat_raw = request.POST.get('target_body_fat', '').strip()
+    target_body_fat = None
+    if body_fat_raw:
+        try:
+            target_body_fat = Decimal(body_fat_raw).quantize(Decimal('0.01'))
+        except Exception:
+            target_body_fat = None
+
+    try:
+        target_weekly_workouts = int(request.POST.get('target_weekly_workouts', 4) or 4)
+    except Exception:
+        target_weekly_workouts = 4
+
+    target_date_raw = request.POST.get('target_date', '').strip()
+    target_date = target_date_raw if target_date_raw else None
+    motivation = request.POST.get('motivation_notes', '').strip()
+
+    MemberFitnessGoal.objects.update_or_create(
+        gym=gym,
+        member=member,
+        defaults={
+            'goal_type': goal_type,
+            'starting_weight_kg': start_w,
+            'target_weight_kg': target_w,
+            'target_body_fat': target_body_fat,
+            'target_weekly_workouts': target_weekly_workouts,
+            'target_date': target_date,
+            'motivation_notes': motivation,
+        }
+    )
+
+    messages.success(request, f"Fitness Goal locked in! Target: {target_w} kg. Game on! 🎯🏏")
+    return redirect('member_portal:progress')
+
+
+@never_cache
+@member_required
+def member_log_workout_action(request):
+    if request.method != 'POST':
+        return redirect('member_portal:progress')
+
+    member = request.member
+    gym = request.gym
+
+    title = request.POST.get('title', '').strip() or 'Workout Session'
+    date_val = request.POST.get('date') or timezone.localdate()
+    workout_type = request.POST.get('workout_type', 'strength')
+    duration_minutes = int(request.POST.get('duration_minutes', 45) or 45)
+    calories_burned_raw = request.POST.get('calories_burned', '').strip()
+    calories_burned = int(calories_burned_raw) if calories_burned_raw.isdigit() else None
+    energy_rating = int(request.POST.get('energy_rating', 4) or 4)
+    notes = request.POST.get('notes', '').strip()
+
+    log = MemberWorkoutLog.objects.create(
+        gym=gym,
+        member=member,
+        date=date_val,
+        title=title,
+        workout_type=workout_type,
+        duration_minutes=duration_minutes,
+        calories_burned=calories_burned,
+        energy_rating=energy_rating,
+        notes=notes,
+    )
+
+    # Process dynamic exercise rows
+    exercise_names = request.POST.getlist('exercise_name[]')
+    sets_list = request.POST.getlist('sets[]')
+    reps_list = request.POST.getlist('reps[]')
+    weight_list = request.POST.getlist('weight[]')
+    notes_list = request.POST.getlist('exercise_notes[]')
+
+    for i, name in enumerate(exercise_names):
+        name_clean = name.strip()
+        if not name_clean:
+            continue
+        try:
+            sets_val = int(sets_list[i]) if i < len(sets_list) and sets_list[i] else 3
+        except (ValueError, IndexError):
+            sets_val = 3
+
+        reps_val = reps_list[i].strip() if i < len(reps_list) and reps_list[i] else "10-12"
+        
+        try:
+            raw_w = weight_list[i].strip() if i < len(weight_list) and weight_list[i] else "0"
+            weight_val = Decimal(raw_w).quantize(Decimal('0.01'))
+            if weight_val < Decimal('0'):
+                weight_val = Decimal('0.00')
+            elif weight_val > Decimal('9999.99'):
+                weight_val = Decimal('9999.99')
+        except (ValueError, IndexError, Exception):
+            weight_val = Decimal('0.00')
+
+        ex_notes = notes_list[i].strip() if i < len(notes_list) else ""
+
+        MemberExerciseLog.objects.create(
+            workout_log=log,
+            exercise_name=name_clean,
+            sets=sets_val,
+            reps=reps_val,
+            weight_kg=weight_val,
+            notes=ex_notes,
+            order=i,
+        )
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'status': 'success', 'message': 'Workout logged successfully!'})
+
+    messages.success(request, f"Awesome job! Workout '{title}' logged successfully. Keep up the streak! 🔥")
+    return redirect('member_portal:progress')
+
+
+@never_cache
+@member_required
+def member_log_metrics_action(request):
+    if request.method != 'POST':
+        return redirect('member_portal:progress')
+
+    member = request.member
+    gym = request.gym
+
+    date_val = request.POST.get('date') or timezone.localdate()
+    try:
+        weight_kg = Decimal(request.POST.get('weight_kg', '0')).quantize(Decimal('0.01'))
+        if weight_kg < Decimal('0') or weight_kg > Decimal('9999.99'):
+            raise ValueError
+    except Exception:
+        messages.error(request, 'Please provide a valid body weight.')
+        return redirect('member_portal:progress')
+
+    def parse_dec(key, max_val=Decimal('9999.99')):
+        val = request.POST.get(key, '').strip()
+        if val:
+            try:
+                d = Decimal(val).quantize(Decimal('0.01'))
+                if d < Decimal('0'):
+                    return Decimal('0.00')
+                if d > max_val:
+                    return max_val
+                return d
+            except Exception:
+                return None
+        return None
+
+    body_fat = parse_dec('body_fat_percentage', Decimal('100.00'))
+    chest = parse_dec('chest_inches')
+    waist = parse_dec('waist_inches')
+    biceps = parse_dec('biceps_inches')
+    thighs = parse_dec('thighs_inches')
+    notes = request.POST.get('notes', '').strip()
+
+    MemberBodyMetric.objects.create(
+        gym=gym,
+        member=member,
+        date=date_val,
+        weight_kg=weight_kg,
+        body_fat_percentage=body_fat,
+        chest_inches=chest,
+        waist_inches=waist,
+        biceps_inches=biceps,
+        thighs_inches=thighs,
+        notes=notes,
+    )
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'status': 'success', 'message': 'Body metrics recorded successfully!'})
+
+    messages.success(request, f"Body metrics for {date_val} recorded successfully!")
+    return redirect('member_portal:progress')
+
+
+@never_cache
+@member_required
+def member_delete_workout_log(request, log_id):
+    if request.method != 'POST':
+        return redirect('member_portal:progress')
+
+    member = request.member
+    gym = request.gym
+    log = get_object_or_404(MemberWorkoutLog, id=log_id, member=member, gym=gym)
+    log.delete()
+    messages.success(request, 'Workout session log deleted.')
+    return redirect('member_portal:progress')
+
+
+@never_cache
+@member_required
+def member_delete_metric(request, metric_id):
+    if request.method != 'POST':
+        return redirect('member_portal:progress')
+
+    member = request.member
+    gym = request.gym
+    metric = get_object_or_404(MemberBodyMetric, id=metric_id, member=member, gym=gym)
+    metric.delete()
+    messages.success(request, 'Body metric record deleted.')
+    return redirect('member_portal:progress')
 

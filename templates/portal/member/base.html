@@ -206,6 +206,12 @@
         <a href="{% url 'member_portal:dashboard' %}" class="portal-nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
           <i class="mdi mdi-view-dashboard-outline"></i> Dashboard
         </a>
+        <a href="{% url 'member_portal:progress' %}" class="portal-nav-link {% if request.resolver_match.url_name == 'progress' %}active{% endif %}">
+          <i class="mdi mdi-chart-line"></i> Progress
+        </a>
+        <a href="{% url 'member_portal:attendance' %}" class="portal-nav-link {% if request.resolver_match.url_name == 'attendance' %}active{% endif %}">
+          <i class="mdi mdi-calendar-check-outline"></i> Attendance
+        </a>
         <a href="{% url 'member_portal:personal_training' %}" class="portal-nav-link {% if request.resolver_match.url_name == 'personal_training' %}active{% endif %}">
           <i class="mdi mdi-account-tie"></i> PT Info
         </a>
@@ -214,9 +220,6 @@
         </a>
         <a href="{% url 'member_portal:diet_plan' %}" class="portal-nav-link {% if request.resolver_match.url_name == 'diet_plan' %}active{% endif %}">
           <i class="mdi mdi-food-apple-outline"></i> Diet
-        </a>
-        <a href="{% url 'member_portal:attendance' %}" class="portal-nav-link {% if request.resolver_match.url_name == 'attendance' %}active{% endif %}">
-          <i class="mdi mdi-calendar-check-outline"></i> Attendance
         </a>
         <a href="{% url 'member_portal:billing' %}" class="portal-nav-link {% if request.resolver_match.url_name == 'billing' %}active{% endif %}">
           <i class="mdi mdi-receipt-text-outline"></i> Payments
@@ -283,17 +286,17 @@
       <i class="mdi mdi-view-dashboard-outline"></i>
       <span>Home</span>
     </a>
-    <a href="{% url 'member_portal:workout_plan' %}" class="mobile-bottom-nav-item {% if request.resolver_match.url_name == 'workout_plan' %}active{% endif %}">
-      <i class="mdi mdi-dumbbell"></i>
-      <span>Workout</span>
-    </a>
-    <a href="{% url 'member_portal:diet_plan' %}" class="mobile-bottom-nav-item {% if request.resolver_match.url_name == 'diet_plan' %}active{% endif %}">
-      <i class="mdi mdi-food-apple-outline"></i>
-      <span>Diet</span>
+    <a href="{% url 'member_portal:progress' %}" class="mobile-bottom-nav-item {% if request.resolver_match.url_name == 'progress' %}active{% endif %}">
+      <i class="mdi mdi-chart-line"></i>
+      <span>Progress</span>
     </a>
     <a href="{% url 'member_portal:attendance' %}" class="mobile-bottom-nav-item {% if request.resolver_match.url_name == 'attendance' %}active{% endif %}">
       <i class="mdi mdi-calendar-check-outline"></i>
       <span>Attendance</span>
+    </a>
+    <a href="{% url 'member_portal:workout_plan' %}" class="mobile-bottom-nav-item {% if request.resolver_match.url_name == 'workout_plan' %}active{% endif %}">
+      <i class="mdi mdi-dumbbell"></i>
+      <span>Workout</span>
     </a>
     <a href="{% url 'member_portal:profile' %}" class="mobile-bottom-nav-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
       <i class="mdi mdi-account-circle-outline"></i>

@@ -261,6 +261,33 @@
     </div>
   </div>
 
+  <!-- WORKOUT TRACKING & BODY PROGRESS BANNER (THEME ALIGNED FITSTACK CARD) -->
+  <div class="gym-card mb-4" style="background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%); border: 1px solid #bfdbfe; position: relative; overflow: hidden;">
+    <div style="position: absolute; right: 24px; top: 50%; transform: translateY(-50%); opacity: 0.06; font-size: 130px; pointer-events: none; line-height: 1; color: #2563eb;">
+      <i class="fas fa-chart-line"></i>
+    </div>
+    <div class="p-4 position-relative" style="z-index: 2;">
+      <div class="row align-items-center">
+        <div class="col-lg-8 mb-3 mb-lg-0">
+          <div class="mb-2">
+            <span class="badge-soft badge-soft-primary">
+              <i class="fas fa-fire text-warning mr-1"></i> Interactive Workout Tracker & Body Metrics
+            </span>
+          </div>
+          <h3 class="font-weight-bold mb-1 text-dark" style="font-size: 1.3rem;">Log Daily Workouts & Track Body Metrics</h3>
+          <p class="mb-0 text-muted small" style="max-width: 620px;">
+            Log sets, reps, weight lifted (kg), energy ratings, and track your body weight & tape measurements with interactive visual charts.
+          </p>
+        </div>
+        <div class="col-lg-4 text-lg-right">
+          <a href="{% url 'member_portal:progress' %}" class="btn btn-primary font-weight-bold px-4 py-2 rounded-pill shadow-sm" style="font-size: 0.9rem;">
+            <i class="fas fa-chart-line mr-1"></i> Open Progress Journal &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ROUTINES & PLANS ROW -->
   <div class="row">
     <!-- Assigned Workout Card -->

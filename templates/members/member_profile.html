@@ -392,6 +392,11 @@
                                 <li class="nav-item">
                                     <a class="nav-link" id="workout-plan-tab" data-toggle="tab" href="#workout-plan" role="tab" aria-controls="workout-plan" aria-selected="false">Workout Plan</a>
                                 </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="fitness-progress-tab" data-toggle="tab" href="#fitness-progress" role="tab" aria-controls="fitness-progress" aria-selected="false">
+                                        <i class="mdi mdi-chart-line text-success mr-1"></i> Workout Progress & Logs
+                                    </a>
+                                </li>
                             </ul>
                             <div class="tab-content" id="myTabContent">
                                   <div class="tab-pane fade" id="personal-trainer" role="tabpanel" aria-labelledby="personal-trainer-tab">
@@ -862,6 +867,155 @@
                                             </div>
                                         {% else %}
                                             <p class="text-muted">No workout plan assigned yet.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="fitness-progress" role="tabpanel" aria-labelledby="fitness-progress-tab">
+                                    <div class="py-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <div>
+                                                <h4 class="mb-0">Member Fitness Journal & Progress</h4>
+                                                <p class="text-muted small mb-0">Logged daily workouts, exercise weights, and periodic body measurements.</p>
+                                            </div>
+                                            <span class="badge badge-primary px-3 py-2 font-weight-bold">
+                                                <i class="mdi mdi-dumbbell mr-1"></i> {{ workout_logs|length }} Workouts Logged
+                                            </span>
+                                        </div>
+
+                                        <!-- Member Target Goal Summary -->
+                                        {% if fitness_goal %}
+                                        <div class="card mb-3 border-0" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; border-radius: 12px;">
+                                            <div class="card-body p-3">
+                                                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                                                    <div>
+                                                        <span class="badge badge-warning text-dark font-weight-bold px-2 py-0.5 rounded-pill mb-1">
+                                                            <i class="mdi mdi-bullseye mr-1"></i> Goal: {{ fitness_goal.get_goal_type_display }}
+                                                        </span>
+                                                        <h5 class="mb-0 text-white font-weight-bold">
+                                                            Target: {{ fitness_goal.target_weight_kg }} kg 
+                                                            <small class="text-white-50 ml-2">(Starting: {{ fitness_goal.starting_weight_kg }} kg{% if fitness_goal.target_date %} &bull; Target Date: {{ fitness_goal.target_date|date:"d M Y" }}{% endif %})</small>
+                                                        </h5>
+                                                        {% if fitness_goal.motivation_notes %}
+                                                        <p class="text-warning small mb-0 font-italic mt-1">"{{ fitness_goal.motivation_notes }}"</p>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="text-right mt-2 mt-sm-0">
+                                                        <span class="badge badge-light text-dark font-weight-bold px-3 py-1.5 rounded-pill">
+                                                            <i class="mdi mdi-calendar-check mr-1 text-primary"></i> {{ fitness_goal.target_weekly_workouts }} Workouts / Wk
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+
+                                        <!-- Section 1: Recent Workout Logs -->
+                                        <h5 class="font-weight-bold mb-3 mt-4 text-dark"><i class="mdi mdi-clipboard-text mr-1 text-primary"></i> Workout Logs</h5>
+                                        {% if workout_logs %}
+                                            <div class="accordion" id="trainerWorkoutAccordion">
+                                                {% for log in workout_logs %}
+                                                <div class="card mb-2 border shadow-none" style="border-radius: 8px;">
+                                                    <div class="card-header bg-light py-2 px-3 d-flex justify-content-between align-items-center" id="headingTrainerLog{{ log.id }}">
+                                                        <div class="d-flex align-items-center flex-wrap">
+                                                            <span class="badge badge-dark mr-2">{{ log.workout_date|date:"d M Y" }}</span>
+                                                            <span class="badge badge-info mr-2 text-capitalize">{{ log.get_workout_type_display }}</span>
+                                                            <strong class="text-dark mr-2">{{ log.title }}</strong>
+                                                            <small class="text-muted mr-3"><i class="mdi mdi-clock-outline mr-1"></i>{{ log.duration_minutes }} min</small>
+                                                            {% if log.calories_burned %}
+                                                            <small class="text-danger mr-3"><i class="mdi mdi-fire mr-1"></i>{{ log.calories_burned }} kcal</small>
+                                                            {% endif %}
+                                                            {% if log.energy_rating %}
+                                                            <small class="text-warning"><i class="mdi mdi-flash mr-1"></i>{{ log.energy_rating }}/5 Energy</small>
+                                                            {% endif %}
+                                                        </div>
+                                                        <button class="btn btn-sm btn-link text-decoration-none font-weight-bold" type="button" data-toggle="collapse" data-target="#collapseTrainerLog{{ log.id }}" aria-expanded="false" aria-controls="collapseTrainerLog{{ log.id }}">
+                                                            View Exercises ({{ log.exercises.count }}) &darr;
+                                                        </button>
+                                                    </div>
+
+                                                    <div id="collapseTrainerLog{{ log.id }}" class="collapse" aria-labelledby="headingTrainerLog{{ log.id }}" data-parent="#trainerWorkoutAccordion">
+                                                        <div class="card-body p-3">
+                                                            {% if log.notes %}
+                                                            <p class="text-muted small mb-2"><strong>Notes:</strong> {{ log.notes }}</p>
+                                                            {% endif %}
+                                                            {% if log.exercises.all %}
+                                                            <div class="table-responsive">
+                                                                <table class="table table-sm table-bordered mb-0">
+                                                                    <thead class="thead-light">
+                                                                        <tr>
+                                                                            <th>#</th>
+                                                                            <th>Exercise Name</th>
+                                                                            <th>Sets</th>
+                                                                            <th>Reps / Set</th>
+                                                                            <th>Weight Lifted</th>
+                                                                            <th>Exercise Notes</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {% for ex in log.exercises.all %}
+                                                                        <tr>
+                                                                            <td>{{ forloop.counter }}</td>
+                                                                            <td class="font-weight-bold text-dark">{{ ex.exercise_name }}</td>
+                                                                            <td>{{ ex.sets }}</td>
+                                                                            <td>{{ ex.reps }}</td>
+                                                                            <td>{% if ex.weight_kg %}<span class="badge badge-success">{{ ex.weight_kg }} kg</span>{% else %}<span class="text-muted">-</span>{% endif %}</td>
+                                                                            <td class="small text-muted">{{ ex.notes|default:"-" }}</td>
+                                                                        </tr>
+                                                                        {% endfor %}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                            {% else %}
+                                                            <p class="text-muted small mb-0">No exercise breakdown recorded for this session.</p>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <div class="alert alert-light border text-center py-3 text-muted">
+                                                <i class="mdi mdi-information-outline mr-1"></i> Member has not logged any workouts yet.
+                                            </div>
+                                        {% endif %}
+
+                                        <!-- Section 2: Body Metrics History -->
+                                        <h5 class="font-weight-bold mb-3 mt-4 text-dark"><i class="mdi mdi-tape-measure mr-1 text-primary"></i> Body Measurement History</h5>
+                                        {% if body_metrics %}
+                                            <div class="table-responsive">
+                                                <table class="table table-striped table-bordered mb-0">
+                                                    <thead class="thead-light">
+                                                        <tr>
+                                                            <th>Date</th>
+                                                            <th>Weight (kg)</th>
+                                                            <th>Body Fat %</th>
+                                                            <th>Chest</th>
+                                                            <th>Waist</th>
+                                                            <th>Biceps</th>
+                                                            <th>Thighs</th>
+                                                            <th>Notes</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for bm in body_metrics %}
+                                                        <tr>
+                                                            <td><strong>{{ bm.metric_date|date:"d M Y" }}</strong></td>
+                                                            <td class="font-weight-bold text-primary">{% if bm.weight_kg %}{{ bm.weight_kg }} kg{% else %}-{% endif %}</td>
+                                                            <td>{% if bm.body_fat_percentage %}{{ bm.body_fat_percentage }}%{% else %}-{% endif %}</td>
+                                                            <td>{% if bm.chest_inches %}{{ bm.chest_inches }}"{% else %}-{% endif %}</td>
+                                                            <td>{% if bm.waist_inches %}{{ bm.waist_inches }}"{% else %}-{% endif %}</td>
+                                                            <td>{% if bm.biceps_inches %}{{ bm.biceps_inches }}"{% else %}-{% endif %}</td>
+                                                            <td>{% if bm.thighs_inches %}{{ bm.thighs_inches }}"{% else %}-{% endif %}</td>
+                                                            <td class="small text-muted">{{ bm.notes|default:"-" }}</td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        {% else %}
+                                            <div class="alert alert-light border text-center py-3 text-muted">
+                                                <i class="mdi mdi-information-outline mr-1"></i> No body measurements recorded yet.
+                                            </div>
                                         {% endif %}
                                     </div>
                                 </div>
