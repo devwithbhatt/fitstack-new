@@ -141,6 +141,9 @@
               <i class="mdi mdi-account-multiple text-primary mr-2"></i> My Clients
             </a>
           {% elif is_gym_admin %}
+            <a class="dropdown-item" href="{% url 'settings:my_subscription' %}">
+              <i class="mdi mdi-crown text-warning mr-2"></i> SaaS Subscription & Quotas
+            </a>
             <a class="dropdown-item" href="{% url 'settings:gym_profile' %}">
               <i class="mdi mdi-settings text-primary mr-2"></i> Gym Settings
             </a>

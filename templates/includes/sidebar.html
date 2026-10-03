@@ -452,6 +452,7 @@
         <ul class="nav flex-column sub-menu">
           <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'gym_profile' %}active{% endif %}" href="{% url 'settings:gym_profile' %}">Gym Profile</a></li>
           <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'payment_setting' %}active{% endif %}" href="{% url 'settings:payment_setting' %}">Payment Settings</a></li>
+          <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'my_subscription' %}active{% endif %}" href="{% url 'settings:my_subscription' %}"><i class="mdi mdi-crown text-warning mr-1"></i> SaaS Subscription</a></li>
         </ul>
       </div>
     </li>

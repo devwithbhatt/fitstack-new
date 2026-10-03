@@ -18,6 +18,7 @@ from django.contrib.auth.decorators import login_required
 from apps.login.decorators import custom_permission_required
 from django.views.decorators.cache import never_cache
 from django.db import IntegrityError
+from apps.superadmin.subscription_utils import check_resource_quota, get_gym_quota_status
 
 
 
@@ -57,7 +58,13 @@ def trainer_list(request):
 @custom_permission_required('add_trainer')
 def add_trainer(request):
     gym = getattr(request, 'gym', None)
+    can_add, quota_error, quota_status = check_resource_quota(gym, 'trainer')
+
     if request.method == 'POST':
+        if not can_add:
+            messages.error(request, quota_error)
+            return redirect('trainer_list')
+
         form = TrainerForm(request.POST, request.FILES)
         if form.is_valid():
             try:
@@ -86,7 +93,12 @@ def add_trainer(request):
                 form.add_error('email', 'A trainer with this email already exists.')
     else:
         form = TrainerForm()
-    return render(request, 'trainers/add_trainer.html', {'form': form})
+    return render(request, 'trainers/add_trainer.html', {
+        'form': form,
+        'quota_status': quota_status,
+        'quota_limit_reached': not can_add,
+        'quota_error': quota_error,
+    })
 
 @never_cache
 @login_required(login_url='login')

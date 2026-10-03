@@ -18,6 +18,7 @@ from apps.superadmin.notifications import (
     notify_pt_assigned,
     notify_payment_submitted
 )
+from apps.superadmin.subscription_utils import check_resource_quota, get_gym_quota_status
 
 from django.contrib.auth.decorators import login_required
 from apps.login.decorators import custom_permission_required
@@ -50,9 +51,14 @@ def check_mobile_number_registration(request):
 @custom_permission_required('add_member')
 def add_new_member(request):
     gym = getattr(request, 'gym', None)
-    
+    can_add, quota_error, quota_status = check_resource_quota(gym, 'member')
+
     MedicalHistoryFormSet = modelformset_factory(MedicalHistory, form=MedicalHistoryForm, extra=1, can_delete=True)
     if request.method == 'POST':
+        if not can_add:
+            messages.error(request, quota_error)
+            return redirect('member_list')
+
         member_form = MemberForm(request.POST, request.FILES)
         medical_formset = MedicalHistoryFormSet(request.POST, request.FILES, prefix='medical')
         emergency_form = EmergencyContactForm(request.POST, prefix='emergency')
@@ -115,7 +121,10 @@ def add_new_member(request):
     return render(request, 'members/add_new_member.html', {
         'form': member_form,
         'medical_formset': medical_formset,
-        'emergency_form': emergency_form
+        'emergency_form': emergency_form,
+        'quota_status': quota_status,
+        'quota_limit_reached': not can_add,
+        'quota_error': quota_error,
     })
 
 @never_cache

@@ -104,6 +104,35 @@
         </div>
 
         <div class="card-body p-4">
+            {% if quota_limit_reached %}
+            <div class="alert alert-danger shadow-sm border-0 d-flex align-items-center justify-content-between flex-wrap p-3 mb-4 rounded-xl" style="border-left: 5px solid #dc2626 !important; background: #fef2f2; border-radius: 12px;">
+              <div class="d-flex align-items-center mb-2 mb-md-0">
+                <div class="p-2 rounded-circle bg-danger text-white mr-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                  <i class="mdi mdi-alert-octagon-outline" style="font-size: 22px;"></i>
+                </div>
+                <div>
+                  <strong class="text-danger">Trainer Quota Full ({{ quota_status.trainers.current }} / {{ quota_status.trainers.display_max }} Registered)!</strong>
+                  <div class="small text-muted">Your active SaaS plan limit for trainers has been reached. Please upgrade your SaaS plan to register more trainers.</div>
+                </div>
+              </div>
+              <a href="{% url 'settings:my_subscription' %}" class="btn btn-danger btn-sm font-weight-bold px-3 py-2 rounded-pill shadow-sm">
+                <i class="mdi mdi-arrow-up-circle mr-1"></i> Upgrade Plan
+              </a>
+            </div>
+            {% elif quota_status.trainers.is_warning %}
+            <div class="alert alert-warning shadow-sm border-0 d-flex align-items-center justify-content-between flex-wrap p-3 mb-4 rounded-xl" style="border-left: 5px solid #f59e0b !important; background: #fffbeb; border-radius: 12px;">
+              <div class="d-flex align-items-center mb-2 mb-md-0">
+                <i class="mdi mdi-alert text-warning mr-2" style="font-size: 22px;"></i>
+                <div class="small text-dark">
+                  <strong>Capacity Notice:</strong> You have used <strong>{{ quota_status.trainers.current }} of {{ quota_status.trainers.display_max }}</strong> trainer slots. Consider upgrading soon.
+                </div>
+              </div>
+              <a href="{% url 'settings:my_subscription' %}" class="btn btn-warning btn-sm font-weight-bold px-3 rounded-pill text-dark">
+                Review Plans
+              </a>
+            </div>
+            {% endif %}
+
             <form method="post" enctype="multipart/form-data" class="needs-validation" id="addTrainerForm" novalidate>
                 {% csrf_token %}
 
@@ -283,13 +312,19 @@
                 </fieldset>
 
                 <!-- Form Action Buttons -->
-                <div class="d-flex flex-column flex-sm-row justify-content-end gap-2 mt-4 pt-3 border-top">
-                    <a href="{% url 'trainer_list' %}" class="btn btn-outline-secondary px-4 py-2 rounded-pill font-weight-semibold me-2 mb-2 mb-sm-0">
+                <div class="d-flex flex-column flex-sm-row justify-content-end align-items-center gap-2 mt-4 pt-3 border-top">
+                    {% if quota_limit_reached %}
+                      <span class="text-danger small font-weight-bold mr-3 me-3"><i class="mdi mdi-alert-circle"></i> Trainer Registration Locked (Quota Full)</span>
+                      <button type="button" class="btn btn-secondary px-4 py-2 rounded-pill font-weight-bold me-2 mb-2 mb-sm-0" disabled>Save Locked</button>
+                      <a href="{% url 'settings:my_subscription' %}" class="btn btn-danger px-4 py-2 rounded-pill font-weight-bold shadow-sm me-2 mb-2 mb-sm-0"><i class="mdi mdi-crown"></i> Upgrade Plan</a>
+                    {% else %}
+                      <button type="submit" class="btn btn-primary px-4 py-2 rounded-pill font-weight-bold shadow-sm me-2 mb-2 mb-sm-0" id="submitBtn">
+                          <i class="mdi mdi-check-circle-outline mr-1 me-1"></i> Save Trainer
+                      </button>
+                    {% endif %}
+                    <a href="{% url 'trainer_list' %}" class="btn btn-outline-secondary px-4 py-2 rounded-pill font-weight-semibold mb-2 mb-sm-0">
                         <i class="mdi mdi-close mr-1 me-1"></i> Cancel
                     </a>
-                    <button type="submit" class="btn btn-primary px-4 py-2 rounded-pill font-weight-bold shadow-sm" id="submitBtn">
-                        <i class="mdi mdi-check-circle-outline mr-1 me-1"></i> Save Trainer
-                    </button>
                 </div>
             </form>
         </div>

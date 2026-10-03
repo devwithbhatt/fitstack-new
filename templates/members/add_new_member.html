@@ -24,6 +24,35 @@
         <h4 class="mb-0">Add New Member</h4>
       </div>
       <div class="card-body">
+        {% if quota_limit_reached %}
+        <div class="alert alert-danger shadow-sm border-0 d-flex align-items-center justify-content-between flex-wrap p-3 mb-4 rounded-xl" style="border-left: 5px solid #dc2626 !important; background: #fef2f2; border-radius: 12px;">
+          <div class="d-flex align-items-center mb-2 mb-md-0">
+            <div class="p-2 rounded-circle bg-danger text-white mr-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+              <i class="mdi mdi-alert-octagon-outline" style="font-size: 22px;"></i>
+            </div>
+            <div>
+              <strong class="text-danger">Member Quota Full ({{ quota_status.members.current }} / {{ quota_status.members.display_max }} Registered)!</strong>
+              <div class="small text-muted">Your active SaaS plan limit has been reached. You cannot register new members until your plan is upgraded or inactive members are archived.</div>
+            </div>
+          </div>
+          <a href="{% url 'settings:my_subscription' %}" class="btn btn-danger btn-sm font-weight-bold px-3 py-2 rounded-pill shadow-sm">
+            <i class="mdi mdi-arrow-up-circle mr-1"></i> Upgrade Plan
+          </a>
+        </div>
+        {% elif quota_status.members.is_warning %}
+        <div class="alert alert-warning shadow-sm border-0 d-flex align-items-center justify-content-between flex-wrap p-3 mb-4 rounded-xl" style="border-left: 5px solid #f59e0b !important; background: #fffbeb; border-radius: 12px;">
+          <div class="d-flex align-items-center mb-2 mb-md-0">
+            <i class="mdi mdi-alert text-warning mr-2" style="font-size: 22px;"></i>
+            <div class="small text-dark">
+              <strong>Capacity Notice:</strong> You have used <strong>{{ quota_status.members.current }} of {{ quota_status.members.display_max }}</strong> member slots ({{ quota_status.members.percent }}%). Consider upgrading soon.
+            </div>
+          </div>
+          <a href="{% url 'settings:my_subscription' %}" class="btn btn-warning btn-sm font-weight-bold px-3 rounded-pill text-dark">
+            Review Plans
+          </a>
+        </div>
+        {% endif %}
+
         <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
           {% csrf_token %}
 
@@ -227,8 +256,14 @@
             </div>
           </fieldset>
 
-          <div class="d-flex justify-content-end">
-            <button type="submit" class="btn btn-primary me-2">Submit</button>
+          <div class="d-flex justify-content-end align-items-center">
+            {% if quota_limit_reached %}
+              <span class="text-danger small font-weight-bold mr-3 me-3"><i class="mdi mdi-alert-circle"></i> Registration locked (Quota Full)</span>
+              <button type="button" class="btn btn-secondary me-2 mr-2" disabled title="Member quota full">Submit Locked</button>
+              <a href="{% url 'settings:my_subscription' %}" class="btn btn-danger me-2 mr-2"><i class="mdi mdi-crown"></i> Upgrade Plan</a>
+            {% else %}
+              <button type="submit" class="btn btn-primary me-2 mr-2 font-weight-bold px-4">Submit</button>
+            {% endif %}
             <a href="{% url 'member_list' %}" class="btn btn-light">Cancel</a>
           </div>
         </form>

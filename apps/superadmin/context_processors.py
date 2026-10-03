@@ -197,6 +197,14 @@ def gym_details(request):
             unread_count = 0
             recent_notifs = []
 
+    gym_quota = None
+    if gym and (user_info.get('is_gym_admin') or user_info.get('is_subadmin')):
+        try:
+            from .subscription_utils import get_gym_quota_status
+            gym_quota = get_gym_quota_status(gym)
+        except Exception:
+            gym_quota = None
+
     try:
         from .models import SystemSetting
         system_setting = SystemSetting.get_settings()
@@ -205,6 +213,7 @@ def gym_details(request):
 
     context = {
         'gym': gym,
+        'gym_quota': gym_quota,
         'system_setting': system_setting,
         'unread_notifications_count': unread_count,
         'recent_notifications': recent_notifs,

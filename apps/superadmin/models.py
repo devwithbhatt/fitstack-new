@@ -339,4 +339,33 @@ class BackupLog(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.filename} ({self.get_backup_type_display()}) - {self.file_size_display}"
+        return f"{self.filename} ({self.get_backup_type_display()}) - {self.file_size_display}"
+
+
+class SaaSUpgradeRequest(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending Review'),
+        ('contacted', 'Contacted / In Discussion'),
+        ('approved', 'Approved & Assigned'),
+        ('declined', 'Declined / Cancelled'),
+    ]
+
+    gym = models.ForeignKey(Gym, on_delete=models.CASCADE, related_name='upgrade_requests')
+    requested_by = models.ForeignKey("auth.User", on_delete=models.SET_NULL, null=True, blank=True)
+    current_plan = models.ForeignKey(SubscriptionPlan, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    target_plan = models.ForeignKey(SubscriptionPlan, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    contact_phone = models.CharField(max_length=25, blank=True, null=True)
+    reason = models.CharField(max_length=100, blank=True, null=True, default='Quota Limit Reached')
+    message = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    admin_notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        plan_name = self.target_plan.name if self.target_plan else 'Custom Upgrade'
+        return f"{self.gym.name} - Request: {plan_name} ({self.get_status_display()})"
+

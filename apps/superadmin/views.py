@@ -21,7 +21,7 @@ from .forms import GymForm, GymAdminForm, SubscriptionPlanForm
 from .models import (
     Gym, GymAdmin, SubscriptionPlan, GymSubscription,
     PlatformNotification, NotificationUserStatus,
-    SystemSetting, BackupLog
+    SystemSetting, BackupLog, SaaSUpgradeRequest
 )
 from . import backup_service
 from . import email_service
@@ -165,6 +165,8 @@ def dashboard(request):
         plan_dist_labels = ['No Active Subscriptions']
         plan_dist_counts = [0]
 
+    pending_upgrade_requests = SaaSUpgradeRequest.objects.filter(status='pending').select_related('gym', 'current_plan', 'target_plan').order_by('-created_at')
+
     context = {
         'total_gyms': total_gyms,
         'active_gyms': active_gyms,
@@ -178,6 +180,8 @@ def dashboard(request):
         'recent_transactions': recent_transactions,
         'recent_inquiries': recent_inquiries,
         'unread_inquiries_count': unread_inquiries_count,
+        'pending_upgrade_requests': pending_upgrade_requests,
+        'pending_upgrade_count': pending_upgrade_requests.count(),
         'months_labels_json': json.dumps(months_labels),
         'revenue_chart_data_json': json.dumps(revenue_chart_data),
         'plan_dist_labels_json': json.dumps(plan_dist_labels),

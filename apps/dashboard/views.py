@@ -14,6 +14,8 @@ from apps.billing.models import Payment
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from apps.login.decorators import custom_permission_required
+from apps.superadmin.subscription_utils import get_gym_quota_status
+from apps.superadmin.models import SubscriptionPlan
 
 
 @never_cache
@@ -210,6 +212,8 @@ def dashboard(request):
         'total_recent_payments': total_recent_payments,
         'today_birthdays': today_birthdays,
         'upcoming_birthdays': upcoming_birthdays_list,
+        'gym_quota': get_gym_quota_status(gym),
+        'available_upgrade_plans': SubscriptionPlan.objects.filter(is_active=True).order_by('price'),
     }
     return render(request, "dashboard.html", context)
 

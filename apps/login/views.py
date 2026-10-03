@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 from .models import SubAdmin, ROLE_CHOICES
 from .models import SubAdminPermission
 from apps.superadmin.email_service import send_password_reset_email, send_password_changed_email
+from apps.superadmin.subscription_utils import check_resource_quota, get_gym_quota_status
 
 
 def gym_admin_required(view_func):
@@ -424,7 +425,13 @@ def add_gym_subadmin(request):
         if gym_admin:
             gym = gym_admin.gym
 
+    can_add, quota_error, quota_status = check_resource_quota(gym, 'admin')
+
     if request.method == 'POST':
+        if not can_add:
+            messages.error(request, quota_error)
+            return redirect('view_subadmins')
+
         # Personal Information
         full_name = request.POST.get('full_name') or request.POST.get('name', '').strip()
         email = request.POST.get('email', '').strip()
@@ -489,7 +496,10 @@ def add_gym_subadmin(request):
         'app_permissions': app_permissions,
         'module_list': module_list,
         'ROLE_CHOICES': ROLE_CHOICES,
-        'assigned_permissions': []
+        'assigned_permissions': [],
+        'quota_status': quota_status,
+        'quota_limit_reached': not can_add,
+        'quota_error': quota_error,
     }
     return render(request, 'login/add_gym_subadmin.html', context)
 
