@@ -2214,10 +2214,31 @@ def restore_backup_action(request):
         messages.error(request, "No valid backup file was provided for restoration.")
         return redirect('superadmin:backup_manager')
 
+    current_user_id = request.user.id if request.user.is_authenticated else None
+
     # Execute restore
     success, message = backup_service.restore_backup(filepath, user=request.user)
 
     if success:
+        # Crucial Session Fix:
+        # When a full database is restored, the `django_session` table is replaced.
+        # The user's active session key does not exist in the newly restored database,
+        # which causes Django's SessionMiddleware to raise SessionInterrupted on response.
+        # By calling request.session.save(must_create=True), we ensure the session is
+        # safely inserted into the restored database table.
+        if current_user_id:
+            try:
+                from django.contrib.auth.models import User
+                if User.objects.filter(id=current_user_id).exists():
+                    request.session.save(must_create=True)
+                else:
+                    request.session.cycle_key()
+            except Exception:
+                try:
+                    request.session.cycle_key()
+                except Exception:
+                    pass
+
         messages.success(request, f"Restore Successful: {message}")
     else:
         messages.error(request, f"Restore Failed: {message}")

@@ -740,6 +740,21 @@ def restore_backup(filepath, user=None, target_gym_id=None):
                                 src.backup(dst)
                             dst.close()
                             src.close()
+
+                            # Close open Django connections to release cached handles
+                            from django.db import connection, connections
+                            connection.close()
+                            for conn in connections.all():
+                                try:
+                                    conn.close()
+                                except Exception:
+                                    pass
+
+                            # Automatically run pending migrations on restored database
+                            try:
+                                call_command('migrate', interactive=False)
+                            except Exception as mig_err:
+                                logger.warning(f"Post-restore migrate warning: {mig_err}")
                         finally:
                             if os.path.exists(temp_extract):
                                 os.remove(temp_extract)
@@ -820,6 +835,22 @@ def restore_backup(filepath, user=None, target_gym_id=None):
                 src.backup(dst)
             dst.close()
             src.close()
+
+            # Close open Django connections to release cached handles
+            from django.db import connection, connections
+            connection.close()
+            for conn in connections.all():
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+
+            # Automatically run pending migrations on restored database
+            try:
+                call_command('migrate', interactive=False)
+            except Exception as mig_err:
+                logger.warning(f"Post-restore migrate warning: {mig_err}")
+
             return True, "SQLite database restored successfully!"
 
     except Exception as e:
