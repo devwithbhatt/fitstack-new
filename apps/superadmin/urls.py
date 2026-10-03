@@ -58,4 +58,4 @@ urlpatterns = [
     path('backups/delete/<int:backup_id>/', views.delete_backup_action, name='delete_backup'),
     path('backups/inspect/', views.inspect_backup_api, name='inspect_backup_api'),
     path('backups/restore/', views.restore_backup_action, name='restore_backup'),
-]
+]
