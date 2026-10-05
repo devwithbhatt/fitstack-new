@@ -205,11 +205,51 @@ def gym_details(request):
         except Exception:
             gym_quota = None
 
+    system_setting = None
     try:
         from .models import SystemSetting
         system_setting = SystemSetting.get_settings()
     except Exception:
         system_setting = None
+
+    current_member = None
+    current_trainer = None
+    topbar_qr_data_uri = None
+    topbar_verify_url = None
+
+    if hasattr(request, 'user') and request.user.is_authenticated:
+        if user_info.get('is_member'):
+            current_member = getattr(request.user, 'member_profile', None)
+            if current_member and current_member.member_id:
+                try:
+                    from django.urls import reverse
+                    import qrcode, io, base64
+                    topbar_verify_url = request.build_absolute_uri(reverse('member_portal:verify_pass', args=[current_member.member_id]))
+                    qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_M, box_size=5, border=1)
+                    qr.add_data(topbar_verify_url)
+                    qr.make(fit=True)
+                    img = qr.make_image(fill_color="#0a192f", back_color="white")
+                    buf = io.BytesIO()
+                    img.save(buf, format="PNG")
+                    topbar_qr_data_uri = f"data:image/png;base64,{base64.b64encode(buf.getvalue()).decode('utf-8')}"
+                except Exception:
+                    pass
+        elif user_info.get('is_trainer'):
+            current_trainer = getattr(request.user, 'trainer_profile', None)
+            if current_trainer and current_trainer.trainer_id:
+                try:
+                    from django.urls import reverse
+                    import qrcode, io, base64
+                    topbar_verify_url = request.build_absolute_uri(reverse('trainer_portal:verify_pass', args=[current_trainer.trainer_id]))
+                    qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_M, box_size=5, border=1)
+                    qr.add_data(topbar_verify_url)
+                    qr.make(fit=True)
+                    img = qr.make_image(fill_color="#0a192f", back_color="white")
+                    buf = io.BytesIO()
+                    img.save(buf, format="PNG")
+                    topbar_qr_data_uri = f"data:image/png;base64,{base64.b64encode(buf.getvalue()).decode('utf-8')}"
+                except Exception:
+                    pass
 
     context = {
         'gym': gym,
@@ -217,6 +257,10 @@ def gym_details(request):
         'system_setting': system_setting,
         'unread_notifications_count': unread_count,
         'recent_notifications': recent_notifs,
+        'current_member': current_member,
+        'current_trainer': current_trainer,
+        'topbar_qr_data_uri': topbar_qr_data_uri,
+        'topbar_verify_url': topbar_verify_url,
         **user_info,
     }
     return context

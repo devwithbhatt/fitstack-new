@@ -50,27 +50,17 @@
       </li>
       {% endif %}
 
-      <!-- QR Code Pay / Check-In -->
+      <!-- QR Code Attendance & Turnstile Pass -->
       <li class="nav-item d-flex align-items-center px-1">
-        {% if payment_settings.qr_code %}
-          <a class="nav-link p-0 d-flex align-items-center topbar-nav-icon-link"
-             href="#"
-             title="Scan & Pay QR"
-             data-bs-toggle="modal"
-             data-bs-target="#imagePreviewModal"
-             data-toggle="modal"
-             data-target="#imagePreviewModal"
-             onclick="showImage('{{ payment_settings.qr_code.url }}')">
-              <i class="mdi mdi-qrcode-scan" style="font-size: 20px; color: #ffffff;"></i>
-          </a>
-        {% else %}
-          <a class="nav-link p-0 d-flex align-items-center topbar-nav-icon-link"
-             href="#"
-             title="QR code not uploaded"
-             onclick="alert('QR code not uploaded yet'); return false;">
-              <i class="mdi mdi-qrcode-scan" style="font-size: 20px; color: #ffffff; opacity: 0.9;"></i>
-          </a>
-        {% endif %}
+        <a class="nav-link p-0 d-flex align-items-center topbar-nav-icon-link"
+           href="javascript:void(0);"
+           title="Attendance QR & Turnstile Pass"
+           data-bs-toggle="modal"
+           data-bs-target="#topbarAttendanceQrModal"
+           data-toggle="modal"
+           data-target="#topbarAttendanceQrModal">
+            <i class="mdi mdi-qrcode-scan" style="font-size: 20px; color: #ffffff;"></i>
+        </a>
       </li>
 
       <!-- Notification Bell Drawer Trigger -->
@@ -367,3 +357,4 @@
 </style>
 
 {% include 'includes/notification_drawer.html' %}
+{% include 'includes/topbar_qr_modal.html' %}

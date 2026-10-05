@@ -1,213 +1,553 @@
-{% extends 'base_public.html' %} {% load static %} {% block title %}Scan & Mark
-Attendance{% endblock %} {% block content %}
-<div
-  class="card shadow border-0 rounded-xl overflow-hidden mx-auto mt-4 mb-5"
-  style="max-width: 420px; border-radius: 16px"
->
-  <div class="card-body p-4 p-sm-5">
-    <div class="text-center mb-4 pb-2">
-      <div
-        class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3 mx-auto"
-        style="
-          width: 90px;
-          height: 90px;
-          background: linear-gradient(135deg, #ffffff 0%, #f4f5f9 100%);
-          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
-          border: 3px solid #ffffff;
-        "
-      >
-        <img
-          src="{% if gym.logo %}{{ gym.logo.url }}{% else %}{% static 'images/logo.jpg' %}{% endif %}"
-          alt="local gym logo"
-          style="max-width: 65px; max-height: 65px; object-fit: contain"
-        />
-      </div>
-      <h4 class="font-weight-bold text-dark mb-1">{{ gym_name }}</h4>
-      <p class="text-muted font-size-sm mb-0">Welcome back! Please check in.</p>
+{% extends 'base_public.html' %}
+{% load static %}
+
+{% block title %}Turnstile Check-In Terminal - {{ gym_name }}{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --brand-primary: #1e40af;
+    --brand-secondary: #2563eb;
+    --brand-cyan: #06b6d4;
+    --brand-emerald: #10b981;
+    --card-bg: #ffffff;
+    --border-color: #e2e8f0;
+  }
+
+  .turnstile-card {
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(226, 232, 240, 0.8);
+    overflow: hidden;
+    max-width: 460px;
+    margin: 20px auto;
+    transition: all 0.3s ease;
+  }
+
+  /* Header Hero */
+  .turnstile-header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #2563eb 100%);
+    padding: 28px 24px;
+    color: #ffffff;
+    text-align: center;
+    position: relative;
+  }
+
+  .turnstile-logo-box {
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
+    background: #ffffff;
+    padding: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+    border: 3px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .turnstile-logo-box img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+
+  .turnstile-title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    margin-bottom: 4px;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+  }
+
+  .turnstile-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50px;
+    padding: 4px 12px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #93c5fd;
+  }
+
+  .live-dot {
+    width: 7px;
+    height: 7px;
+    background-color: var(--brand-emerald);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--brand-emerald);
+    animation: livePulse 2s infinite ease-in-out;
+  }
+
+  @keyframes livePulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(1.2); }
+  }
+
+  /* Navigation Tabs */
+  .terminal-tabs {
+    display: flex;
+    background: #f1f5f9;
+    padding: 6px;
+    border-radius: 14px;
+    margin: 20px 24px 12px 24px;
+    gap: 6px;
+  }
+
+  .terminal-tab-btn {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #64748b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+  }
+
+  .terminal-tab-btn.active {
+    background: #ffffff;
+    color: var(--brand-secondary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Scanner Container */
+  .camera-scanner-wrapper {
+    padding: 8px 24px 24px 24px;
+  }
+
+  #reader {
+    width: 100% !important;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 2px dashed #cbd5e1;
+    background: #0f172a;
+    min-height: 280px;
+  }
+
+  #reader video {
+    border-radius: 14px;
+    object-fit: cover !important;
+  }
+
+  .scanner-guide {
+    text-align: center;
+    margin-top: 14px;
+    font-size: 0.82rem;
+    color: #64748b;
+  }
+
+  /* Form Elements */
+  .manual-form-wrapper {
+    padding: 8px 24px 24px 24px;
+  }
+
+  .form-label-custom {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #475569;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .input-custom {
+    height: 48px;
+    border-radius: 12px;
+    border: 1.5px solid #e2e8f0;
+    font-size: 0.95rem;
+    padding: 10px 16px;
+    background-color: #f8fafc;
+    transition: all 0.2s ease;
+    width: 100%;
+  }
+
+  .input-custom:focus {
+    border-color: var(--brand-secondary);
+    background-color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    outline: none;
+  }
+
+  .btn-checkin-submit {
+    background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.03em;
+    padding: 14px;
+    width: 100%;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .btn-checkin-submit:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.4);
+    color: #ffffff;
+  }
+
+  /* Scan Success Pulse Overlay */
+  .scan-success-pill {
+    display: none;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 16px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.88rem;
+  }
+</style>
+
+<!-- html5-qrcode Library for in-browser high-performance camera QR scanner -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+<div class="turnstile-card">
+  <!-- Top Brand Header -->
+  <div class="turnstile-header">
+    <div class="turnstile-logo-box">
+      <img
+        src="{% if gym.logo %}{{ gym.logo.url }}{% else %}{% static 'images/logo.jpg' %}{% endif %}"
+        alt="{{ gym_name }}"
+      />
+    </div>
+    <h3 class="turnstile-title">{{ gym_name }}</h3>
+    <div class="turnstile-status-pill">
+      <span class="live-dot"></span>
+      Turnstile Terminal &bull; Check-In
+    </div>
+  </div>
+
+  <!-- Mode Selector Tabs -->
+  <div class="terminal-tabs">
+    <button type="button" class="terminal-tab-btn active" id="tabScanBtn" onclick="switchCheckinMode('scan')">
+      <i class="mdi mdi-qrcode-scan" style="font-size: 16px;"></i> Scan QR Pass
+    </button>
+    <button type="button" class="terminal-tab-btn" id="tabManualBtn" onclick="switchCheckinMode('manual')">
+      <i class="mdi mdi-keyboard-outline" style="font-size: 16px;"></i> Manual Entry
+    </button>
+  </div>
+
+  <!-- Scan Success Alert (Shown upon successful camera decode) -->
+  <div id="scanSuccessAlert" class="scan-success-pill mx-4">
+    <i class="mdi mdi-check-circle text-success mr-1"></i> Pass Detected! Checking in...
+  </div>
+
+  <!-- TAB 1: LIVE CAMERA QR SCANNER -->
+  <div id="scannerSection" class="camera-scanner-wrapper">
+    <div id="reader"></div>
+
+    <div class="scanner-guide">
+      <p class="mb-1 text-dark font-weight-bold" style="font-size: 0.88rem;">
+        <i class="mdi mdi-camera-outline mr-1 text-primary"></i> Hold your Coach or Member Pass in front of camera
+      </p>
+      <span class="text-muted" style="font-size: 0.78rem;">Turnstile automatically verifies and logs your attendance</span>
     </div>
 
-    <form method="post">
+    <!-- Hidden form submitted automatically upon camera scan -->
+    <form id="autoScanForm" method="post" style="display: none;">
       {% csrf_token %}
-      <div class="form-group mb-4">
-        <label class="font-weight-semibold text-muted small text-uppercase mb-2"
-          >Member / Trainer Details</label
-        >
-        <div
-          class="input-group input-group-merge shadow-sm"
-          style="border-radius: 10px; overflow: hidden"
-        >
-          <div class="input-group-prepend">
-            <span class="input-group-text bg-white border-right-0">
-              <i class="mdi mdi-cellphone-iphone text-primary mdi-18px"></i>
-            </span>
-          </div>
+      <input type="hidden" name="reg_number" id="auto_reg_number">
+      {% if gym.attendance_code_required %}
+        <input type="hidden" name="attendance_code" id="auto_attendance_code" value="{{ gym.attendance_code }}">
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- TAB 2: MANUAL ENTRY FORM -->
+  <div id="manualSection" class="manual-form-wrapper" style="display: none;">
+    <form method="post" id="manualCheckinForm">
+      {% csrf_token %}
+      
+      <div class="form-group mb-3">
+        <label class="form-label-custom">Member ID / Coach ID / Registered Phone</label>
+        <div class="position-relative">
           <input
             type="text"
-            class="form-control form-control-lg border-left-0 px-2 bg-white"
+            class="input-custom"
             id="reg_number"
             name="reg_number"
-            placeholder="Registered ID or Phone"
-            value="{{ form_data.reg_number }}"
+            placeholder="e.g. MEM-2026-001 or 9876543210"
+            value="{{ form_data.reg_number|default:'' }}"
             required
-            style="font-size: 1rem"
+            autocomplete="off"
           />
         </div>
       </div>
 
       {% if gym.attendance_code_required %}
-      <div class="form-group mb-4">
-        <label class="font-weight-semibold text-muted small text-uppercase mb-2"
-          >Verification</label
-        >
-        <div
-          class="input-group input-group-merge shadow-sm"
-          style="border-radius: 10px; overflow: hidden"
-        >
-          <div class="input-group-prepend">
-            <span class="input-group-text bg-white border-right-0">
-              <i class="mdi mdi-lock-outline text-primary mdi-18px"></i>
-            </span>
-          </div>
-          <input
-            type="text"
-            class="form-control form-control-lg border-left-0 px-2 bg-white"
-            id="attendance_code"
-            name="attendance_code"
-            placeholder="4-Digit Code"
-            value="{{ form_data.attendance_code }}"
-            required
-            maxlength="4"
-            pattern="\d{4}"
-            style="font-size: 1rem; letter-spacing: 2px"
-          />
+      <div class="form-group mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <label class="form-label-custom mb-0">Turnstile 4-Digit Passcode</label>
+          <span class="text-muted" style="font-size: 0.72rem;">Shown on entrance screen</span>
         </div>
-        <small class="text-muted mt-1 d-block text-center"
-          >Check the premises for today's code.</small
-        >
+        <input
+          type="text"
+          class="input-custom"
+          id="attendance_code"
+          name="attendance_code"
+          placeholder="Enter 4-digit code"
+          value="{{ form_data.attendance_code|default:'' }}"
+          required
+          maxlength="4"
+          pattern="\d{4}"
+          style="letter-spacing: 4px; font-weight: 700; font-family: monospace;"
+        />
       </div>
       {% endif %}
 
-      <button
-        type="submit"
-        class="btn btn-primary btn-lg btn-block font-weight-bold shadow-sm text-uppercase py-3 mt-2"
-        style="border-radius: 10px; letter-spacing: 1px"
-      >
-        <i class="mdi mdi-check-circle-outline mr-1"></i> Check In Now
+      <button type="submit" class="btn-checkin-submit mt-3">
+        <i class="mdi mdi-door-open" style="font-size: 18px;"></i> Complete Check-In
       </button>
     </form>
+  </div>
 
-    {% if members %}
-    <!-- Member Selection Modal -->
-    <div
-      class="modal fade"
-      id="memberSelectionModal"
-      tabindex="-1"
-      role="dialog"
-      aria-labelledby="memberSelectionModalLabel"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content shadow-lg border-0" style="border-radius: 16px">
-          <div class="modal-header border-0 pb-0">
-            <h5 class="modal-title font-weight-bold" id="memberSelectionModalLabel">
-              Multiple Members Found
-            </h5>
-          </div>
-          <form method="post">
-            {% csrf_token %}
-            <input type="hidden" name="reg_number" value="{{ reg_number }}" />
-            {% if gym.attendance_code_required %}
-            <input
-              type="hidden"
-              name="attendance_code"
-              value="{{ attendance_code }}"
-            />
-            {% endif %}
-            <div class="modal-body">
-              <p class="text-muted">
-                Please select the correct member to check in.
-              </p>
-              <div class="list-group list-group-flush">
-                {% for member in members %}
-                <label
-                  for="member{{ member.id }}"
-                  class="list-group-item list-group-item-action border-0 px-0"
-                >
-                  <div class="d-flex w-100 align-items-center">
-                    {% comment %} <img
-                      src="{% if member.photo %}{{ member.photo.url }}{% else %}{% static 'images/faces/member_dp.jpg' %}{% endif %}"
-                      alt="Member"
-                      class="rounded-circle mr-3"
-                      style="width: 48px; height: 48px; object-fit: cover"
-                    /> {% endcomment %}
-                    <div class="flex-grow-1">
-                      <h6 class="mb-0 font-weight-bold">{{ member.name }}</h6>
-                      <small class="text-muted">{{ member.member_id }}</small>
-                    </div>
-                    <input
-                      class="form-check-input"
-                      type="radio"
-                      name="member_id"
-                      id="member{{ member.id }}"
-                      value="{{ member.id }}"
-                      {% if forloop.first %}checked{% endif %}
-                      style="position: static; margin-left: 1rem"
-                    />
-                  </div>
-                </label>
-                {% endfor %}
-              </div>
-            </div>
-            <div class="modal-footer border-0">
-              <button type="submit" class="btn btn-primary btn-block">
-                Confirm & Check In
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-    {% endif %}
-
-    <div class="text-center mt-4 pt-3 border-top">
-      <span class="text-muted small">Having trouble?</span>
-      <a
-        href="#"
-        class="text-primary font-weight-bold ml-1 text-decoration-none small"
-        onclick="
-          event.preventDefault();
-          Swal.fire({
-            title: 'Need Assistance?',
-            text: 'Please contact the gym staff at the front desk for help with your check-in.',
-            icon: 'info',
-            confirmButtonColor: '#4b49ac',
-            confirmButtonText: 'Got it!',
-            customClass: {
-              popup: 'rounded-xl shadow-lg border-0',
-            },
-          });
-        "
-      >
-        Contact Staff
-      </a>
-    </div>
+  <!-- Footer Help Link -->
+  <div class="text-center py-3 border-top" style="background: #f8fafc; font-size: 0.8rem;">
+    <span class="text-muted">Need front-desk assistance?</span>
+    <a href="javascript:void(0);" class="text-primary font-weight-bold ml-1" onclick="showHelpModal()">
+      Contact Staff
+    </a>
   </div>
 </div>
 
-<!-- SweetAlert2 Library -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-{% endblock %} {% block extra_js %}
+{% if members %}
+<!-- Member Selection Modal (when multiple members share same phone number) -->
+<div class="modal fade" id="memberSelectionModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document" style="max-width: 400px;">
+    <div class="modal-content shadow-lg border-0" style="border-radius: 20px; overflow: hidden;">
+      <div class="modal-header border-0 pb-0 pt-4 px-4">
+        <h5 class="modal-title font-weight-bold text-dark">Multiple Members Found</h5>
+      </div>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="reg_number" value="{{ reg_number }}" />
+        {% if gym.attendance_code_required %}
+          <input type="hidden" name="attendance_code" value="{{ attendance_code }}" />
+        {% endif %}
+        <div class="modal-body px-4 py-3">
+          <p class="text-muted small mb-3">Please select the profile checking in today:</p>
+          <div class="list-group list-group-flush">
+            {% for member in members %}
+            <label for="member{{ member.id }}" class="list-group-item list-group-item-action border rounded-12 mb-2 p-3 d-flex align-items-center justify-content-between cursor-pointer" style="border-radius: 12px;">
+              <div>
+                <div class="font-weight-bold text-dark">{{ member.name }}</div>
+                <div class="text-muted small">{{ member.member_id }}</div>
+              </div>
+              <input class="form-check-input" type="radio" name="member_id" id="member{{ member.id }}" value="{{ member.id }}" {% if forloop.first %}checked{% endif %} style="position: static;">
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="modal-footer border-0 px-4 pb-4">
+          <button type="submit" class="btn btn-primary btn-block py-2.5 font-weight-bold" style="border-radius: 10px;">
+            Confirm & Check In
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    {% if members %}
-    var memberModal = new bootstrap.Modal(
-      document.getElementById("memberSelectionModal"),
-      {
-        keyboard: false,
-        backdrop: "static",
+  let html5QrcodeScanner = null;
+  let isScanning = false;
+
+  // Audio Chime synthesizer for turnstile sound effect
+  function playTurnstileChime() {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+      osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.12); // A5
+      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.25);
+    } catch(e) {
+      // Audio not supported or blocked
+    }
+  }
+
+  // Switch between Camera Scan and Manual Check-in
+  function switchCheckinMode(mode) {
+    const tabScan = document.getElementById('tabScanBtn');
+    const tabManual = document.getElementById('tabManualBtn');
+    const scannerSec = document.getElementById('scannerSection');
+    const manualSec = document.getElementById('manualSection');
+
+    if (mode === 'scan') {
+      tabScan.classList.add('active');
+      tabManual.classList.remove('active');
+      scannerSec.style.display = 'block';
+      manualSec.style.display = 'none';
+      startCameraScanner();
+    } else {
+      tabManual.classList.add('active');
+      tabScan.classList.remove('active');
+      manualSec.style.display = 'block';
+      scannerSec.style.display = 'none';
+      stopCameraScanner();
+      document.getElementById('reg_number').focus();
+    }
+  }
+
+  // Parse scanned QR string (supports raw ID, phone number, or URL query parameters)
+  function parseScannedCode(decodedText) {
+    if (!decodedText) return null;
+    let clean = decodedText.trim();
+    
+    // If it's a URL
+    if (clean.startsWith('http://') || clean.startsWith('https://')) {
+      try {
+        const url = new URL(clean);
+        // Look for parameters: id, reg_number, member_id, trainer_id
+        if (url.searchParams.get('id')) return url.searchParams.get('id');
+        if (url.searchParams.get('reg_number')) return url.searchParams.get('reg_number');
+        if (url.searchParams.get('member_id')) return url.searchParams.get('member_id');
+        if (url.searchParams.get('trainer_id')) return url.searchParams.get('trainer_id');
+      } catch (err) {
+        // Fallback
       }
-    );
-    memberModal.show();
+    }
+    return clean;
+  }
+
+  // Handle successful QR scan
+  function onScanSuccess(decodedText, decodedResult) {
+    if (!isScanning) return;
+    const resolvedId = parseScannedCode(decodedText);
+    if (!resolvedId) return;
+
+    isScanning = false;
+    playTurnstileChime();
+
+    // Show visual feedback
+    const alertEl = document.getElementById('scanSuccessAlert');
+    if (alertEl) {
+      alertEl.innerHTML = `<i class="mdi mdi-check-circle text-success mr-1"></i> Pass Verified: <strong>${resolvedId}</strong>. Checking in...`;
+      alertEl.style.display = 'block';
+    }
+
+    // Stop scanner
+    stopCameraScanner();
+
+    // Populate auto form and submit
+    const autoRegInput = document.getElementById('auto_reg_number');
+    const autoForm = document.getElementById('autoScanForm');
+    if (autoRegInput && autoForm) {
+      autoRegInput.value = resolvedId;
+      setTimeout(() => {
+        autoForm.submit();
+      }, 400);
+    }
+  }
+
+  function startCameraScanner() {
+    if (html5QrcodeScanner) return; // already initialized
+    
+    try {
+      html5QrcodeScanner = new Html5Qrcode("reader");
+      const config = { fps: 10, qrbox: { width: 220, height: 220 } };
+
+      html5QrcodeScanner.start(
+        { facingMode: "environment" },
+        config,
+        onScanSuccess
+      ).then(() => {
+        isScanning = true;
+      }).catch(err => {
+        console.warn("Unable to start front/back camera with environment mode, falling back:", err);
+        // Fallback to default user camera
+        html5QrcodeScanner.start(
+          { facingMode: "user" },
+          config,
+          onScanSuccess
+        ).then(() => {
+          isScanning = true;
+        }).catch(e => {
+          console.error("Camera access failed:", e);
+          document.getElementById('reader').innerHTML = `
+            <div style="padding: 30px 20px; text-align: center; color: #94a3b8;">
+              <i class="mdi mdi-camera-off" style="font-size: 3rem; color: #f87171;"></i>
+              <div class="mt-2 font-weight-bold text-white">Camera Access Not Allowed</div>
+              <p class="small text-muted mt-1">Please allow camera permissions or use Manual Entry tab.</p>
+              <button type="button" class="btn btn-sm btn-outline-light mt-2" onclick="switchCheckinMode('manual')">
+                Switch to Manual Entry
+              </button>
+            </div>
+          `;
+        });
+      });
+    } catch(err) {
+      console.error("html5Qrcode init error:", err);
+    }
+  }
+
+  function stopCameraScanner() {
+    if (html5QrcodeScanner) {
+      isScanning = false;
+      html5QrcodeScanner.stop().then(() => {
+        html5QrcodeScanner.clear();
+        html5QrcodeScanner = null;
+      }).catch(err => {
+        html5QrcodeScanner = null;
+      });
+    }
+  }
+
+  function showHelpModal() {
+    Swal.fire({
+      title: 'Front-Desk Assistance',
+      text: 'Please show your member/coach credentials to the front desk reception staff for turnstile clearance.',
+      icon: 'info',
+      confirmButtonColor: '#1e40af',
+      confirmButtonText: 'Understood'
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    // Start camera scanner by default
+    startCameraScanner();
+
+    {% if members %}
+    var memberModalEl = document.getElementById("memberSelectionModal");
+    if (memberModalEl) {
+      var memberModal = new bootstrap.Modal(memberModalEl, { keyboard: false, backdrop: "static" });
+      memberModal.show();
+    }
     {% endif %}
   });
 </script>
