@@ -1,7 +1,7 @@
 {% extends 'base_public.html' %}
 {% load static %}
 
-{% block title %}Turnstile Check-In Terminal - {{ gym_name }}{% endblock %}
+{% block title %}Live Attendance Scanner - {{ gym_name }}{% endblock %}
 
 {% block col_class %}col-12 col-xl-11 col-xxl-10 mx-auto px-2 px-sm-3{% endblock col_class %}
 
@@ -665,7 +665,7 @@
         <h2 class="terminal-title">{{ gym_name }}</h2>
         <div class="terminal-badge-live">
           <span class="live-dot-pulse"></span>
-          Turnstile Terminal &bull; Station #1
+          Attendance Scanner &bull; Station #1
         </div>
       </div>
     </div>
@@ -706,7 +706,7 @@
           <div class="panel-header flex-wrap" style="gap: 8px;">
             <div class="panel-title">
               <i class="mdi mdi-camera-iris text-primary" style="font-size: 20px;"></i>
-              <span>Live Turnstile Scanner</span>
+              <span>Live Attendance Scanner</span>
             </div>
             <div class="d-flex align-items-center gap-2">
               <select id="cameraSelect" class="form-control form-control-sm border text-truncate" onchange="changeCameraDevice(this.value)" style="max-width: 170px; font-size: 11px; height: 32px; border-radius: 8px;" title="Select Camera Source">
@@ -808,7 +808,7 @@
           <div class="panel-header">
             <div class="panel-title">
               <i class="mdi mdi-account-check-outline text-primary" style="font-size: 20px;"></i>
-              <span>Turnstile Attendance Status</span>
+              <span>Live Attendance Status</span>
             </div>
             <span class="badge-soft badge-soft-primary px-2.5 py-1" style="font-size: 11px;" id="panelStatusBadge">
               WAITING FOR SCAN
@@ -824,9 +824,9 @@
               <div class="idle-radar-ring">
                 <i class="mdi mdi-qrcode-scan idle-icon"></i>
               </div>
-              <h3 class="idle-heading">Ready For Turnstile Check-In</h3>
+              <h3 class="idle-heading">Ready For Attendance Scan</h3>
               <p class="idle-subtext">
-                Present your Coach Pass or Membership QR Code to the camera on the left. The turnstile will instantly verify your pass and log your attendance.
+                Present your Coach Pass or Membership QR Code to the camera on the left. The scanner will instantly verify your pass and log your attendance.
               </p>
 
               <!-- Recent Today Check-Ins Feed -->
@@ -915,7 +915,7 @@
                   <div class="detail-tile-value" id="attendeePhone">+91 --</div>
                 </div>
                 <div class="detail-tile">
-                  <div class="detail-tile-label">Turnstile Check-In Time</div>
+                  <div class="detail-tile-label">Attendance Check-In Time</div>
                   <div class="detail-tile-value text-success" id="attendeeTime">--:-- --</div>
                 </div>
               </div>
