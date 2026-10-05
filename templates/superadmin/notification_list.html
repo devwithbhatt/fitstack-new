@@ -35,6 +35,9 @@
                         <a href="?status=popups{% if q %}&q={{ q }}{% endif %}" class="btn btn-sm mr-2 mb-1 {% if status_filter == 'popups' %}btn-info font-weight-bold shadow-sm{% else %}btn-outline-info{% endif %}">
                             <i class="mdi mdi-window-maximize mr-1"></i> Interactive Popups
                         </a>
+                        <a href="?status=admin_popups{% if q %}&q={{ q }}{% endif %}" class="btn btn-sm mr-2 mb-1 {% if status_filter == 'admin_popups' %}btn-warning font-weight-bold shadow-sm text-dark{% else %}btn-outline-warning text-dark{% endif %}" style="{% if status_filter != 'admin_popups' %}border-color: #f59e0b; color: #b45309 !important;{% endif %}">
+                            <i class="mdi mdi-account-star mr-1"></i> Admin Created Popups
+                        </a>
                         <a href="?status=inactive{% if q %}&q={{ q }}{% endif %}" class="btn btn-sm mb-1 {% if status_filter == 'inactive' %}btn-dark font-weight-bold shadow-sm{% else %}btn-outline-dark{% endif %}">
                             Inactive / Expired
                         </a>
@@ -93,6 +96,11 @@
                                     <i class="mdi mdi-clock-outline mr-1"></i>{{ n.created_at|date:"d M Y, h:i A" }}
                                     {% if n.expires_at %}
                                         | <span class="text-warning"><i class="mdi mdi-timer-sand mr-1"></i>Expires: {{ n.expires_at|date:"d M Y" }}</span>
+                                    {% endif %}
+                                    {% if n.created_by %}
+                                        | <span class="text-primary font-weight-bold"><i class="mdi mdi-account-check mr-1"></i>By {{ n.created_by.username }}</span>
+                                    {% else %}
+                                        | <span class="text-muted"><i class="mdi mdi-robot-outline mr-1"></i>System</span>
                                     {% endif %}
                                 </div>
                             </td>
@@ -186,8 +194,20 @@
                         <tr>
                             <td colspan="7" class="text-center py-5 text-muted">
                                 <i class="mdi mdi-bullhorn-outline d-block text-muted mb-2" style="font-size: 48px;"></i>
-                                <h6 class="font-weight-bold">No Notifications Found</h6>
-                                <p class="small mb-3">Broadcast platform-wide announcements and interactive popups anytime.</p>
+                                <h6 class="font-weight-bold">
+                                    {% if status_filter == 'admin_popups' %}
+                                        No Admin Created Popups Found
+                                    {% else %}
+                                        No Notifications Found
+                                    {% endif %}
+                                </h6>
+                                <p class="small mb-3">
+                                    {% if status_filter == 'admin_popups' %}
+                                        No custom broadcast popups have been created by an admin yet.
+                                    {% else %}
+                                        Broadcast platform-wide announcements and interactive popups anytime.
+                                    {% endif %}
+                                </p>
                                 <a href="{% url 'superadmin:create_notification' %}" class="btn btn-primary btn-sm px-3">
                                     <i class="mdi mdi-plus mr-1"></i> Compose Notification
                                 </a>

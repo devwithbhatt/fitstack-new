@@ -854,6 +854,8 @@ def notification_list(request):
         notifications = notifications.filter(is_active=False)
     elif status_filter == 'popups':
         notifications = notifications.filter(show_popup=True)
+    elif status_filter in ['admin_popups', 'admin_created', 'admin']:
+        notifications = notifications.filter(created_by__isnull=False, show_popup=True)
 
     # Search filter
     q = request.GET.get('q', '').strip()
