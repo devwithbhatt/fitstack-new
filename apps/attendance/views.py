@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
 from django.urls import reverse
 from django.utils import timezone
 from django.contrib import messages
@@ -115,8 +116,73 @@ def trainer_attendance(request):
     return render(request, 'attendance/trainer_attendance.html', context)
 
 
+def get_member_scan_data(member):
+    photo_url = '/static/images/member_dp.jpg'
+    if member.profile_picture:
+        try:
+            photo_url = member.profile_picture.url
+        except Exception:
+            photo_url = '/static/images/member_dp.jpg'
+
+    plan_title = 'Standard Membership'
+    valid_thru = 'Active'
+    try:
+        latest_mem = getattr(member, 'latest_membership', None)
+        if latest_mem:
+            if hasattr(latest_mem, 'plan') and latest_mem.plan:
+                plan_title = getattr(latest_mem.plan, 'name', str(latest_mem.plan))
+            if hasattr(latest_mem, 'get_end_date'):
+                end_d = latest_mem.get_end_date()
+                if end_d:
+                    valid_thru = end_d.strftime('%d %b %Y')
+    except Exception:
+        pass
+
+    return {
+        'type': 'member',
+        'badge': 'Member',
+        'name': member.name,
+        'id': member.member_id,
+        'phone': member.mobile_number,
+        'photo': photo_url,
+        'plan': plan_title,
+        'valid_thru': valid_thru,
+        'membership_status': getattr(member, 'current_status', 'Active'),
+        'time': timezone.localtime(timezone.now()).strftime('%I:%M:%S %p'),
+        'date': timezone.localtime(timezone.now()).strftime('%d %b %Y'),
+    }
+
+
+def get_trainer_scan_data(trainer):
+    photo_url = '/static/images/trainer_dp.png'
+    if trainer.photo:
+        try:
+            photo_url = trainer.photo.url
+        except Exception:
+            photo_url = '/static/images/trainer_dp.png'
+    spec = trainer.get_specialization_display() if hasattr(trainer, 'get_specialization_display') else str(trainer.specialization)
+    return {
+        'type': 'trainer',
+        'badge': 'Coach / Trainer',
+        'name': f"Coach {trainer.name}",
+        'id': trainer.trainer_id,
+        'phone': trainer.phone,
+        'photo': photo_url,
+        'plan': spec or 'Fitness Coach',
+        'valid_thru': 'Certified Staff' if trainer.is_active else 'Inactive Staff',
+        'membership_status': 'Active' if trainer.is_active else 'Inactive',
+        'time': timezone.localtime(timezone.now()).strftime('%I:%M:%S %p'),
+        'date': timezone.localtime(timezone.now()).strftime('%d %b %Y'),
+    }
+
+
 def scan_attendance(request, gym_id):
     gym = get_object_or_404(Gym, gym_id=gym_id)
+    is_ajax = (
+        request.headers.get('x-requested-with') == 'XMLHttpRequest' or
+        request.POST.get('is_ajax') == '1' or
+        'application/json' in request.META.get('HTTP_ACCEPT', '')
+    )
 
     if request.method == 'POST':
         reg_number = request.POST.get('reg_number', '').strip()
@@ -124,41 +190,93 @@ def scan_attendance(request, gym_id):
 
         if gym.attendance_code_required:
             if not all([reg_number, attendance_code]):
-                messages.error(request, 'All fields are required.')
+                err = 'All fields are required.'
+                if is_ajax:
+                    return JsonResponse({'status': 'error', 'message': err}, status=400)
+                messages.error(request, err)
                 return render(request, 'attendance/scan_attendance.html', {'gym': gym, 'gym_name': gym.name, 'form_data': request.POST})
 
             if gym.attendance_code != attendance_code:
-                messages.error(request, 'Invalid attendance code.')
+                err = 'Invalid attendance code.'
+                if is_ajax:
+                    return JsonResponse({'status': 'error', 'message': err}, status=400)
+                messages.error(request, err)
                 return render(request, 'attendance/scan_attendance.html', {'gym': gym, 'gym_name': gym.name, 'form_data': request.POST})
 
             if gym.attendance_code_expiry and gym.attendance_code_expiry < timezone.now():
-                messages.error(request, 'Attendance code has expired. Please scan the new code.')
+                err = 'Attendance code has expired. Please scan the new code.'
+                if is_ajax:
+                    return JsonResponse({'status': 'error', 'message': err}, status=400)
+                messages.error(request, err)
                 return render(request, 'attendance/scan_attendance.html', {'gym': gym, 'gym_name': gym.name, 'form_data': request.POST})
         else:
             if not reg_number:
-                messages.error(request, 'Registered ID or Phone is required.')
+                err = 'Registered ID or Phone is required.'
+                if is_ajax:
+                    return JsonResponse({'status': 'error', 'message': err}, status=400)
+                messages.error(request, err)
                 return render(request, 'attendance/scan_attendance.html', {'gym': gym, 'gym_name': gym.name, 'form_data': request.POST})
 
         member_id = request.POST.get('member_id')
         if member_id:
             try:
-                member = Member.objects.get(id=member_id, gym=gym)
-                handle_member_attendance(request, member, gym)
+                member = Member.objects.get(id=member_id, gym=gym, is_deleted=False)
+                res = handle_member_attendance(request, member, gym)
+                user_payload = get_member_scan_data(member)
+                if is_ajax:
+                    return JsonResponse({
+                        'status': res.get('status', 'success'),
+                        'action': res.get('action', 'checkin'),
+                        'message': res.get('message', ''),
+                        'user': user_payload
+                    })
                 return redirect('attendance:scan_attendance', gym_id=gym.gym_id)
             except Member.DoesNotExist:
-                messages.error(request, 'Selected member not found.')
+                err = 'Selected member record not found or is deactivated.'
+                if is_ajax:
+                    return JsonResponse({'status': 'error', 'message': err}, status=404)
+                messages.error(request, err)
                 return redirect('attendance:scan_attendance', gym_id=gym.gym_id)
 
         try:
             members = Member.objects.filter(
                 Q(member_id__iexact=reg_number) | Q(mobile_number__iexact=reg_number),
-                gym=gym
+                gym=gym,
+                is_deleted=False
             )
             if members.count() == 1:
                 member = members.first()
-                handle_member_attendance(request, member, gym)
+                res = handle_member_attendance(request, member, gym)
+                user_payload = get_member_scan_data(member)
+                if is_ajax:
+                    return JsonResponse({
+                        'status': res.get('status', 'success'),
+                        'action': res.get('action', 'checkin'),
+                        'message': res.get('message', ''),
+                        'user': user_payload
+                    })
                 return redirect('attendance:scan_attendance', gym_id=gym.gym_id)
             elif members.count() > 1:
+                if is_ajax:
+                    members_data = []
+                    for m in members:
+                        p_url = '/static/images/member_dp.jpg'
+                        if m.profile_picture:
+                            try:
+                                p_url = m.profile_picture.url
+                            except Exception:
+                                p_url = '/static/images/member_dp.jpg'
+                        members_data.append({
+                            'id': m.id,
+                            'name': m.name,
+                            'member_id': m.member_id,
+                            'photo': p_url
+                        })
+                    return JsonResponse({
+                        'status': 'multiple',
+                        'message': f'Multiple members found with phone {reg_number}. Please select:',
+                        'members': members_data
+                    })
                 return render(request, 'attendance/scan_attendance.html', {
                     'gym': gym,
                     'gym_name': gym.name,
@@ -173,58 +291,154 @@ def scan_attendance(request, gym_id):
                     Q(trainer_id__iexact=reg_number) | Q(phone__iexact=reg_number),
                     gym=gym
                 )
-                handle_trainer_attendance(request, trainer, gym)
+                res = handle_trainer_attendance(request, trainer, gym)
+                user_payload = get_trainer_scan_data(trainer)
+                if is_ajax:
+                    return JsonResponse({
+                        'status': res.get('status', 'success'),
+                        'action': res.get('action', 'checkin'),
+                        'message': res.get('message', ''),
+                        'user': user_payload
+                    })
                 return redirect('attendance:scan_attendance', gym_id=gym.gym_id)
             except Trainer.DoesNotExist:
-                messages.error(request, 'Member or Trainer not found with the provided details.')
+                err = 'No active Member or Coach found with the provided details.'
+                if is_ajax:
+                    return JsonResponse({'status': 'error', 'message': err}, status=404)
+                messages.error(request, err)
 
         except Member.DoesNotExist:
-             messages.error(request, 'Member or Trainer not found with the provided details.')
+            err = 'No Member or Coach found with the provided details.'
+            if is_ajax:
+                return JsonResponse({'status': 'error', 'message': err}, status=404)
+            messages.error(request, err)
 
         return render(request, 'attendance/scan_attendance.html', {'gym': gym, 'gym_name': gym.name, 'form_data': request.POST})
 
+    # Recent Check-Ins for kiosk live display
+    today = timezone.localdate()
+    recent_checkins = []
+    try:
+        recent_records = MemberAttendance.objects.filter(gym=gym, check_in_time__date=today).select_related('member').order_by('-check_in_time')[:5]
+        for r in recent_records:
+            if r.member and not r.member.is_deleted:
+                p_url = '/static/images/member_dp.jpg'
+                if r.member.profile_picture:
+                    try:
+                        p_url = r.member.profile_picture.url
+                    except Exception:
+                        p_url = '/static/images/member_dp.jpg'
+                recent_checkins.append({
+                    'name': r.member.name,
+                    'badge': 'Member',
+                    'member_id': r.member.member_id,
+                    'time': timezone.localtime(r.check_in_time).strftime('%I:%M %p'),
+                    'photo': p_url,
+                    'status': r.status,
+                })
+    except Exception:
+        recent_checkins = []
+
     context = {
         'gym_name': gym.name,
-        'gym': gym
+        'gym': gym,
+        'recent_checkins': recent_checkins,
     }
     return render(request, 'attendance/scan_attendance.html', context)
 
 
 def handle_member_attendance(request, member, gym):
+    # 1. Soft-deletion security check
+    if getattr(member, 'is_deleted', False):
+        msg = 'Access Denied: This member account is deactivated.'
+        try: messages.error(request, msg, fail_silently=True)
+        except Exception: pass
+        return {'action': 'denied', 'status': 'error', 'message': msg}
+
+    # 2. Membership status validation (Expired, Frozen, No Membership)
+    status = getattr(member, 'current_status', 'Active')
+    if status == 'Expired':
+        latest_mem = getattr(member, 'latest_membership', None)
+        end_d = latest_mem.get_end_date() if (latest_mem and hasattr(latest_mem, 'get_end_date')) else None
+        end_str = end_d.strftime('%d %b %Y') if end_d else 'recently'
+        msg = f'Access Denied: Membership expired on {end_str}. Please renew at the front desk.'
+        try: messages.error(request, msg, fail_silently=True)
+        except Exception: pass
+        return {'action': 'denied', 'status': 'error', 'message': msg}
+    elif status == 'Freezed':
+        msg = 'Access Denied: Membership is currently frozen. Please contact reception.'
+        try: messages.error(request, msg, fail_silently=True)
+        except Exception: pass
+        return {'action': 'denied', 'status': 'error', 'message': msg}
+    elif status == 'No Membership':
+        msg = 'Access Denied: No active membership plan assigned to this account.'
+        try: messages.error(request, msg, fail_silently=True)
+        except Exception: pass
+        return {'action': 'denied', 'status': 'error', 'message': msg}
+
+    # 3. Process Attendance
     today = timezone.now().date()
-    existing_attendance = MemberAttendance.objects.filter(member=member, check_in_time__date=today, check_out_time__isnull=True, gym=gym).first()
+    existing_attendance = MemberAttendance.objects.filter(
+        member=member, check_in_time__date=today, check_out_time__isnull=True, gym=gym
+    ).first()
 
     if existing_attendance:
         fifteen_minutes_ago = timezone.now() - timedelta(minutes=15)
         if existing_attendance.check_in_time > fifteen_minutes_ago:
-            messages.warning(request, f'{member.name} is already checked in.')
+            msg = f'{member.name} is already checked in.'
+            try: messages.warning(request, msg, fail_silently=True)
+            except Exception: pass
+            return {'action': 'already_checked_in', 'status': 'warning', 'message': msg, 'record': existing_attendance}
         else:
             existing_attendance.check_out_time = timezone.now()
             existing_attendance.status = 'outside'
             existing_attendance.save()
-            messages.success(request, f'Goodbye, {member.name}! You have been checked out successfully.')
+            msg = f'Goodbye, {member.name}! You have been checked out successfully.'
+            try: messages.success(request, msg, fail_silently=True)
+            except Exception: pass
+            return {'action': 'checkout', 'status': 'success', 'message': msg, 'record': existing_attendance}
     else:
-        MemberAttendance.objects.create(member=member, check_in_time=timezone.now(), gym=gym)
-        messages.success(request, f'Welcome, {member.name}! You have been successfully checked in.')
+        record = MemberAttendance.objects.create(member=member, check_in_time=timezone.now(), gym=gym)
+        msg = f'Welcome, {member.name}! You have been successfully checked in.'
+        try: messages.success(request, msg, fail_silently=True)
+        except Exception: pass
+        return {'action': 'checkin', 'status': 'success', 'message': msg, 'record': record}
 
 
 def handle_trainer_attendance(request, trainer, gym):
+    if not getattr(trainer, 'is_active', True):
+        msg = f'Access Denied: Coach {trainer.name} is currently marked inactive.'
+        try: messages.error(request, msg, fail_silently=True)
+        except Exception: pass
+        return {'action': 'denied', 'status': 'error', 'message': msg}
+
     today = timezone.now().date()
     thirty_minutes_ago = timezone.now() - timedelta(minutes=30)
     
-    existing_attendance = TrainerAttendance.objects.filter(trainer=trainer, check_in_time__date=today, check_out_time__isnull=True).first()
+    existing_attendance = TrainerAttendance.objects.filter(
+        trainer=trainer, check_in_time__date=today, check_out_time__isnull=True, gym=gym
+    ).first()
 
     if existing_attendance:
         if existing_attendance.check_in_time > thirty_minutes_ago:
-            messages.warning(request, f'{trainer.name} is already checked in. You can check out after 30 minutes.')
+            msg = f'Coach {trainer.name} is already checked in. You can check out after 30 minutes.'
+            try: messages.warning(request, msg, fail_silently=True)
+            except Exception: pass
+            return {'action': 'already_checked_in', 'status': 'warning', 'message': msg, 'record': existing_attendance}
         else:
             existing_attendance.check_out_time = timezone.now()
             existing_attendance.status = 'outside'
             existing_attendance.save()
-            messages.success(request, f'{trainer.name} checked out successfully.')
+            msg = f'Goodbye, Coach {trainer.name}! You have been checked out successfully.'
+            try: messages.success(request, msg, fail_silently=True)
+            except Exception: pass
+            return {'action': 'checkout', 'status': 'success', 'message': msg, 'record': existing_attendance}
     else:
-        TrainerAttendance.objects.create(trainer=trainer, check_in_time=timezone.now(), gym=gym)
-        messages.success(request, f'Welcome, {trainer.name}! You have been successfully checked in.')
+        record = TrainerAttendance.objects.create(trainer=trainer, check_in_time=timezone.now(), gym=gym)
+        msg = f'Welcome, Coach {trainer.name}! You have been successfully checked in.'
+        try: messages.success(request, msg, fail_silently=True)
+        except Exception: pass
+        return {'action': 'checkin', 'status': 'success', 'message': msg, 'record': record}
 
 
 @login_required
