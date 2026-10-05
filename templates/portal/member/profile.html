@@ -35,12 +35,16 @@
 }
 
 /* -------------------------------------------------------------
-   THEME 1: MINIMAL WHITE (Reference Style: WhatsApp / Apple Wallet)
+   THEME 1: MINIMAL WHITE (With Official Geometric ID Card Background)
    ------------------------------------------------------------- */
 .phone-smart-pass.theme-corporate-white {
-  background: #ffffff;
+  background-color: #f0f7ff;
+  background-image: url('{% if id_card_bg_data_uri %}{{ id_card_bg_data_uri }}{% else %}{% static "images/id_card_bg.png" %}{% endif %}');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   color: #0f172a;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #bfdbfe;
   box-shadow: 
     0 24px 55px -12px rgba(15, 23, 42, 0.16),
     0 8px 18px -4px rgba(15, 23, 42, 0.06),
@@ -53,17 +57,33 @@
 }
 .phone-smart-pass.theme-corporate-white .pass-brand-title { color: #0f172a; }
 .phone-smart-pass.theme-corporate-white .pass-brand-sub { color: #2563eb; }
-.phone-smart-pass.theme-corporate-white .pass-divider { border-color: #f1f5f9; }
-.phone-smart-pass.theme-corporate-white .pass-member-card { background: #f8fafc; border: 1px solid #e2e8f0; }
+.phone-smart-pass.theme-corporate-white .pass-divider { border-color: rgba(37, 99, 235, 0.15); }
+.phone-smart-pass.theme-corporate-white .pass-member-card { 
+  background: rgba(255, 255, 255, 0.82); 
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.06);
+}
 .phone-smart-pass.theme-corporate-white .pass-id-pill { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; }
-.phone-smart-pass.theme-corporate-white .pass-qr-frame { background: #ffffff; border: 1.5px solid #e2e8f0; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08); }
+.phone-smart-pass.theme-corporate-white .pass-qr-frame { 
+  background: #ffffff; 
+  border: 1.5px solid rgba(37, 99, 235, 0.22); 
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.12); 
+}
 .phone-smart-pass.theme-corporate-white .reticle-bracket { border-color: #2563eb; }
-.phone-smart-pass.theme-corporate-white .pass-scan-line { background: #e2e8f0; }
+.phone-smart-pass.theme-corporate-white .pass-scan-line { background: rgba(37, 99, 235, 0.18); }
 .phone-smart-pass.theme-corporate-white .pass-scan-text { color: #1e40af; }
-.phone-smart-pass.theme-corporate-white .pass-credential-box { background: #f8fafc; border: 1px solid #e2e8f0; }
+.phone-smart-pass.theme-corporate-white .pass-credential-box { 
+  background: rgba(255, 255, 255, 0.82); 
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.05);
+}
 .phone-smart-pass.theme-corporate-white .cred-label { color: #64748b; }
 .phone-smart-pass.theme-corporate-white .cred-val { color: #0f172a; }
-.phone-smart-pass.theme-corporate-white .feature-item { color: #64748b; }
+.phone-smart-pass.theme-corporate-white .feature-item { color: #475569; }
 .phone-smart-pass.theme-corporate-white .feature-item i { color: #2563eb; }
 .phone-smart-pass.theme-corporate-white .pass-footer-banner {
   background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%);

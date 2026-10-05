@@ -602,6 +602,17 @@ def trainer_profile_view(request):
         except Exception:
             gym_logo_data_uri = None
 
+    id_card_bg_data_uri = None
+    try:
+        from django.conf import settings
+        import os, base64
+        bg_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'id_card_bg.png')
+        if os.path.exists(bg_path):
+            with open(bg_path, 'rb') as f:
+                id_card_bg_data_uri = f"data:image/png;base64,{base64.b64encode(f.read()).decode('utf-8')}"
+    except Exception:
+        id_card_bg_data_uri = None
+
     context = {
         'trainer': trainer,
         'gym': gym,
@@ -612,6 +623,7 @@ def trainer_profile_view(request):
         'qr_data_uri': qr_data_uri,
         'profile_pic_data_uri': profile_pic_data_uri,
         'gym_logo_data_uri': gym_logo_data_uri,
+        'id_card_bg_data_uri': id_card_bg_data_uri,
         'verify_url': verify_url,
     }
     return render(request, 'portal/trainer/profile.html', context)

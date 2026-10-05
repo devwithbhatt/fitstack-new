@@ -92,9 +92,9 @@
           </button>
         </div>
 
-        <div class="modal-body p-4 text-center">
+        <div class="modal-body p-4 text-center" style="background: #f0f7ff url('{% static 'images/id_card_bg.png' %}') center / cover no-repeat;">
           <!-- Member Avatar & Card Header -->
-          <div class="d-flex align-items-center justify-content-center mb-3 p-2.5 rounded-16 border" style="background: #f8fafc; border-color: #e2e8f0; gap: 12px; border-radius: 16px;">
+          <div class="d-flex align-items-center justify-content-center mb-3 p-2.5 rounded-16 border shadow-sm" style="background: rgba(255, 255, 255, 0.88); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-color: rgba(255,255,255,0.9); gap: 12px; border-radius: 16px;">
             <img src="{% if current_member.profile_picture %}{{ current_member.profile_picture.url }}{% else %}{% static 'images/member_dp.jpg' %}{% endif %}" 
                  onerror="this.src='{% static 'images/member_dp.jpg' %}';"
                  alt="{{ current_member.name }}" 
@@ -110,7 +110,7 @@
           </div>
 
           <!-- Central High-Precision QR Code -->
-          <div class="my-3 d-inline-block position-relative p-2.5 rounded-20 border shadow-sm" style="background: #ffffff; border-color: #e2e8f0; border-radius: 16px;">
+          <div class="my-3 d-inline-block position-relative p-2.5 rounded-20 border shadow-sm" style="background: #ffffff; border-color: rgba(37, 99, 235, 0.2); border-radius: 16px; box-shadow: 0 8px 24px rgba(37, 99, 235, 0.12);">
             {% if topbar_qr_data_uri %}
               <img src="{{ topbar_qr_data_uri }}" alt="Member Verification QR" style="width: 175px; height: 175px; display: block; border-radius: 8px;">
             {% else %}
@@ -122,14 +122,14 @@
 
           <!-- Turnstile Instruction Banner -->
           <div class="d-flex align-items-center justify-content-center text-primary font-weight-bold text-uppercase my-2" style="font-size: 0.72rem; letter-spacing: 0.08em; gap: 8px;">
-            <span style="height: 1px; background: #e2e8f0; flex: 1;"></span>
+            <span style="height: 1px; background: rgba(37, 99, 235, 0.2); flex: 1;"></span>
             <span><i class="fas fa-camera mr-1"></i> Scan At Gym Turnstile To Enter</span>
-            <span style="height: 1px; background: #e2e8f0; flex: 1;"></span>
+            <span style="height: 1px; background: rgba(37, 99, 235, 0.2); flex: 1;"></span>
           </div>
 
           <!-- Active Beacon -->
           <div class="mt-2 mb-1">
-            <span class="badge badge-pill px-3 py-1.5 font-weight-bold" style="background: rgba(37,99,235,0.1); color: #1e40af; border: 1px solid #bfdbfe; font-size: 0.74rem; letter-spacing: 0.03em;">
+            <span class="badge badge-pill px-3 py-1.5 font-weight-bold" style="background: rgba(255,255,255,0.9); color: #1e40af; border: 1px solid #bfdbfe; font-size: 0.74rem; letter-spacing: 0.03em; box-shadow: 0 2px 8px rgba(37,99,235,0.08);">
               <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #2563eb; margin-right: 5px; vertical-align: middle;"></span>
               ACTIVE TURNSTILE PASS
             </span>
