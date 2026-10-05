@@ -29,7 +29,7 @@ def gym_details(request):
 
     if hasattr(request, 'user') and request.user.is_authenticated:
         user = request.user
-        session_role = request.session.get('role', '')
+        session_role = request.session.get('role', '') if hasattr(request, 'session') else ''
 
         # Resolve gym if missing from request
         if not gym:
@@ -41,7 +41,7 @@ def gym_details(request):
                 gym = user.trainer_profile.gym
             elif hasattr(user, 'member_profile') and user.member_profile.gym:
                 gym = user.member_profile.gym
-            elif request.session.get('gym_id'):
+            elif hasattr(request, 'session') and request.session.get('gym_id'):
                 gym = Gym.objects.filter(id=request.session.get('gym_id')).first()
 
         # 1. Super Admin
