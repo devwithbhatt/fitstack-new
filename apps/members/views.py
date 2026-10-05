@@ -175,8 +175,8 @@ def member_profile(request, member_id):
 
     assigned_diet_plans = AssignDietPlan.objects.filter(member=member, gym=gym).order_by('-assigned_at')
     assigned_workout_plans = AssignWorkoutPlan.objects.filter(member=member, gym=gym).order_by('-assigned_at')
-    workout_logs = MemberWorkoutLog.objects.filter(member=member, gym=gym).prefetch_related('exercises').order_by('-workout_date', '-created_at')[:30]
-    body_metrics = MemberBodyMetric.objects.filter(member=member, gym=gym).order_by('-metric_date', '-created_at')[:30]
+    workout_logs = MemberWorkoutLog.objects.filter(member=member, gym=gym).prefetch_related('exercises').order_by('-date', '-created_at')[:30]
+    body_metrics = MemberBodyMetric.objects.filter(member=member, gym=gym).order_by('-date', '-created_at')[:30]
     fitness_goal = MemberFitnessGoal.objects.filter(member=member, gym=gym).first()
 
     return render(request, 'members/member_profile.html', {

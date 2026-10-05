@@ -917,7 +917,7 @@
                                                 <div class="card mb-2 border shadow-none" style="border-radius: 8px;">
                                                     <div class="card-header bg-light py-2 px-3 d-flex justify-content-between align-items-center" id="headingTrainerLog{{ log.id }}">
                                                         <div class="d-flex align-items-center flex-wrap">
-                                                            <span class="badge badge-dark mr-2">{{ log.workout_date|date:"d M Y" }}</span>
+                                                            <span class="badge badge-dark mr-2">{{ log.date|date:"d M Y" }}</span>
                                                             <span class="badge badge-info mr-2 text-capitalize">{{ log.get_workout_type_display }}</span>
                                                             <strong class="text-dark mr-2">{{ log.title }}</strong>
                                                             <small class="text-muted mr-3"><i class="mdi mdi-clock-outline mr-1"></i>{{ log.duration_minutes }} min</small>
@@ -999,7 +999,7 @@
                                                     <tbody>
                                                         {% for bm in body_metrics %}
                                                         <tr>
-                                                            <td><strong>{{ bm.metric_date|date:"d M Y" }}</strong></td>
+                                                            <td><strong>{{ bm.date|date:"d M Y" }}</strong></td>
                                                             <td class="font-weight-bold text-primary">{% if bm.weight_kg %}{{ bm.weight_kg }} kg{% else %}-{% endif %}</td>
                                                             <td>{% if bm.body_fat_percentage %}{{ bm.body_fat_percentage }}%{% else %}-{% endif %}</td>
                                                             <td>{% if bm.chest_inches %}{{ bm.chest_inches }}"{% else %}-{% endif %}</td>
