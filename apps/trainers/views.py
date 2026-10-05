@@ -682,14 +682,25 @@ def pay_trainer_salary(request, salary_id):
 
 
 def generate_payslip_pdf_response(request, context, filename):
+    import os
     from io import BytesIO
     from django.http import HttpResponse
     from django.template.loader import render_to_string
+    from django.conf import settings
     from xhtml2pdf import pisa
+
+    def link_callback(uri, rel):
+        if uri.startswith(settings.MEDIA_URL):
+            path = os.path.join(settings.MEDIA_ROOT, uri[len(settings.MEDIA_URL):])
+        elif uri.startswith(settings.STATIC_URL):
+            path = os.path.join(settings.STATIC_ROOT or settings.BASE_DIR, uri[len(settings.STATIC_URL):])
+        else:
+            return uri
+        return path if os.path.isfile(path) else uri
 
     html = render_to_string('trainers/payslip_pdf.html', context, request=request)
     result = BytesIO()
-    pdf = pisa.pisaDocument(BytesIO(html.encode('utf-8')), result)
+    pdf = pisa.pisaDocument(BytesIO(html.encode('utf-8')), result, link_callback=link_callback)
     if not pdf.err:
         response = HttpResponse(result.getvalue(), content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="{filename}"'

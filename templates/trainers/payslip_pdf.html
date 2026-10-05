@@ -7,9 +7,11 @@
   <style>
     @page {
       size: a4 portrait;
-      margin: 12mm 14mm;
+      margin: 10mm 12mm;
     }
     body {
+      margin: 0;
+      padding: 0;
       font-family: Helvetica, Arial, sans-serif;
       font-size: 10pt;
       color: #111111;
@@ -17,7 +19,7 @@
     }
     .sheet {
       border: 1.5pt solid #333333;
-      width: 100%;
+      margin: 0 auto;
     }
     .header-table {
       width: 100%;
@@ -29,7 +31,7 @@
       vertical-align: middle;
     }
     .logo-cell {
-      width: 30%;
+      width: 140pt;
       border-right: 1pt solid #444444;
       text-align: center;
     }
@@ -123,9 +125,13 @@
     <table class="header-table">
       <tr>
         <td class="logo-cell">
-          <div style="font-size: 16pt; font-weight: bold; color: #ea580c; line-height: 1.1;">
-            COMPANY<br><span style="font-size: 20pt;">LOGO</span>
-          </div>
+          {% if gym.logo %}
+            <img src="{{ gym.logo.url }}" alt="{{ gym.name }}" style="max-height: 50pt; max-width: 110pt;">
+          {% else %}
+            <div style="font-size: 16pt; font-weight: bold; color: #ea580c; line-height: 1.1;">
+              COMPANY<br><span style="font-size: 20pt;">LOGO</span>
+            </div>
+          {% endif %}
         </td>
         <td style="text-align: center; width: 70%;">
           <div class="gym-name">{{ gym.name|default:"FITSTACK GYM" }}</div>

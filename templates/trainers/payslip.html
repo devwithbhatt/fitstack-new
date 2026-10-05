@@ -11,21 +11,36 @@
     max-width: 860px;
     margin: 0 auto;
     background: #ffffff;
+    box-sizing: border-box;
+  }
+  #payslipPdfWrapper {
+    background: #ffffff;
+    padding: 3px 6px 5px 3px;
+    box-sizing: border-box;
+    width: 100%;
   }
   .payslip-sheet {
+    box-sizing: border-box;
     border: 2px solid #333333;
     padding: 0;
     background: #ffffff;
     font-family: Arial, Helvetica, sans-serif;
     color: #111111;
+    width: 100%;
+    margin: 0 auto;
+  }
+  .payslip-sheet *, .payslip-sheet *::before, .payslip-sheet *::after {
+    box-sizing: border-box;
   }
   .payslip-table {
     width: 100%;
     border-collapse: collapse;
     margin-bottom: 0;
+    box-sizing: border-box;
   }
   .payslip-table th, 
   .payslip-table td {
+    box-sizing: border-box;
     border: 1px solid #444444;
     padding: 7px 12px;
     font-size: 0.88rem;
@@ -73,6 +88,9 @@
   }
 
   @media print {
+    *, *::before, *::after {
+      box-sizing: border-box !important;
+    }
     body {
       background-color: #ffffff !important;
       color: #000000 !important;
@@ -88,18 +106,32 @@
       box-shadow: none !important;
       border: none !important;
     }
-    .payslip-sheet {
-      border: 1.5px solid #000000 !important;
-      box-shadow: none !important;
+    #payslipPdfWrapper {
+      padding: 0 !important;
       margin: 0 !important;
       width: 100% !important;
+      box-sizing: border-box !important;
+    }
+    .payslip-sheet {
+      box-sizing: border-box !important;
+      border: 2px solid #000000 !important;
+      box-shadow: none !important;
+      margin: 0 auto !important;
+      width: 99.4% !important;
+      max-width: 99.4% !important;
+    }
+    .payslip-table {
+      box-sizing: border-box !important;
+      width: 100% !important;
+      border-collapse: collapse !important;
     }
     .payslip-table th, .payslip-table td {
+      box-sizing: border-box !important;
       border: 1px solid #000000 !important;
     }
     @page {
       size: A4 portrait;
-      margin: 12mm;
+      margin: 10mm;
     }
   }
 </style>
@@ -162,8 +194,9 @@
     </div>
   </div>
 
-  <!-- EXACT REFERENCE PAYSLIP SHEET -->
-  <div class="payslip-sheet shadow-sm" id="payslipPrintArea">
+  <!-- EXACT REFERENCE PAYSLIP SHEET (WITH WRAPPER TO PREVENT PRINT CLIPPING) -->
+  <div id="payslipPdfWrapper">
+    <div class="payslip-sheet shadow-sm" id="payslipPrintArea">
 
     <!-- 1. Header Section (Company Logo on left, Gym Name & Address on right) -->
     <div class="payslip-header-box">
@@ -368,6 +401,7 @@
       </div>
     </div>
 
+    </div>
   </div>
 </div>
 
@@ -379,14 +413,20 @@ function downloadPayslipPDF() {
   btn.innerHTML = '<i class="mdi mdi-loading mdi-spin mr-1 me-1"></i> Generating PDF...';
   btn.disabled = true;
 
-  const element = document.getElementById('payslipPrintArea');
+  const element = document.getElementById('payslipPdfWrapper') || document.getElementById('payslipPrintArea');
 
   if (typeof html2pdf !== 'undefined') {
     const opt = {
       margin:       [8, 8, 8, 8],
       filename:     'Payslip_{{ trainer.name|slugify }}_{{ month_name }}_{{ year }}.pdf',
       image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0 },
+      html2canvas:  { 
+        scale: 2, 
+        useCORS: true, 
+        backgroundColor: '#ffffff', 
+        scrollY: 0,
+        scrollX: 0
+      },
       jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
