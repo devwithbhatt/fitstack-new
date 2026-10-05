@@ -270,7 +270,7 @@
                     <div class="row align-items-center mt-2">
                         <div class="col-md-auto text-center mb-3 mb-md-0">
                             <div id="preview_id_photo">
-                                <img id="trainerAvatarImg" src="{% if trainer.photo %}{{ trainer.photo.url }}{% else %}{% static 'images/gym-guy.jpg' %}{% endif %}" alt="Trainer Avatar" class="trainer-avatar-box">
+                                <img id="trainerAvatarImg" src="{% if trainer.photo %}{{ trainer.photo.url }}{% else %}{% static 'images/trainer_dp.png' %}{% endif %}" alt="Trainer Avatar" class="trainer-avatar-box">
                             </div>
                         </div>
                         <div class="col-md">
@@ -313,7 +313,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const photoInput = document.getElementById('id_photo');
     const avatarImg = document.getElementById('trainerAvatarImg');
     const resetBtn = document.getElementById('resetPhotoBtn');
-    const originalAvatarSrc = "{% if trainer.photo %}{{ trainer.photo.url }}{% else %}{% static 'images/gym-guy.jpg' %}{% endif %}";
+    const originalAvatarSrc = "{% if trainer.photo %}{{ trainer.photo.url }}{% else %}{% static 'images/trainer_dp.png' %}{% endif %}";
 
     // Instant image preview when user selects a file from disk
     if (photoInput && avatarImg) {

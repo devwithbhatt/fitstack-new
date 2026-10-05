@@ -492,27 +492,156 @@ def trainer_apply_leave(request):
 def trainer_profile_view(request):
     trainer = request.trainer
     gym = request.gym
+    today = timezone.localdate()
 
-    if request.method == 'POST' and 'change_password' in request.POST:
-        new_pwd = request.POST.get('new_password', '').strip()
-        confirm_pwd = request.POST.get('confirm_password', '').strip()
-        if len(new_pwd) < 6:
-            messages.error(request, 'Password must be at least 6 characters long.')
-        elif new_pwd != confirm_pwd:
-            messages.error(request, 'Passwords do not match.')
-        else:
-            request.user.set_password(new_pwd)
-            request.user.save()
-            from django.contrib.auth import update_session_auth_hash
-            update_session_auth_hash(request, request.user)
-            messages.success(request, 'Password updated successfully!')
+    if request.method == 'POST':
+        if 'change_password' in request.POST:
+            new_pwd = request.POST.get('new_password', '').strip()
+            confirm_pwd = request.POST.get('confirm_password', '').strip()
+            if len(new_pwd) < 6:
+                messages.error(request, 'Password must be at least 6 characters long.')
+            elif new_pwd != confirm_pwd:
+                messages.error(request, 'Passwords do not match.')
+            else:
+                request.user.set_password(new_pwd)
+                request.user.save()
+                from django.contrib.auth import update_session_auth_hash
+                update_session_auth_hash(request, request.user)
+                messages.success(request, 'Password updated successfully!')
+                return redirect('trainer_portal:profile')
+        elif 'update_profile' in request.POST:
+            phone = request.POST.get('phone', '').strip()
+            email = request.POST.get('email', '').strip()
+            address = request.POST.get('address', '').strip()
+            if phone:
+                trainer.phone = phone
+            if email:
+                trainer.email = email
+            if address:
+                trainer.address = address
+            if 'photo' in request.FILES:
+                trainer.photo = request.FILES['photo']
+            trainer.save()
+            messages.success(request, 'Profile details updated successfully!')
             return redirect('trainer_portal:profile')
+
+    # Quick Snapshot Counts
+    active_clients_count = PersonalTrainer.objects.filter(
+        trainer=trainer, status='active', is_deleted=False
+    ).count()
+
+    total_attendance_count = TrainerAttendance.objects.filter(
+        trainer=trainer
+    ).count()
+
+    # Profile completeness score
+    profile_fields = [trainer.name, trainer.phone, trainer.email, trainer.photo, trainer.specialization, trainer.address]
+    filled_fields = sum(1 for f in profile_fields if f)
+    profile_pct = int((filled_fields / len(profile_fields)) * 100)
+
+    # Verification URL & QR Code
+    from django.urls import reverse
+    verify_url = request.build_absolute_uri(reverse('trainer_portal:verify_pass', args=[trainer.trainer_id]))
+    try:
+        import qrcode
+        import io
+        import base64
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=5,
+            border=1,
+        )
+        qr.add_data(verify_url)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="#0a192f", back_color="white")
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        qr_b64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+        qr_data_uri = f"data:image/png;base64,{qr_b64}"
+    except Exception:
+        qr_data_uri = None
+
+    # Base64 Data URIs for trainer photo and gym logo (0 CORS issues with html2canvas download)
+    profile_pic_data_uri = None
+    if trainer.photo:
+        try:
+            import mimetypes
+            import base64
+            with trainer.photo.open('rb') as f:
+                content = f.read()
+                mime, _ = mimetypes.guess_type(trainer.photo.name)
+                mime = mime or 'image/jpeg'
+                profile_pic_data_uri = f"data:{mime};base64,{base64.b64encode(content).decode('utf-8')}"
+        except Exception:
+            profile_pic_data_uri = None
+
+    if not profile_pic_data_uri:
+        try:
+            import os
+            import base64
+            from django.conf import settings
+            default_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'trainer_dp.png')
+            if os.path.exists(default_path):
+                with open(default_path, 'rb') as f:
+                    content = f.read()
+                profile_pic_data_uri = f"data:image/png;base64,{base64.b64encode(content).decode('utf-8')}"
+        except Exception:
+            pass
+
+    gym_logo_data_uri = None
+    if gym and gym.logo:
+        try:
+            import mimetypes
+            import base64
+            with gym.logo.open('rb') as f:
+                content = f.read()
+                mime, _ = mimetypes.guess_type(gym.logo.name)
+                mime = mime or 'image/png'
+                gym_logo_data_uri = f"data:{mime};base64,{base64.b64encode(content).decode('utf-8')}"
+        except Exception:
+            gym_logo_data_uri = None
 
     context = {
         'trainer': trainer,
         'gym': gym,
+        'today': today,
+        'active_clients_count': active_clients_count,
+        'total_attendance_count': total_attendance_count,
+        'profile_pct': profile_pct,
+        'qr_data_uri': qr_data_uri,
+        'profile_pic_data_uri': profile_pic_data_uri,
+        'gym_logo_data_uri': gym_logo_data_uri,
+        'verify_url': verify_url,
     }
     return render(request, 'portal/trainer/profile.html', context)
+
+
+def trainer_verify_pass_view(request, trainer_id):
+    """
+    Public verification endpoint to verify authenticity of digital coach pass via QR code scan.
+    Accessible on mobile devices without requiring trainer login.
+    """
+    trainer = Trainer.objects.filter(trainer_id=trainer_id).select_related('gym').first()
+
+    if not trainer:
+        return render(request, 'portal/trainer/verify_pass.html', {
+            'found': False,
+            'trainer_id': trainer_id,
+        })
+
+    active_clients_count = PersonalTrainer.objects.filter(
+        trainer=trainer, status='active', is_deleted=False
+    ).count()
+
+    context = {
+        'found': True,
+        'trainer': trainer,
+        'gym': trainer.gym,
+        'active_clients_count': active_clients_count,
+        'today': timezone.localdate(),
+    }
+    return render(request, 'portal/trainer/verify_pass.html', context)
 
 
 @never_cache

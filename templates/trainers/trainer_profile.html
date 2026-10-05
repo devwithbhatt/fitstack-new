@@ -84,7 +84,7 @@
                             {% if trainer.photo %}
                                 <img src="{{ trainer.photo.url }}" alt="profile" class="img-lg rounded-circle mb-3 shadow-sm" style="width: 120px; height: 120px; object-fit: cover; cursor: pointer;" onclick="showImage('{{ trainer.photo.url }}')"/>
                             {% else %}
-                                <img src="{% static 'images/gym-guy.jpg' %}" alt="profile" class="img-lg rounded-circle mb-3 shadow-sm" style="width: 120px; height: 120px; object-fit: cover;"/>
+                                <img src="{% static 'images/trainer_dp.png' %}" alt="profile" class="img-lg rounded-circle mb-3 shadow-sm" style="width: 120px; height: 120px; object-fit: cover; background: #ffffff;"/>
                             {% endif %}
                             <h4 class="font-weight-bold">{{ trainer.name }}</h4>
                             <p class="text-muted mb-2">#{{ trainer.trainer_id }}</p>

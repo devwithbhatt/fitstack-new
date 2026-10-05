@@ -11,6 +11,7 @@ urlpatterns = [
     path('attendance/action/', views.trainer_attendance_action, name='attendance_action'),
     path('leave/apply/', views.trainer_apply_leave, name='apply_leave'),
     path('profile/', views.trainer_profile_view, name='profile'),
+    path('verify-pass/<str:trainer_id>/', views.trainer_verify_pass_view, name='verify_pass'),
     path('salary/', views.trainer_salary_view, name='salary'),
     path('salary/<int:salary_id>/payslip/', views.trainer_payslip_view, name='payslip'),
 ]
